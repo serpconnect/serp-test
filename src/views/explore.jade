@@ -1,0 +1,66 @@
+extends base
+block view-specific-scripts
+	// shameless plug
+	link(rel="stylesheet" href="css/explore.css")
+
+	// libraries
+	script(src="js/util/el.js")
+	script(src="http://d3js.org/d3.v3.min.js" charset="utf-8")
+
+	// libraries - sigma
+	script(src="js/vendor/sigma.min.js")
+	script(src="js/plugins/sigma.plugins.filter.min.js")
+	script(src="js/plugins/sigma.parsers.json.min.js")
+
+	// conf
+	script(src="js/conf.js")
+	script(src="js/util/color.js")
+	script(src="js/util/usage.js")
+	script(src="js/plugins/sigma.canvas.edges.curve.js")
+	script(src="js/plugins/sigma.canvas.hovers.def.js")
+	script(src="js/plugins/sigma.canvas.labels.def.js")
+
+	// app
+	script(src="js/dataset.js")
+	script(src="js/graph-parse.js")
+	script(src="js/controls.js")
+	script(src="js/listing.js")
+	script(src="js/explore.js")
+
+block content
+	ul#helpbox
+		li Click on a research entry or challenge entry to find matching entries.
+
+		li Click on a facet to filter out entries not connected to that facet.
+
+		li Click again on already clicked nodes to remove their filter.
+
+		li Only one research or entry node can be selected at any time.
+
+		li.
+			In the match view, the coloring indicates entry type:
+			#[span.res research] or #[span.chl challenge]
+
+		li If an entry matches both effect and scope facets, it is a complete match and the entry retains its original color.
+
+		li If an entry matches either effect or scope facetsm it is an #[span.inc incomplete] match.
+
+		li Click 'Reset' (bottom right) to remove all filters.
+
+		li Click 'Matches' to toggle list view of matched entries
+
+		li Login to explore your collections.
+
+	div#container
+		div#graph
+		div#listing
+	span
+		select#dataset
+			option(value="main" selected) main
+	span#legend
+		span.chl challenge
+		span.res research
+		span.inc incomplete
+	button#help.control-btn Tips
+	button#reset.control-btn Reset
+	button#matches.control-btn Matches

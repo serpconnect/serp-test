@@ -1,0 +1,31 @@
+extends base
+block view-specific-scripts
+    script(src="js/entries.js")
+block content
+    div.profile-area-wrapper
+        a(href="/profile.html").view-area-tab.unactive-tab profile
+        a(href="/invitations.html").view-area-tab.unactive-tab invitations
+        a(href="/users.html").view-area-tab.unactive-tab users
+        a(href="/entries.html").view-area-tab.active-tab pending entries
+        div.entries-view-container
+            div.entries-content
+                table#entries-table
+                    thead
+                        tr
+                            th entry
+                            th.alternating-group collection
+                            th solve
+                            th adapt
+                            th assess
+                            th improve
+                            th.alternating-group planning
+                            th.alternating-group design
+                            th.alternating-group execution
+                            th.alternating-group analysis
+                            th people
+                            th info
+                            th SUT
+                            th other
+                            th
+                            th
+                    tbody#table-body

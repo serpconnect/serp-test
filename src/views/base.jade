@@ -1,0 +1,38 @@
+doctype html5
+html
+    head
+        meta(name="viewport", content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1")
+        title SERP-connect | a web-tool for linking practical challenges with research results in software testing
+        link(rel='stylesheet', href='css/style.css')
+        link(rel='stylesheet', href='css/grid.css')
+
+        link(href='https://fonts.googleapis.com/css?family=Open+Sans:300,300italic', rel='stylesheet', type='text/css')
+        link(rel="shortcut icon" href="favicon.ico")
+        script(src="https://code.jquery.com/jquery-1.11.3.min.js")
+
+        script(src="js/api.js")
+        if env == "dev"
+            script(src="js/api-dev.js")
+
+        script(src="js/serp.js")
+        script(src="js/user.js")
+
+        block view-specific-scripts
+
+    body
+        div.grid-container
+            div.grid-parent.grid-100
+                a(href="/")
+                    img(src="img/serp-logo-lofi.png")#logo
+                div#header
+                    div.views
+                        a(href="login.html")#login.view-title login
+                        a(href="/")#home.view-title home
+                        a(href="search.html")#search.view-title search
+                        a(href="explore.html")#explore.view-title explore
+                        a(href="submit.html")#submit.view-title submit
+                        a(href="about.html")#about.view-title about
+                div.header-separator
+                div.content
+                    block content
+                    div.footer

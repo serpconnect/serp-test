@@ -1,0 +1,34 @@
+extends base
+block view-specific-scripts
+    link(rel="stylesheet" href="css/overview.css")
+
+    // libraries - d3
+    script(src="http://d3js.org/d3.v3.min.js" charset="utf-8")
+
+    // app
+    script(src="js/util/color.js")
+    script(src="js/util/usage.js")
+    script(src="js/util/treeify.js")
+    script(src="js/dataset.js")
+    script(src="js/overview.js")
+    script(src="js/index.js")
+block content
+    div.text-title
+        | SERP-connect: a web-tool for linking practical challenges with research results in software testing
+
+    div.text
+        | SERP-connect is developed to support the use and evolution of the &#32;
+        a(href="https://lup.lub.lu.se/search/publication/7989173").link SERP-test taxonomy
+        | &#32; aiming at the interface between research and
+        | practice in software testing. Descriptions of practical challenges and
+        | research results are classified and organized according to four facets:
+
+    ol.text
+        li Intervention - characteristics of possible solutions
+        li Effect - the effect targets, or measured effects of an intervention
+        li Scope - the scope of an effect or an effect target
+        li Context - factors in the context affecting the applicability of an intervention
+
+    div.container
+        span#challenges
+        span#research

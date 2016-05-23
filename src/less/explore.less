@@ -1,0 +1,92 @@
+body {
+	width: 100%;
+	height: ~"calc(100% - 15px)";
+}
+
+#graph {
+	width: 100%;
+}
+
+.control-btn {
+	height: 2em;
+	line-height: 1em;
+
+	margin: 0;
+	margin-right: 1em;
+
+	float: right;
+
+	&.down {
+		border-top: inset 2px gray;
+		border-left: inset 2px gray;
+		border-right: inset 2px white;
+		border-bottom: inset 2px white;
+	}
+}
+
+/* match view class appended on research entries */
+.res {
+	background-color: #FAB;
+}
+/* match view class appended on challenge entries */
+.chl {
+	background-color: #BAF;
+}
+.inc {
+	background-color: #AAA;
+}
+
+#helpbox {
+	display: none;
+	position: absolute;
+	z-index: 10;
+	background: white;
+	top: ~"calc(87px + 35px)";
+}
+
+#container {
+	width: 100%;
+	width: ~"calc(100% - 20px)";
+
+	height: 100%;
+	height: ~"calc(100% - 2em - 87px - 35px - 15px)";
+
+	display: inline-flex;
+}
+
+#listing {
+	display: none;
+	width: 25%;
+	overflow-y: scroll;
+
+	>div {
+		background: #FFF;
+		padding: 5px;
+		margin-top: 5px;
+		margin-bottom: 5px;
+		border-radius: 2px;
+
+		&:hover {
+			cursor: pointer;
+		}
+	}
+}
+
+#legend {
+	margin-left: 1em;
+
+	>span {
+		padding: 2px;
+		margin: 2px;
+		border-radius: 2px;
+	}
+}
+
+.content {
+	margin-left: 0 !important;
+}
+
+.footer {
+	height: 0 !important;
+	margin-top: 0 !important;
+}
