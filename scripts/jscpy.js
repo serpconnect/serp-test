@@ -2,7 +2,7 @@ const ioutil = require('./ioutil.js')
 const babel = require('babel-core')
 
 /* libraries that do weird injection stuff and gets broken by babel */
-const exclude = ['sigma.min.js', 'fuzzyset.js']
+const exclude = ['sigma.min.js', 'fuse.min.js']
 
 /* babel needs to be told what transforms to use; es2015~ES6 */
 const babelOpt = {
