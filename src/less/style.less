@@ -67,7 +67,6 @@ ul li {
 
 .content {
     margin-top: 35px;
-    margin-left: 100px;
 }
 
 // styling of select box
@@ -92,7 +91,6 @@ select {
     appearance: none;
     cursor: pointer;
 }
-
 
 // remove dotted outline from firefox for buttons, links
 button::-moz-focus-inner {
@@ -265,7 +263,7 @@ a {
     color: @light-gray;
 
     border: none;
-    padding-bottom: 3px;
+    padding-bottom: 4px;
     cursor: pointer;
 
     -webkit-transition: background-color 0.2s ease;
@@ -312,6 +310,7 @@ a {
     color: @light-gray;
     margin-top: 7px;
     margin-left: 25px;
+    margin-right: 25px;
 }
 
 .user-email, #logout, #change, #delete {
@@ -359,6 +358,10 @@ a {
     text-overflow: ellipsis;
 }
 
+.collection-wrapper:hover {
+    background-color: #fbfbfb;
+}
+
 .collection-stats {
     font-size: 10pt;
 }
@@ -366,15 +369,16 @@ a {
 .collection-wrapper {
     overflow: hidden;
     margin-bottom: 15px;
+    padding: 0.5em;
 }
 
 .collection-info {
     display: inline-block;
-    min-width: 200px;
 }
 
 .collection-options {
     display: inline-block;
+    float: right;
 }
 
 .collection-option {
@@ -442,7 +446,8 @@ a {
 }
 
 // USERS VIEW
-#users-search {
+#users-search,
+.large-input {
     .submit-input-box();
     width: 450px;
 }
@@ -1194,7 +1199,11 @@ th {
 
 // modal content
 .modal > div {
-    width: 500px;
+    min-width: 500px;
+    max-width: 700px;
+
+    max-height: 60%;
+
     background: #fff;
     position: relative;
     margin: 10% auto;
@@ -1204,6 +1213,9 @@ th {
     background-color: @bg-color;
     border-radius: 2px;
     box-shadow: 0 1px 0 rgba(0,0,0,0.9);
+
+    overflow-y: scroll;
+    overflow-x: hidden;
 }
 
 .modal h2 {
@@ -1276,6 +1288,17 @@ th {
 .modal-spacing {
     height: 5px;
 }
+.modal-entry {
+    min-height: 1em;
+    padding: 0.25em;
+    &:hover {
+        background-color: #fafafa;
+    }
+}
+.modal-entry > button {
+    float: right;
+}
+
 // utility functions for less
 .rounded-corners (@radius: 5px) {
     -webkit-border-radius: @radius;

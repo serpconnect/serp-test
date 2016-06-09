@@ -7,6 +7,8 @@ $(document).ready(function() {
 
     // stores all the queued entries
     var dataset = [];
+    var selectedEntries = []
+    var loggedIn = false
 
     var currentClassification = {
         adapting: false,
@@ -173,13 +175,101 @@ $(document).ready(function() {
             // get all collections user is part of
             updateDataset([])
             Object.keys(collections).forEach(id => {
-                getCollection(id, entries => updateDataset(dataset.concat(entries)))
+                getCollection(id, entries => {
+                    for (var i = 0; i < entries.length; i++) {
+                        var exists = false
+                        for (var j = 0; j < dataset.length; j++) {
+                            if (dataset[j].id === entries[i].id) {
+                                exists = true
+                                break
+                            }
+                        }
+                        if (!exists)
+                            dataset.push(entries[i])
+                    }
+                    updateDataset(dataset)
+                })
             })
         } else {
             // use specific collection
             getCollection(value, entries => updateDataset(entries))
         }
     }
+
+    function exportEntries(){
+        if (selectedEntries.length === 0) {
+            return
+        }
+
+        function submitToCollection(cID) {
+            console.log('submitting to', cID)
+            var url = window.api.host + "/v1/collection/" + cID + "/addEntry"
+            selectedEntries.forEach(eID => {
+                window.api.ajax("POST", url, {
+                    entryId: eID
+                })
+                $('input[type=checkbox]').prop('checked', false)
+            })
+            selectedEntries = []
+            $modal.remove()
+        }
+
+        function newCollection() {
+            window.api.ajax("POST", window.api.host + "/v1/collection/", {
+                name: $('.large-input').val()
+            }).done(cID => {
+                submitToCollection(cID)
+            })
+        }
+
+        function existingCollection() {
+            submitToCollection($('#existing').val())
+        }
+
+        var $modal = el("div").addClass("modal")
+
+        $("body").on("click", function(evt) {
+           if (evt.target.className === "modal")
+                $(".modal").remove()
+        })
+
+        // remove modal view if escape key is pressed
+        // FIXME: This is registered globally, so they all accumulate
+        $(document).keydown(function(e) {
+            if (e.keyCode === 27) {
+                $(".modal").remove()
+            }
+        })
+
+        var $content = el("div")
+            .append(el("div").addClass("close-btn").click(() => $(".modal").remove()))
+            .append(el("div").addClass("modal-entry-type").text(`export entries (${selectedEntries.length})`))
+            .append(el("modal-entry-title").text("select collection"))
+            .append(el("div").addClass("modal-divider"))
+            .append(el("input").attr("type", "text").attr("placeholder", "new collection name").addClass('large-input'))
+            .append(el("button").addClass("edit-btn").text("create new").click(newCollection))
+            .append(el("div").addClass("modal-divider"))
+            .append(el("select").attr('id', 'existing').append(Object.keys(collections).map(
+                coll => el("option").val(collections[coll].id).text(collections[coll].name)
+            )))
+            .append(el("button").addClass("edit-btn").text("use existing").click(existingCollection))
+
+        $modal.append($content)
+        $("body").append($modal)
+    }
+
+
+    // Append a select element if logged in so user can export to new/existing
+    // collection/
+    window.user.self().done(self => {
+        $('tr').append(el('th').text("export"))
+
+        $('.view-area').append(
+            el('button').addClass('edit-btn').text('export').click(exportEntries)
+        )
+
+        loggedIn = true
+    })
 
     window.user.collections().done(collz => {
         var selector = document.getElementById('collection-dropdown')
@@ -190,7 +280,7 @@ $(document).ready(function() {
         mine.text = "show mine"
 
         selector.appendChild(mine)
-        if (!requested)
+        if (!requested || requested === 'all')
             selector.value = "all"
 
         collz.forEach(coll => {
@@ -205,11 +295,26 @@ $(document).ready(function() {
                 selector.value = coll.id
         })
     }).always(() => {
-        selectDataset(document.getElementById('collection-dropdown').value)
+        var selector = document.getElementById('collection-dropdown')
+        var requested = getCollectionFromPreviousPage()
+
+        if (requested && selector.value !== requested
+            && requested !== 'all' && requested !== 'mine') {
+            collections[requested] = { id: requested }
+            var opt = document.createElement('option')
+            opt.setAttribute('value', requested)
+            opt.text = '#' + requested
+            selector.appendChild(opt)
+
+            selector.value = requested
+        }
+
+        selectDataset(selector.value)
     })
 
     $("#collection-dropdown").change(function (evt) {
         selectDataset(this.value)
+        window.location.hash = this.value
     })
 
     // classification took place
@@ -393,6 +498,8 @@ $(document).ready(function() {
 
         $row.append(titleCell);
 
+        createCell("intervention", true);
+
         // effect
         createCell("solving");
         createCell("adapting");
@@ -410,6 +517,24 @@ $(document).ready(function() {
         createCell("information");
         createCell("sut");
         createCell("other");
+
+        if (loggedIn) {
+            var mark = el("input").attr("type", "checkbox").val(entry.id)
+
+            if (selectedEntries.indexOf(entry.id) >= 0)
+                mark.attr('checked', 'checked')
+
+            mark.on('change', function (evt) {
+                if (this.checked) {
+                    if (selectedEntries.indexOf(entry.id) === -1)
+                        selectedEntries.push(entry.id)
+                } else {
+                    selectedEntries.splice(selectedEntries.indexOf(entry.id), 1)
+                }
+            })
+
+            $row.append(mark)
+        }
 
         // insert the row into the specified position
         if (position) {
@@ -510,7 +635,11 @@ $(document).ready(function() {
                 var $facet = el("div").addClass("modal-header-title").text(facetName.capitalize());
                 classifiedItems[facetName] = $facet;
             }
-            var $subfacet = el("div").addClass("modal-sub-sub-item").text(shorthandMap[subfacet]);
+
+            var $subfacet = shorthandMap[subfacet]
+                ? el("div").addClass("modal-sub-sub-item").text(shorthandMap[subfacet])
+                : classifiedItems[facetName]
+
             var subfacetList = entry.taxonomy[subfacet.toUpperCase()];
             for (var i = 0; i < subfacetList.length; i++ ) {
                 var detailText = subfacetList[i]
@@ -520,7 +649,12 @@ $(document).ready(function() {
             classifiedItems[facetName].append($subfacet);
         }
 
-        var classifiedItems = {scope: null, effect: null, context: null};
+        var classifiedItems = {
+            scope: null,
+            effect: null,
+            context: null,
+            intervention: null
+        };
         for (var subfacet in classifications) {
             if (classifications[subfacet]) {
                 if (scope.indexOf(subfacet) >= 0) {
@@ -529,6 +663,8 @@ $(document).ready(function() {
                     handleFacetMatch("effect", subfacet);
                 } else if (context.indexOf(subfacet) >= 0) {
                     handleFacetMatch("context", subfacet);
+                } else if (subfacet === "intervention") {
+                    handleFacetMatch("intervention", subfacet)
                 } else {
                     console.log("this shouldn't ever happen; inside buildModalView() " + subfacet);
                 }

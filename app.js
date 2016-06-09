@@ -92,6 +92,16 @@ app.get("/explore", function(req, res) {
     res.render("explore");
 });
 
+app.get("/collection", function(req, res) {
+    res.render("collection");
+});
+app.get("/collection/entries", function(req, res) {
+    res.render("collection/entries");
+});
+app.get("/collection/users", function(req, res) {
+    res.render("collection/users");
+});
+
 app.get("*", function(req, res) {
     res.status(404).render("404");
 });

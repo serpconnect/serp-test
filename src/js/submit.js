@@ -397,7 +397,7 @@ $(document).ready(function() {
     }
 
     /* Wrapper for toggling buttons */
-    function disableButton(el, yesno) {
+    function disableButton(el) {
         el.prop("disabled", true).addClass("submit-disabled")
     }
     function enableButton(el) {
@@ -435,6 +435,7 @@ $(document).ready(function() {
                 queuedEntries.unshift(entry)
                 insertIntoTable(entry, 0)
                 flashErrorMessage(xhr.responseText)
+                enableButton($this)
             })
             .done(() => setTimeout(submit, 0))
         }

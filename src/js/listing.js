@@ -30,7 +30,8 @@
         "people": "Context",
         "information": "Context",
         "sut" : "Context",
-        "other": "Context"
+        "other": "Context",
+        "intervention": "Intervention"
     }
     var shorthandMap = {
         "adapting": "Adapt testing",
@@ -73,45 +74,56 @@
 					document.body.removeChild(close.parentNode.parentNode)
 				}, false)
 
+				var constructEntries = function (facet) {
+					var filtered = taxonomy[facet] || []
+
+					return filtered.map(sample => (
+						sample === "unspecified" ?
+							undefined : el('div.modal-sub-sub-item', [sample]))
+					)
+				}
+
+				var constructSubfacet = function (facet) {
+					if (shorthandMap[facet.toLowerCase()])
+						return el('div.modal-sub-sub-item', [
+							shorthandMap[facet.toLowerCase()],
+							constructEntries(facet)
+						])
+					else
+						return constructEntries(facet)
+				}
+
 				var constructFacet = function(name) {
-					var samples = Object.keys(taxonomy).filter(facet => reverseMap[facet.toLowerCase()] === name) || []
+					var samples = Object.keys(taxonomy).filter(
+						facet => reverseMap[facet.toLowerCase()] === name
+					) || []
+
 					if (!samples.length) return undefined
 
 					return el("div.modal-header-title", [
 						name,
-						samples.map(facet => {
-							var filtered = taxonomy[facet] || []
-							return el('div.modal-sub-sub-item', [
-								shorthandMap[facet.toLowerCase()],
-								filtered.map(sample => (sample === "unspecified"
-									? undefined : el('div.modal-sub-sub-item', [sample])))
-							])
-						})
+						samples.map(constructSubfacet)
 					])
-				}
-
-				var extraInfo = []
-				if (entry.type === "challenge") {
-					extraInfo.push(
-						el('div.modal-header-title', ['Description']),
-						el('div.modal-sub-item', [entry.description]))
-				} else {
-					extraInfo.push(
-						el('div.modal-header-title', ['References']),
-						el('div.modal-sub-item', [entry.reference]),
-						el('div.modal-header-title', ['DOI']),
-						el('div.modal-sub-item', [entry.doi]))
 				}
 
 				var modal = el('div.modal', [el('div', [
 					close, el("div.modal-entry-type", [entry.type]),
 					el("div.modal-header-title", [`entry #${entry.id}`]),
 					el("div.modal-divider"),
+					constructFacet("Intervention"),
 					constructFacet("Effect"),
 					constructFacet("Scope"),
 					constructFacet("Context"),
 					el("div.modal-divider"),
-					extraInfo
+					entry.type === "challenge" ? [
+						el('div.modal-header-title', ['Description']),
+						el('div.modal-sub-item', [entry.description])
+					] : [
+						el('div.modal-header-title', ['References']),
+						el('div.modal-sub-item', [entry.reference]),
+						el('div.modal-header-title', ['DOI']),
+						el('div.modal-sub-item', [entry.doi])
+					]
 				])])
 
 				document.body.appendChild(modal)

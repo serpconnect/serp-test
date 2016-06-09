@@ -6,6 +6,17 @@
 		return unusedTypes.indexOf(type) === -1
 	}
 
+	function unique_edges() {
+		var edges = {}
+		return function(edge) {
+			var id = `${edge.source}--${edge.type}--${edge.target}`
+			if (edges[id])
+				return false
+			edges[id] = true
+			return true
+		}
+	}
+
 	/* Connect an entry node with a facet node */
 	function process_edge(edge, conf) {
 		return {
@@ -40,6 +51,7 @@
 	function graph(data, conf) {
 		var edges = data.edges()
 			.filter(remove_unused)
+			.filter(unique_edges())
 			.map(e => process_edge(e, conf))
 
 		var rc = 0, cc = 0,

@@ -1,6 +1,6 @@
 $(function () {
 	window.api = {
-		host: "http://api.serpconnect.cs.lth.se",
+		host: "https://api.serpconnect.cs.lth.se",
 		ajax: function (method, url, data) {
 			return $.ajax(url, {
 				method: method,

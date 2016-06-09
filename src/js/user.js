@@ -58,5 +58,5 @@ $(function (){
 
 	// TODO: Get a somewhat better solution that doesn't flicker
 	window.api.ajax("GET", window.api.host + "/v1/account/login")
-	.done(() => $("#login").text("profile").attr("href", "profile.html"))
+	.done(() => $("#login").text("profile").attr("href", "/profile.html"))
 })

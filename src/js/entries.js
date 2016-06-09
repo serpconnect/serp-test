@@ -14,9 +14,9 @@ $(document).ready(function() {
         })
     }).fail(xhr => {
         if (xhr.status === 403)
-            window.location = "profile.html"
+            window.location = "/profile.html"
         else
-            window.location = "login.html"
+            window.location = "/login.html"
     })
 
     function commit(entryNumber, action) {
@@ -45,6 +45,8 @@ $(document).ready(function() {
 
         $row.append(titleCell);
         $row.append(el("td").addClass("alternating-group").text(entry.collection));
+
+        createCell("intervention");
 
         // effect
         createCell("solving");

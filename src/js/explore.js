@@ -63,28 +63,53 @@
 		}
 	}
 
+	function exploreSet(set) {
+		explore(set, $$('#graph'))
+	}
+
 	window.onload = function() {
 		$$('#explore').classList.add('current-view')
 		$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
 		$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
 
-		window.user.collections().done(collz => {
-			var selector = $$('#dataset')
-			collz.forEach(coll => {
-				var opt = document.createElement('option')
-				opt.setAttribute('value', coll.id)
-				opt.text = coll.name
-				selector.appendChild(opt)
+		var hasCollection = window.location.hash.length > 0
+		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
+		var found = false
+		window.user.collections()
+			.done(collz => {
+				var selector = $$('#dataset')
+
+				collz.forEach(coll => {
+					var opt = document.createElement('option')
+					opt.setAttribute('value', coll.id)
+					opt.text = coll.name
+					selector.appendChild(opt)
+					if (coll.id === Number(collectionId))
+						found = true
+				})
+
 			})
-		}).always(xhr => {
-			Dataset.loadDefault(set => explore(set, $$('#graph')))
-		})
+			.always(xhr => {
+				if (!found && hasCollection) {
+					var opt = document.createElement('option')
+					opt.setAttribute('value', collectionId)
+					opt.text = "#" + collectionId
+					$$('#dataset').appendChild(opt)
+				}
+
+				if (hasCollection) {
+					$$('#dataset').value = collectionId
+					Dataset.loadCollection(collectionId, exploreSet)
+				} else
+					Dataset.loadDefault(exploreSet)
+			})
 
 		$$('#dataset').addEventListener('change', function (evt) {
+	        window.location.hash = '#' + this.value
 			if (this.value === "main")
-				Dataset.loadDefault(set => explore(set, $$('#graph')))
+				Dataset.loadDefault(exploreSet)
 			else
-				Dataset.loadCollection(this.value, set => explore(set, $$('#graph')))
+				Dataset.loadCollection(this.value, exploreSet)
 		})
 
 		// Some browsers do not support the css calc(), or it doesn't work.

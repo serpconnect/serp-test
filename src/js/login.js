@@ -19,7 +19,7 @@ $(document).ready(function() {
     }
 
     window.api.ajax("GET", window.api.host + "/v1/account/login")
-    .done(ok => window.location = "profile.html")
+    .done(ok => window.location = "/profile.html")
 
     function resetPassword(email) {
         var req = window.user.resetPassword(email)

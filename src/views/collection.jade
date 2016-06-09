@@ -1,0 +1,19 @@
+extends base
+block view-specific-scripts
+    script(src="js/util/el.js")
+    script(src="js/collection.js")
+block content
+    div.profile-area-wrapper
+        a(href="/collection.html")#general.view-area-tab.active-tab general
+        a(href="/collection/users.html")#users.view-area-tab.unactive-tab users
+        a(href="/collection/entries.html")#entries.view-area-tab.unactive-tab entries
+        div.profile-container
+            div.profile-content
+                span#name.user-email name
+                span.user-email  #
+                span#id.user-email id
+                div.user-options
+                    div#logout leave
+
+                div.collections-main-title statistics
+                    p.collection-stats 0 entries, 5 users

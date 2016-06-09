@@ -15,7 +15,7 @@ $(function() {
         }
     }
 
-    // Easy { 'ok?', 'cancel' } type of poput
+    // Easy { 'ok?', 'cancel' } type of popup
     function confirmModal(title, desc, btnText, callb) {
         var confirm = el('button.btn', [btnText])
         var cancel = el('button.btn', ['cancel'])
@@ -162,7 +162,7 @@ $(function() {
     })
 
     function toLogin() {
-    	window.location = "login.html"
+    	window.location = "/login.html"
     }
 
     function invite(evt) {
@@ -213,19 +213,6 @@ $(function() {
         modal.querySelector('input').focus()
     }
 
-    function leave(evt) {
-        var parent = this.parentNode.parentNode.parentNode
-    	var id = parent.dataset.collectionId
-        var name = parent.querySelector('.collection-title').textContent
-
-        confirmModal(name,
-            "Leave collection and lose access to entries in it?",
-            "leave",
-            () => {
-    	       window.api.ajax("POST", window.api.host + "/v1/collection/" + id + "/leave")
-            })
-    }
-
     function submit(evt) {
         var id = this.parentNode.parentNode.parentNode.dataset.collectionId
         window.location = window.location.origin + "/submit.html?c=" + id
@@ -236,60 +223,45 @@ $(function() {
         window.location = window.location.origin + "/search.html#" + id
     }
 
-    function showMembers(evt) {
-        var parent = this.parentNode.parentNode.parentNode
-        var id = parent.dataset.collectionId
-        var name = parent.querySelector('.collection-title').textContent
-
-        window.api.ajax("GET", window.api.host + "/v1/collection/" + id + "/members")
-            .done(members => {
-                var ok = el('button.btn', ["ok"])
-
-                var modal = el('div.modal', [el('div', [
-                    el("div.modal-entry-type", [String(name)]),
-                    el("div.modal-header-title", ["members"]),
-                    el("div.modal-divider"),
-                    members.map(member => el("div.modal-sub-item", [member.email])),
-                    el("div.modal-divider"),
-                    ok
-                ])])
-
-                ok.addEventListener('click', (evt) => {
-                    document.body.removeChild(modal)
-                }, false)
-
-                document.body.appendChild(modal)
-            })
-            .fail(reason => window.alert(JSON.stringify(reason)))
+    function explore(evt) {
+        var id = this.parentNode.parentNode.parentNode.dataset.collectionId
+        window.location = window.location.origin + "/explore.html#" + id
     }
 
-    function appendCollection(coll) {
+    function manage(evt) {
+        var id = this.parentNode.parentNode.parentNode.dataset.collectionId
+        window.location = window.location.origin + "/collection.html#" + id
+    }
+
+    function appendCollection(self, coll) {
     	var addUser = el('div.collection-option', ['add user'])
         var addEntry = el('div.collection-option', ['add entry'])
-    	var members = el('div.collection-option', ['members'])
-    	var leaveCollection = el('div.collection-option', ['leave collection'])
-    	var showCollection = el('div.collection-option', ['show collection'])
+        var manageCollection = el('div.collection-option', ['manage'])
+        var showCollection = el('div.collection-option', ['search'])
+    	var exploreCollection = el('div.collection-option', ['explore'])
 
         addUser.addEventListener('click', invite, false)
-    	members.addEventListener('click', showMembers, false)
-    	addEntry.addEventListener('click', submit, false)
-    	leaveCollection.addEventListener('click', leave, false)
-    	showCollection.addEventListener('click', search, false)
+        addEntry.addEventListener('click', submit, false)
+    	manageCollection.addEventListener('click', manage, false)
+        showCollection.addEventListener('click', search, false)
+    	exploreCollection.addEventListener('click', explore, false)
 
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('div.collection-title', [coll.name]),
-    			el('div.collection-stats', [`${coll.members} users, ${coll.entries} entries`])
+    			el('div.collection-stats', [
+                    `${coll.members} user${coll.members === 1 ? '' : 's'}, ${coll.entries} entr${coll.entries === 1 ? 'y' : 'ies'}`
+                ])
     		]),
             el('div.collection-options', [
                 el('div.collection-row', [
-                    addUser,
-                    members
+                    showCollection,
+                    exploreCollection,
+                    manageCollection
                 ]),
                 el('div.collection-row', [
-                    addEntry,
-                    showCollection,
-                    leaveCollection
+                    addUser,
+                    addEntry
                 ])
             ])
 		])
@@ -306,7 +278,7 @@ $(function() {
                 .then(data => {
                     coll.members = data.members
                     coll.entries = data.entries
-                    appendCollection(coll)
+                    appendCollection(self, coll)
                 })
         })
     }

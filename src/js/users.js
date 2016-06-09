@@ -11,6 +11,10 @@ $(document).ready(function() {
     window.api.ajax("GET", window.api.host + "/v1/admin/users").done(users => {
         var parent = $('.users-content')
 
+        emailsFuzzy = new Fuse(users.map(user => user.email), {
+
+        })
+
         users.forEach(user => {
             var div = el('div').addClass('users-container')
             div.append(el('div').addClass('users-email').text(user.email))
@@ -28,11 +32,12 @@ $(document).ready(function() {
             parent.append(div)
 
             emails.push(user.email)
-            emailMappings[user.email] = div
+            emailMappings[emails.length - 1] = div
         })
 
-        // construct the fuzzy set from the emails
-        emailsFuzzy = FuzzySet(emails);
+        emailsFuzzy = new Fuse(emails, {
+            threshold: 0.5
+        });
 
         $(".users-select").on("focus", function() {
             previousValue = $(this).val();
@@ -51,10 +56,10 @@ $(document).ready(function() {
         var searchString = $(this).val();
         if (searchString) {
             $(".users-email").parent().hide();
-            var results = emailsFuzzy.get(searchString, []);
+            var results = emailsFuzzy.search(searchString);
             if (results.length) {
                 for (var i = 0; i < results.length; ++i) {
-                    var matchingEmail = results[i][1];
+                    var matchingEmail = results[i];
                     emailMappings[matchingEmail].show();
                 }
             }
@@ -99,7 +104,6 @@ $(document).ready(function() {
 
         var $cancelBtn = el("button").addClass("edit-btn").text("cancel");
         $cancelBtn.on("click", function(evt) {
-            console.log("cancel this user change!!!!!!!!");
             $(".modal").remove();
             $dropdown.val(oldLevel);
         });
