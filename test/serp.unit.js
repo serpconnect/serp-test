@@ -48,7 +48,8 @@ var ref = {
 	context: {
 		people: undefined,
 		information: undefined,
-		sut: undefined
+		sut: undefined,
+		other: undefined
 	}
 }
 
@@ -118,11 +119,13 @@ function flatten (win) {
 		context: {
 			people: undefined,
 			information: undefined,
-			sut: undefined
+			sut: undefined,
+			other: undefined
 		},
 		people: undefined,
 		information: undefined,
-		sut: undefined
+		sut: undefined,
+		other: undefined
 	}
 	var match = new win.SERP().flatten()
 	var ok = assert(match, serp,
