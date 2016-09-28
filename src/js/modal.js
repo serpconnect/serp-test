@@ -22,16 +22,28 @@
 		closeBtn.addEventListener('click', destroy, false)
 	}
 
-	modal.prototype.ok = function (name, cb) {
-		var btn = el('div.button', [name])
+    modal.prototype.toggleButtonState = function() {
+        var btns = this.div.querySelectorAll('.btn')
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.toggle('submit-disabled')
+            if (btns[i].getAttribute('disabled'))
+                btns[i].removeAttribute('disabled')
+            else
+                btns[i].setAttribute('disabled', true)
+        }
+    }
+
+	modal.prototype.confirm = function (name, cb) {
+		var btn = el('button.btn', [name])
 
 		this.div.firstChild.appendChild(btn)
 
 		btn.addEventListener('click', cb, false)
 		return this
 	}
+
 	modal.prototype.cancel = function (name, cb) {
-		var btn = el('div.button', [name])
+		var btn = el('button.btn', [name])
 
 		this.div.firstChild.appendChild(btn)
 
@@ -42,6 +54,7 @@
 
 		return this
 	}
+
 	modal.prototype.show = function () {
 		document.body.appendChild(this.div)
 		return this
