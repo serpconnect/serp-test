@@ -464,7 +464,7 @@ $(document).ready(function() {
                         document.body.removeChild(create.div)
 
                         // Use internal qs to avoid messing up user
-                        querystring.c = ok
+                        querystring.c = ok.id
                         updateCollectionList()
                     })
                     .fail(xhr => {
