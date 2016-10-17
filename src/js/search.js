@@ -264,7 +264,7 @@ $(document).ready(function() {
     window.user.self().done(self => {
         $('tr').append(el('th').text("export"))
 
-        $('.view-area').append(
+        $('.table-view-area').append(
             el('button').addClass('edit-btn').text('export').click(exportEntries)
         )
 
