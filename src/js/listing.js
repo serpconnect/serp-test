@@ -48,85 +48,66 @@
         "other": "Other"
     }
 
-    document.addEventListener('keydown', function (evt) {
-    	if (evt.keyCode === 27) {
-    		var modal = document.querySelector('.modal')
-    		if (!modal) return
-    		document.body.removeChild(modal)
-    	}
-    })
 
-    window.addEventListener('load', () => {
-	    document.body.addEventListener('click', function (evt) {
-	    	if (evt.target.className === "modal")
-	    		document.body.removeChild(evt.target)
-	    }, false)
-	})
+	function constructEntities(taxonomy, facet) {
+		var filtered = taxonomy[facet] || []
+
+		return filtered.map(sample => (
+			sample === "unspecified" ?
+				undefined : el('div.modal-sub-sub-item', [sample]))
+		)
+	}
+
+	function constructSubfacet(taxonomy, facet) {
+		if (shorthandMap[facet.toLowerCase()])
+			return el('div.modal-sub-sub-item', [
+				shorthandMap[facet.toLowerCase()],
+				constructEntities(taxonomy, facet)
+			])
+		else
+			return constructEntities(taxonomy, facet)
+	}
+
+	function constructFacet(taxonomy, name) {
+		var samples = Object.keys(taxonomy).filter(
+			facet => reverseMap[facet.toLowerCase()] === name
+		) || []
+
+		if (!samples.length) return undefined
+
+		return el("div.modal-header-title", [
+			name,
+			samples.map(facet => constructSubfacet(taxonomy, facet))
+		])
+	}
 
 	function inspectEntry(evt) {
 		var id = this.dataset.entryId
 
 		window.api.ajax("GET", window.api.host + "/v1/entry/" + id).done(entry => {
 			window.api.ajax("GET", window.api.host + "/v1/entry/" + id + "/taxonomy").done(taxonomy => {
-				var close = el('div.close-btn')
-
-				close.addEventListener('click', function (evt) {
-					document.body.removeChild(close.parentNode.parentNode)
-				}, false)
-
-				var constructEntries = function (facet) {
-					var filtered = taxonomy[facet] || []
-
-					return filtered.map(sample => (
-						sample === "unspecified" ?
-							undefined : el('div.modal-sub-sub-item', [sample]))
-					)
-				}
-
-				var constructSubfacet = function (facet) {
-					if (shorthandMap[facet.toLowerCase()])
-						return el('div.modal-sub-sub-item', [
-							shorthandMap[facet.toLowerCase()],
-							constructEntries(facet)
-						])
-					else
-						return constructEntries(facet)
-				}
-
-				var constructFacet = function(name) {
-					var samples = Object.keys(taxonomy).filter(
-						facet => reverseMap[facet.toLowerCase()] === name
-					) || []
-
-					if (!samples.length) return undefined
-
-					return el("div.modal-header-title", [
-						name,
-						samples.map(constructSubfacet)
-					])
-				}
-
-				var modal = el('div.modal', [el('div', [
-					close, el("div.modal-entry-type", [entry.type]),
-					el("div.modal-header-title", [`entry #${entry.id}`]),
-					el("div.modal-divider"),
-					constructFacet("Intervention"),
-					constructFacet("Effect"),
-					constructFacet("Scope"),
-					constructFacet("Context"),
-					el("div.modal-divider"),
-					entry.type === "challenge" ? [
-						el('div.modal-header-title', ['Description']),
-						el('div.modal-sub-item', [entry.description])
-					] : [
-						el('div.modal-header-title', ['References']),
-						el('div.modal-sub-item', [entry.reference]),
-						el('div.modal-header-title', ['DOI']),
-						el('div.modal-sub-item', [entry.doi])
+				var inspectModal = new window.modal(
+					[
+						el('div.modal-entry-type', [entry.type]),
+						el('div.modal-header-title', [`entry #${entry.id}`])
+					], [
+						constructFacet(taxonomy, "Intervention"),
+						constructFacet(taxonomy, "Effect"),
+						constructFacet(taxonomy, "Scope"),
+						constructFacet(taxonomy, "Context"),
+						el("div.modal-divider"),
+						entry.type === "challenge" ? [
+							el('div.modal-header-title', ['Description']),
+							el('div.modal-sub-item', [entry.description])
+						] : [
+							el('div.modal-header-title', ['References']),
+							el('div.modal-sub-item', [entry.reference]),
+							el('div.modal-header-title', ['DOI']),
+							el('div.modal-sub-item', [entry.doi])
+						]
 					]
-				])])
-
-				document.body.appendChild(modal)
+				)
+				inspectModal.show()
 			})
 		})
 	}
