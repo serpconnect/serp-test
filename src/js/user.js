@@ -56,6 +56,12 @@ $(function (){
 		})
 	}
 
+	user.resetpassword = function(passw){
+		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password-confirm", {
+			passw: passw
+		})
+	}
+
 	// TODO: Get a somewhat better solution that doesn't flicker
 	window.api.ajax("GET", window.api.host + "/v1/account/login")
 	.done(() => $("#login").text("profile").attr("href", "/profile.html"))

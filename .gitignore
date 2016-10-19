@@ -1,2 +1,4 @@
 *.*~
 *.swp
+bin/
+node_modules/

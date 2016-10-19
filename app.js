@@ -102,6 +102,10 @@ app.get("/collection/users", function(req, res) {
     res.render("collection/users");
 });
 
+app.get("/resetpassword", function(req, res) {
+    res.render("resetpassword");
+});
+
 app.get("*", function(req, res) {
     res.status(404).render("404");
 });
@@ -112,4 +116,3 @@ server.listen(app.get("port"), function(){
 });
 
 var log = console.log;
-
