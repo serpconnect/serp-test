@@ -1,4 +1,4 @@
-# serpent
+# SERP connect website
 
  - install [nodejs](https://nodejs.org/en/) (compatible with 6.1.0)
  - `make` in this dir
