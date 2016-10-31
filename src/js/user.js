@@ -65,13 +65,12 @@ $(function (){
     	window.location = "/"
     }
 
-    // TODO: Make "log in or sign up" link disappear on login page
- //    if (window.location.pathname=="/login") {
- //   		$("#logout").hide();//.style.display = 'hidden';
-	// }
-
 	// TODO: Get a somewhat better solution that doesn't flicker
 	//#logout is the id for both login/signup + logout
 	window.api.ajax("GET", window.api.host + "/v1/account/login")
 	.done(() => $("#logout").text("logout").attr("href", "/"))
+
+	window.api.ajax("GET", window.api.host + "/v1/account/login")
+	.done(() => $("#profile").text("profile").attr("href", "/profile.html"))
+
 })
