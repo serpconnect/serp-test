@@ -56,7 +56,22 @@ $(function (){
 		})
 	}
 
+
+	// Logout user when logout button is clicked
+    $("#logout").click(evt => window.user.logout().done(toHome))
+
+    //logout to home page
+    function toHome() {
+    	window.location = "/"
+    }
+
+    // TODO: Make "log in or sign up" link disappear on login page
+ //    if (window.location.pathname=="/login") {
+ //   		$("#logout").hide();//.style.display = 'hidden';
+	// }
+
 	// TODO: Get a somewhat better solution that doesn't flicker
+	//#logout is the id for both login/signup + logout
 	window.api.ajax("GET", window.api.host + "/v1/account/login")
-	.done(() => $("#login").text("profile").attr("href", "/profile.html"))
+	.done(() => $("#logout").text("logout").attr("href", "/"))
 })

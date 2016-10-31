@@ -26,13 +26,16 @@ html
                     img(src="/img/serp-logo-lofi.png")#logo
                 div#header
                     div.views
-                        a(href="/login.html")#login.view-title login
+                        <!--a(href="/login.html")#login.view-title login-->
                         a(href="/")#home.view-title home
                         a(href="/search.html")#search.view-title search
                         a(href="/explore.html")#explore.view-title explore
                         a(href="/submit.html")#submit.view-title submit
                         a(href="/about.html")#about.view-title about
                 div.header-separator
+                block loginlogout
+                    div
+                        a(href="/login.html")#logout.login-logout log in or sign up
                 div.content
                     block content
                     div.footer
