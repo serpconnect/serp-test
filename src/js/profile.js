@@ -41,10 +41,11 @@ $(function() {
     }
 
     // We are on profile page (#login is a sham)
-    $("#login").addClass("current-view")
+   // $("#login").addClass("current-view")
 
     // Logout user when logout button was clicked
-    $("#logout").click(evt => window.user.logout().done(toLogin))
+    //old logout button
+    //$("#logout").click(evt => window.user.logout().done(toLogin))
 
     // Let user confirm account deletion before commencing orbital strike
     $("#delete").click(evt => {
