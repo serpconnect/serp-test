@@ -124,6 +124,7 @@ $(document).ready(function() {
         graph.nodes.forEach(node => {
             node.serpClassification = {}
             node.entryType = node.type
+            node.date = new Date(node.date);
             delete node.type
             if (collectionName)
                 node.collection = collectionName
