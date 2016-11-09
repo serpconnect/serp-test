@@ -15,19 +15,23 @@ $(document).ready(function() {
 
     // set the little white line underneath the submit title
     $("#submit").addClass("current-view");
-    window.user.collections().done(collz => {
-        var def = 0
-        $("#collection")
-            .empty()
-            .append(collz.map(coll => {
-                if (coll.name === "default")
-                    def = coll.id
-                return el("option")
-                    .text(coll.name)
-                    .attr("value", coll.id)
-                })
-            ).val(querystring.c || def)
-    })
+
+    function updateCollectionList() {
+        return window.user.collections().done(collz => {
+            var def = 0
+            $("#collection")
+                .empty()
+                .append(collz.map(coll => {
+                    if (coll.name === "default")
+                        def = coll.id
+                    return jqEl("option")
+                        .text(coll.name)
+                        .attr("value", coll.id)
+                    })
+                ).val(querystring.c || def)
+        })
+    }
+    updateCollectionList()
 
     // load the requested entry if we have one
     var currentEntry = undefined
@@ -187,7 +191,7 @@ $(document).ready(function() {
         var classification = entry["serpClassification"];
 
         // let's build the table row for this entry
-        var $row = el("tr");
+        var $row = jqEl("tr");
         var maxLength = 35;
 
         // choose as the row descriptor either the description (for challenges)
@@ -201,7 +205,7 @@ $(document).ready(function() {
             entryTitle.substring(0, maxLength - 3) + "..." :
             entryTitle.substring(0, maxLength);
         var entryNumber = position ? position : queuedEntries.length - 1;
-        var titleCell = el("td").text(entryTitle || entry["description"] || entry["reference"]);
+        var titleCell = jqEl("td").text(entryTitle || entry["description"] || entry["reference"]);
         titleCell.data("entry-number", entryNumber);
 
         $row.append(titleCell);
@@ -246,7 +250,7 @@ $(document).ready(function() {
         });
 
         function createCell(subfacet, alternating) {
-            var $td = el("td");
+            var $td = jqEl("td");
             classification[subfacet] ? $td.addClass("filled-cell") : "";
             alternating ? $td.addClass("alternating-group") : "";
             $row.append($td);
@@ -258,7 +262,7 @@ $(document).ready(function() {
             // if dropdown is disabled => use input for new collection name
             var collection = $("#new-collection").val();
             // add the new collection name to the dropdown
-            var $option = el("option").attr("value", collection).text(collection);
+            var $option = jqEl("option").attr("value", collection).text(collection);
             $("#collection").append($option);
         } else {
             // otherwise, use selected option in dropdown
@@ -293,11 +297,11 @@ $(document).ready(function() {
     function complain(entry) {
         if (entry.entryType == "research") {
             if (entry.reference.length < 1) {
-                $("#reference-area").append(el("div").addClass("complaint").text("please supply information"));
+                $("#reference-area").append(jqEl("div").addClass("complaint").text("please supply information"));
             }
         } else if (entry.entryType == "challenge") {
             if (entry.description.length < 1) {
-                $("#description-area").append(el("div").addClass("complaint").text("please supply information"));
+                $("#description-area").append(jqEl("div").addClass("complaint").text("please supply information"));
             }
         }
     }
@@ -444,16 +448,32 @@ $(document).ready(function() {
     });
 
     $("#submit-create-collection").on("click", function(evt) {
-        var $this = $(this);
-        if ($this.text() === "create a new collection") {
-            $("#collection").attr("disabled", "true");
-            $this.text("nevermind, I don't want to create a new collection");
-        } else {
-            $("#collection").removeAttr("disabled");
-            $this.text("create a new collection");
-        }
-        $("#new-collection").slideToggle();
-        $("#collection").toggleClass("disabled-dropdown");
+        var create = new window.modal(
+		    el('div.modal-header-title', ['create collection']),
+            el('input.submit-input-box', {placeholder: 'my best entries'}, [])
+        );
+        
+        create.
+		    confirm('create', (evt) => {
+			    create.toggleButtonState()	
+
+                window.api.ajax("POST", window.api.host + "/v1/collection/", {
+                    name: create.div.querySelector('input').value
+                })
+                    .done(ok => {
+                        document.body.removeChild(create.div)
+
+                        // Use internal qs to avoid messing up user
+                        querystring.c = ok.id
+                        updateCollectionList()
+                    })
+                    .fail(xhr => {
+                        window.alert(xhr.responseText)
+                        modal.toggleButtonState()
+                    })
+            }).
+            cancel('cancel').
+            show();
     });
 
     $("#submit-btn").on("click", function(evt) {
@@ -543,7 +563,7 @@ $(document).ready(function() {
         if (thisEl.is(":checked")) {
             // create the additional info text snippet
             var descriptor = getAdditionalDataDescriptor(name);
-            var $infoText = el("div").addClass("additional-data").text("click to add " + descriptor + " +");
+            var $infoText = jqEl("div").addClass("additional-data").text("click to add " + descriptor + " +");
 
             // create an event handler for when the text snippet is clicked on
             $infoText.on("click", function(evt) {
@@ -623,8 +643,8 @@ $(document).ready(function() {
 
     // factory function to create and insert the input element for supplying the additional data
     function createAdditionalInput(text, element) {
-        var $inputParent = el("div").addClass("additional-data-wrapper").addClass("ui-widget");
-        var $input = el("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
+        var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
+        var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
         $input.addClass("facet-additional-input");
 
         // we need an id for jquery ui's autocomplete to work
@@ -633,7 +653,7 @@ $(document).ready(function() {
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
 
-        var $removeBtn = el("div");
+        var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
             $(this).parent().remove();
@@ -648,10 +668,10 @@ $(document).ready(function() {
         return $input;
     }
 
+    // more efficient way of creating elements than purely using jquery;
+    // basically an alias for document.createElement - returns a jquery element
+    function jqEl(elementType) {
+        return $(document.createElement(elementType));
+    }
 });
 
-// more efficient way of creating elements than purely using jquery;
-// basically an alias for document.createElement - returns a jquery element
-function el(elementType) {
-    return $(document.createElement(elementType));
-}
