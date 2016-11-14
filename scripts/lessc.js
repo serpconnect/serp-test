@@ -19,7 +19,9 @@ LessStream.prototype._transform = function(data, enc, cb) {
 }
 
 LessStream.prototype._flush = function (cb) {
-	less.render(this._code.toString('utf-8'), (err, out) => {
+	less.render(this._code.toString('utf-8'), {
+		include: "src/less/"
+	}, (err, out) => {
 		if (err) {
 			console.error(err)
 			cb()
@@ -40,14 +42,18 @@ require('util').inherits(LessStream, Transform)
  *		- relative path: only render that path/file
  */
 function render(file, src, dst) {
-	if (file.ext !== '.less')
+	//used to compile all.less to all.css	
+	if (file.name !== 'all.less') {
 		return
+	}
 
 	ioutil.log('lessc', src, '-->', dst)
 
 	/* xyz.less --> xyz.css */
+
 	dst = path.join(path.dirname(dst), path.basename(file.name, file.ext))
-		+ '.css'
+		+ '.css'	
 	stream.read(src).pipe(LessStream()).pipe(stream.write(dst))
 }
-module.exports = ioutil.process('./src/less', './bin/css', render)
+
+module.exports = ioutil.process('./src/less/', './bin/css', render)
