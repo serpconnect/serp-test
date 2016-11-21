@@ -56,7 +56,6 @@ $(function (){
 		})
 	}
 
-
 	// Logout user when logout button is clicked
     $("#logout").click(evt => window.user.logout().done(toHome))
 
@@ -64,6 +63,12 @@ $(function (){
     function toHome() {
     	window.location = "/"
     }
+
+	user.resetpassword = function(passw){
+		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password-confirm", {
+			passw: passw
+		})
+	}
 
 	// TODO: Get a somewhat better solution that doesn't flicker
 	//#logout is the id for both login/signup + logout
