@@ -49,12 +49,18 @@ $(function() {
 
     // Let user confirm account deletion before commencing orbital strike
     $("#delete").click(evt => {
-        confirmModal("delete account",
-            "This will delete your accont, but your collections and entries will remain. Are you sure?",
-            "delete",
-            () => {
-                window.user.delete().done(toLogin)
-            })
+		var warning = "This will delete your accont, but your collections and entries will remain. Are you sure?"
+
+		var deleteModal = new window.modal(
+			[el('div.modal-header-title', ['delete account'])],
+			[el('div.modal-sub-item', [warning])]
+		)
+
+		deleteModal.confirm("delete", () => {
+			deleteModal.toggleButtonState()
+			window.user.delete().done(toLogin)
+		})
+		deleteModal.cancel("cancel").show()
     })
 
     // Create a new collection
@@ -74,15 +80,20 @@ $(function() {
             create, cancel
         ])])
 
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        create.addEventListener('click', (evt) => {
-            toggleButtonState()
+		var createCollection = new window.modal(
+			el('div.modal-header-title', ["create new collection"]),
+            el('input#name.submit-input-box', {
+                placeholder: 'collection name',
+                type: 'text',
+                name: 'name'
+            })
+		)
+		createCollection.cancel("cancel")
+		createCollection.confirm('create', (evt) => {
+			createCollection.toggleButtonState()	
 
             window.api.ajax("POST", window.api.host + "/v1/collection/", {
-                name: $('#name').val(),
+                name: document.getElementById('name').value
             })
                 .done(ok => {
                     document.body.removeChild(modal)
@@ -94,12 +105,11 @@ $(function() {
                     old.parentNode.insertBefore(el('div.complaint', [
                         xhr.responseText
                     ]), old.nextSibling)
-                    toggleButtonState()
+                    modal.toggleButtonState()
                 })
-        }, false)
-
-        document.body.appendChild(modal)
-        modal.querySelector('input').focus()
+		})
+		createCollection.show()
+        document.getElementById('name').focus()
     })
 
     // Change password dialog, must submit current and new passwords to api
