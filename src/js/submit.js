@@ -33,6 +33,10 @@ $(document).ready(function() {
     }
     updateCollectionList()
 
+    //booleans to limit number of error messages
+    var researchComplaint=false;
+    var challengeComplaint=false;
+
     // load the requested entry if we have one
     var currentEntry = undefined
     if (querystring.e) {
@@ -92,10 +96,13 @@ $(document).ready(function() {
     var currentType = $(".circular-checkbox input:checked").val();
     if (currentType === "research") {
         $("#description-area").hide();
+
     } else if (currentType === "challenge") {
         $("#reference-area").hide();
         $("#doi-area").hide();
     }
+
+
 
     function submitEntry(entry) {
         var id = entry.id
@@ -296,18 +303,23 @@ $(document).ready(function() {
 
     function complain(entry) {
         if (entry.entryType == "research") {
-            if (entry.reference.length < 1) {
+            if (researchComplaint==false && entry.reference.length < 1) {
+                researchComplaint=true;
                 $("#reference-area").append(jqEl("div").addClass("complaint").text("please supply information"));
             }
         } else if (entry.entryType == "challenge") {
-            if (entry.description.length < 1) {
+            if (challengeComplaint==false && entry.description.length < 1) {
+                challengeComplaint=true;
                 $("#description-area").append(jqEl("div").addClass("complaint").text("please supply information"));
             }
         }
     }
 
+    //removes all error messages
     function clearComplaints() {
         $(".complaint").remove();
+        researchComplaint=false;
+        challengeComplaint=false;
     }
 
     function fillAccordingToEntry(entry, noswap) {
@@ -549,7 +561,7 @@ $(document).ready(function() {
         $("#reference-area").slideToggle();
         $("#description-area").slideToggle();
         $("#doi-area").slideToggle();
-
+        clearComplaints();
         updateCheckboxText();
     });
 
