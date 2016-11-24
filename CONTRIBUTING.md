@@ -7,15 +7,11 @@ connect is licensed under the BSD 2-clause license.
 
 Documentation
 -------------
-All documentation is avaiable at [readthedocs](https://serp-connect.rtfd.io) for developer guides.
+<<there is no documentation>> ? (yes there is)
 
 Depedencies
 -----------
-Connect itself is mainly built on [pippo](https://pippo.ro) and [jcypher](https://github.com/Wolfgang-Schuetzelhofer/jcypher/wiki) but requires some tools to actually compile/test:
-
- - maven 3.X.Y ([website](https://maven.apache.org/index.html))
- - java 1.8
- - neo4j 2.X.Y ([website](https://neo4j.com/download/other-releases/))
+<<detail dependencies>>
 
 Versioning strategy
 -------------------
