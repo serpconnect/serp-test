@@ -218,8 +218,9 @@ $(document).ready(function() {
         function newCollection() {
             window.api.ajax("POST", window.api.host + "/v1/collection/", {
                 name: $('.large-input').val()
-            }).done(cID => {
-                submitToCollection(cID)
+            }).done(res => {
+                var collectionId = res.id
+                submitToCollection(collectionId)
             })
         }
 
