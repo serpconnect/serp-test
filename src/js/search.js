@@ -197,13 +197,23 @@ $(document).ready(function() {
         }
     }
 
+    function selectAllEntries(){
+    //  var length = $('.table-view-area tr').length-1;
+      for (i = 0; i < dataset.length; i++) {
+          var entry = dataset[i];
+          if (selectedEntries.indexOf(entry.id) === -1){
+                selectedEntries.push(entry.id);
+          }
+      }
+      $('.table-view-area tr').find('input[type=checkbox]').prop('checked', true);
+    }
+
     function exportEntries(){
         if (selectedEntries.length === 0) {
             return
         }
 
         function submitToCollection(cID) {
-            console.log('submitting to', cID)
             var url = window.api.host + "/v1/collection/" + cID + "/addEntry"
             selectedEntries.forEach(eID => {
                 window.api.ajax("POST", url, {
@@ -218,8 +228,9 @@ $(document).ready(function() {
         function newCollection() {
             window.api.ajax("POST", window.api.host + "/v1/collection/", {
                 name: $('.large-input').val()
-            }).done(cID => {
-                submitToCollection(cID)
+            }).done(res => {
+                var collectionId = res.id;
+                submitToCollection(collectionId)
             })
         }
 
@@ -265,9 +276,10 @@ $(document).ready(function() {
     window.user.self().done(self => {
         $('tr').append(el('th').text("export"))
 
-        $('.table-view-area').append(
-            el('button').addClass('edit-btn').text('export').click(exportEntries)
-        )
+        $('.table-view-area')
+        .append(el('button').addClass('edit-btn').text('export').click(exportEntries))
+        .append(el('button').addClass('edit-btn').text('select all').click(selectAllEntries))
+
 
         loggedIn = true
     })
