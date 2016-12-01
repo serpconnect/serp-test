@@ -1,0 +1,82 @@
+
+.confirm{
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 10000;
+
+    -webkit-transition: opacity 200ms ease-in;
+    -moz-transition: opacity 200ms ease-in;
+    transition: opacity 200ms ease-in;
+
+    // hide initially
+    opacity: 1;
+    pointer-events: auto;
+}
+
+// confirmation content
+.confirm > div {
+    min-width: 20%;
+    max-width: 25%;
+
+    max-height: 6%;
+
+    background: #fff;
+    position: relative;
+    margin: 15% auto;
+
+    padding: 30px;
+    padding-bottom: 85px;
+    background-color: @bg-color;
+    border-radius: 2px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.9);
+
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+.confirm h2 {
+    font-size: 36px;
+    padding: 0 0 20px;
+}
+
+.confirm-entry-type {
+    font-style: italic;
+    color: @light-gray;
+}
+.confirm-entry-title {
+    font-size: 14pt;
+}
+.confirm-divider {
+    border-bottom: 1px solid @super-light-gray;
+    width: 100%;
+    margin-top: 15px;
+    margin-bottom: 15px;
+}
+.confirm-sub-item {
+    margin-left: 20px;
+    font-size: 11pt;
+}
+.confirm-sub-sub-item {
+    margin-left: 25px;
+    font-size: 10pt;
+}
+
+.confirm-spacing {
+    height: 5px;
+}
+.confirm-entry {
+    min-height: 1em;
+    padding: 0.25em;
+    &:hover {
+        background-color: #fafafa;
+    }
+}
+.confirm-entry > button {
+    float: right;
+}
+
