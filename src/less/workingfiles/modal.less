@@ -119,3 +119,47 @@
 .modal-entry > button {
     float: right;
 }
+
+.modal-input-box {
+    font-family: "Open Sans";
+    font-size: 12pt;
+    margin-right: 30%;
+    margin-bottom: 5px;
+    padding: 5px;
+    width: 350px;
+    .box-shadow(0px; 0px; 1px; @light-gray);
+
+    background-color: white;
+    color: @middling-gray;
+
+    border: none;
+
+    -webkit-transition: background-color 0.2s ease;
+    -moz-transition: background-color 0.2s ease;
+    -o-transition: background-color 0.2s ease;
+    -ms-transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease;
+    &:hover {
+        background-color: #ffffff - #101010;
+        -webkit-transition: background-color 0.2s ease;
+        -moz-transition: background-color 0.2s ease;
+        -o-transition: background-color 0.2s ease;
+        -ms-transition: background-color 0.2s ease;
+        transition: background-color 0.2s ease;
+    }
+}
+
+.modal-optional {
+    margin-left: 5px;
+    color: @light-gray;
+    font-style: italic;
+    display: inline-block;
+}
+.modal-complaint {
+    .modal-optional();
+    padding-top:1.2rem;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    vertical-align: top;
+    color: @red;
+}

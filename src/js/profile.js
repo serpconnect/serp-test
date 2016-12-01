@@ -11,217 +11,134 @@ $(function() {
                 btns[i].removeAttribute('disabled')
             else
                 btns[i].setAttribute('disabled', true)
-
         }
     }
+    
+      var deleteAccountModal = {  
+            desc: "Delete Account",
+            message: "This will delete your account, but your collections and entries will remain. Are you sure?",
+            //message above input boxes
+            input: [],
+            //[textbox names, types, placeholder] //else put '[]'
+            //automatically takes input[0] as first paramater for method passed in.. etc
+            btnText: "Delete"
+            //text on button
+        };
 
-    // Easy { 'ok?', 'cancel' } type of popup
-    function confirmModal(title, desc, btnText, callb) {
-        var confirm = el('button.btn', [btnText])
-        var cancel = el('button.btn', ['cancel'])
-
-        var modal = el('div.modal', [el('div', [
-            el("div.modal-header-title", [title]),
-            el("div.modal-divider"),
-            el("div.modal-sub-item", [desc]),
-            el("div.modal-divider"),
-            confirm, cancel
-        ])])
-
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        confirm.addEventListener('click', (evt) => {
-            toggleButtonState()
-            callb()
+        // Let user confirm account deletion before commencing orbital strike
+        $("#delete").click(evt => { 
+            window.modals.optionsModal(deleteAccountModal,function () {
+                //A secondary box pops up to imply importance of the decision
+                var message= "Delete Account - Are You Sure"
+                window.modals.confirmPopUp(message, function () {
+                
+                    window.user.delete()
+                    .done(ok => {
+                        toLogin()
+                    })
+                    .fail(xhr => {
+                        $('.modal-complaint').remove()
+                        var error = document.getElementById('cancel')
+                        error.parentNode.insertBefore(el('div.modal-complaint', [
+                        xhr.responseText ]), error.nextSibling)
+                        this.modal.window.profile.toggleButtonState()
+                    })
+                })
+            })
         })
 
-        document.body.appendChild(modal)
-    }
 
-    // We are on profile page (#login is a sham)
-   // $("#login").addClass("current-view")
-
-    // Logout user when logout button was clicked
-    //old logout button
-    //$("#logout").click(evt => window.user.logout().done(toLogin))
-
-    // Let user confirm account deletion before commencing orbital strike
-    $("#delete").click(evt => {
-		var warning = "This will delete your accont, but your collections and entries will remain. Are you sure?"
-
-		var deleteModal = new window.modal(
-			[el('div.modal-header-title', ['delete account'])],
-			[el('div.modal-sub-item', [warning])]
-		)
-
-		deleteModal.confirm("delete", () => {
-			deleteModal.toggleButtonState()
-			window.user.delete().done(toLogin)
-		})
-		deleteModal.cancel("cancel").show()
-    })
-
-    // Create a new collection
-    $("#create").click(evt => {
-        var create = el('button.btn', ['create'])
-        var cancel = el('button.btn', ['cancel'])
-
-        var modal = el('div.modal', [el('div', [
-            el("div.modal-header-title", ["create new collection"]),
-            el("div.modal-divider"),
-            el('input#name.submit-input-box', {
-                placeholder: 'collection name',
-                type: 'text',
-                name: 'name'
-            }),
-            el("div.modal-divider"),
-            create, cancel
-        ])])
-
-		var createCollection = new window.modal(
-			el('div.modal-header-title', ["create new collection"]),
-            el('input#name.submit-input-box', {
-                placeholder: 'collection name',
-                type: 'text',
-                name: 'name'
-            })
-		)
-		createCollection.cancel("cancel")
-		createCollection.confirm('create', (evt) => {
-			createCollection.toggleButtonState()	
-
-            window.api.ajax("POST", window.api.host + "/v1/collection/", {
-                name: document.getElementById('name').value
-            })
+    var newCollectionModal = {  
+            desc: "create new collection",
+            message: "",
+            //message above input boxes
+            input: [['input0','text','collection name']],
+            //[textbox names, types, placeholder] //else put '[]'
+            //automatically takes input[0] as first paramater for method passed in.. etc
+            btnText: "Create"
+            //text on button
+        };
+        // Create a new collection
+        $("#create").click(evt => {
+            window.modals.optionsModal(newCollectionModal,function (name) {
+                window.user.createCollection(name)
                 .done(ok => {
-                    document.body.removeChild(modal)
+                    document.body.removeChild(this.modal)
                     window.user.self().done(update)
                 })
                 .fail(xhr => {
-                    $('.complaint').remove()
-                    var old = document.getElementById('name')
-                    old.parentNode.insertBefore(el('div.complaint', [
-                        xhr.responseText
-                    ]), old.nextSibling)
-                    modal.toggleButtonState()
+                    $('.modal-complaint').remove()
+                    var error = document.getElementById('cancel')
+                    error.parentNode.insertBefore(el('div.modal-complaint', [
+                    xhr.responseText ]), error.nextSibling)
+                    this.modal.toggleButtonState()
                 })
-		})
-		createCollection.show()
-        document.getElementById('name').focus()
-    })
+            })
+        })
 
     // Change password dialog, must submit current and new passwords to api
+      var newPasswordModal = {  
+            desc: "Change your password",
+            message: "",
+            //message above input boxes
+            input: [['input0','password','old password'],['input1','password','new password']],
+            //[textbox names, types, placeholder] //else put '[]'
+            //automatically takes input[0] as first paramater for method passed in.. etc
+            btnText: "Save"
+            //text on button
+        };
+
     $("#change").click(evt => {
-        var save = el('button.btn', ['save'])
-        var cancel = el('button.btn', ['cancel'])
-
-        var modal = el('div.modal', [el('div', [
-            el("div.modal-header-title", ["change password"]),
-            el("div.modal-divider"),
-            el('input#old.submit-input-box', {
-                placeholder: 'old',
-                type: 'password',
-                name: 'old',
-            }),
-            el('input#new.submit-input-box', {
-                placeholder: 'new',
-                type: 'password',
-                name: 'new'
-            }),
-            el("div.modal-divider"),
-            save, cancel
-        ])])
-
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        save.addEventListener('click', (evt) => {
-            toggleButtonState()
-
-            window.api.ajax("POST", window.api.host + "/v1/account/change-password", {
-                old: $('#old').val(),
-                new: $('#new').val()
-            }).done(ok => document.body.removeChild(modal))
-            .fail(xhr => {
-                $('.complaint').remove()
-                var old = document.getElementById('old')
-                old.parentNode.insertBefore(el('div.complaint', [xhr.responseText]), old.nextSibling)
-                toggleButtonState()
+            window.modals.optionsModal(newPasswordModal,function (oldpw, newpw) {
+                //modal.js.typeOfModal(relativeObject, parameters for relevant method)
+                window.user.changePassword(oldpw, newpw)
+                // method called from user.js
+                .done(ok => {
+                    document.body.removeChild(this.modal)
+                    window.user.self().done(update)
+                })
+                .fail(xhr => {
+                    $('.modal-complaint').remove()
+                    var error = document.getElementById('cancel')
+                    error.parentNode.insertBefore(el('div.modal-complaint', [
+                        xhr.responseText ]), error.nextSibling)
+                    this.modal.toggleButtonState()
+                })
             })
-        }, false)
-
-        document.body.appendChild(modal)
-        modal.querySelector('input').focus()
-    })
-
-    document.addEventListener('keydown', function (evt) {
-        if (evt.keyCode === 27) {
-            var modal = document.querySelector('.modal')
-            if (!modal) return
-            document.body.removeChild(modal)
-        }
-    })
-
-    window.addEventListener('load', () => {
-        document.body.addEventListener('click', function (evt) {
-            if (evt.target.className === "modal")
-                document.body.removeChild(evt.target)
-        }, false)
-    })
+        })
 
     function toLogin() {
     	window.location = "/login.html"
     }
 
-    function invite(evt) {
+function invite(evt) {
         var parent = this.parentNode.parentNode.parentNode
         var id = parent.dataset.collectionId
         var name = parent.querySelector('.collection-title').textContent
 
-        var send = el('button.btn', ['send'])
-        var cancel = el('button.btn', ['cancel'])
-        var modal = el('div.modal', [el('div', [
-            el("div.modal-entry-type", [String(name)]),
-            el("div.modal-header-title", ["send invite"]),
-            el("div.modal-divider"),
-            el('input#email.submit-input-box', {
-                placeholder : 'user email',
-                type : 'email',
-                name : 'email'
-            }),
-            el("div.modal-divider"),
-            send, cancel
-        ])])
 
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        send.addEventListener('click', (evt) => {
-            toggleButtonState()
-
-            window.api.ajax("POST", window.api.host + "/v1/collection/" + id + "/invite", {
-                email: $('#email').val(),
-            })
+        var inviteUserModal = {  
+        desc: "Invite User to " + name,
+        message: "",
+        input: [['input0','email','user email']],
+        btnText: "Send"
+        //text on button
+    }   
+         window.modals.optionsModal(inviteUserModal,function (email) {
+                //modal.js.typeOfModal(relativeObject, parameters for relevant method)
+                window.user.collectionInvite(email,id)
                 .done(ok => {
-                    document.body.removeChild(modal)
+                    document.body.removeChild(this.modal)
                     window.user.self().done(update)
                 })
                 .fail(xhr => {
-                    $('.complaint').remove()
-                    var div = document.getElementById('name')
-                    div.parentNode.insertBefore(el('div.complaint', [
-                        xhr.responseText
-                    ]), div.nextSibling)
-                    toggleButtonState()
+                    $('.modal-complaint').remove()
+                    var error = document.getElementById('cancel')
+                    error.parentNode.insertBefore(el('div.modal-complaint', [
+                    xhr.responseText ]), error.nextSibling)
+                    this.modal.toggleButtonState()
                 })
-        }, false)
-
-        document.body.appendChild(modal)
-        modal.querySelector('input').focus()
+        })
     }
 
     function submit(evt) {
