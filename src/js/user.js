@@ -24,6 +24,18 @@ $(function (){
 		return window.api.ajax("GET", window.api.host + "/v1/account/collections")
 	}
 
+	user.createCollection = function (name) {
+		 return window.api.ajax("POST", window.api.host + "/v1/collection/", {
+		 	name: name
+		 });
+	}
+
+	user.collectionInvite = function(email,id){
+		return window.api.ajax("POST", window.api.host + "/v1/collection/" + id + "/invite", {
+                email: email
+            });
+	}	
+
 	user.invites = function () {
 		return window.api.ajax("GET", window.api.host + "/v1/account/invites")
 	}
