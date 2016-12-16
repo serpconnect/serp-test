@@ -135,9 +135,20 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	/* Create a modal that displays contents of an entry & an edit button */
-	modals.entryModal = function(entry, taxonomy) {
+	/** 
+	 * Create a modal that displays contents of an entry & an edit button.
+	 * 
+	 * @param {object} entry 	straight from the API
+	 * @param {object} taxonomy also straight from the API
+	 * @param {object} options 	configure some stuff
+	 * 
+	 * options.button = [buttonEl, ..., buttonEl]
+	 *     - button elements are added after the edit button
+	 * */
+	modals.entryModal = function(entry, taxonomy, options) {
        	var editBtn = el('button#editBtn.edit-btn', ['edit'])
+		var extraButtons = (options && options.button) || []
+
 		var modal = el('div#modal.modal', [
 			el('div',[
 				el('div.modal-entry-type', [entry.type]),
@@ -160,12 +171,12 @@ $(document).ready(function() {
 					el('div.modal-sub-item', [entry.doi]),
 					el("div.modal-divider")
 				],
-				editBtn
+				editBtn, 
+				extraButtons
 			])	
 		])
 
 		editBtn.addEventListener("click", function(evt) {
-            $(".modal").remove();
             window.location = `/submit.html?e=${entry.id}`;
         });
 	    

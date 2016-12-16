@@ -25,67 +25,65 @@ $(document).ready(function() {
         }).done(ok => {
             $(".modal").remove();
             removeEntry(entryNumber);
-        }).fail(reason => window.alert(reason))
+        }).fail(xhr => window.alert(xhr.responseText))
     }
 
     function insertIntoTable(entry, position) {
         var classification = entry["serpClassification"];
 
         // let's build the table row for this entry
-        var $row = el("tr");
         var maxLength = 35;
-        // choose as the row descriptor either the project name, description
-        // (for challenges), or the reference (for research results)
         var entryTitle = entry["description"] || entry["reference"];
         entryTitle = entryTitle.length > maxLength ?
             entryTitle.substring(0, maxLength - 3) + "..." :
             entryTitle.substring(0, maxLength);
-        var titleCell = el("td").text(entryTitle);
-        titleCell.data("entry-number", entries.indexOf(entry));
 
-        $row.append(titleCell);
-        $row.append(el("td").addClass("alternating-group").text(entry.collection));
-
-        createCell("intervention");
-
-        // effect
-        createCell("solving");
-        createCell("adapting");
-        createCell("assessing");
-        createCell("improving");
-
-        // scope
-        createCell("planning", true);
-        createCell("design", true);
-        createCell("execution", true);
-        createCell("analysis", true);
-
-        // context
-        createCell("people");
-        createCell("information");
-        createCell("sut");
-        createCell("other");
-
-        var $acceptBtn = el("td").append(el("button").addClass("entries-accept-btn").text("accept"));
-        $acceptBtn.on("click", function(evt) {
-            var entryNumber = $($(this).closest("tr").children()[0]).data("entryNumber");
+        var acceptBtn = el("button.entries-accept-btn", ["accept"]);
+        acceptBtn.addEventListener("click", function(evt) {
+            
+            var entryNumber = this.parentNode.children[0].dataset.entryNumber
             commit(entryNumber, 'accept')
-        });
-        $row.append($acceptBtn);
+        }, false);
 
-        var $rejectBtn = el("td").append(el("button").addClass("entries-reject-btn").text("reject"));
-        $rejectBtn.on("click", function(evt) {
-            var entryNumber = $($(this).closest("tr").children()[0]).data("entryNumber");
+        var rejectBtn = el("button.entries-reject-btn", ["reject"]);
+        rejectBtn.addEventListener("click", function(evt) {
+            var entryNumber = this.parentNode.children[0].dataset.entryNumber
             commit(entryNumber, 'reject')
-        });
-        $row.append($rejectBtn);
+        }, false);
+
+        var row = el('tr', [
+            el('td', {'data-entry-number': entries.indexOf(entry) }, [entryTitle]),
+
+            createCell("intervention", true),
+
+            // effect
+            createCell("solving"),
+            createCell("adapting"),
+            createCell("assessing"),
+            createCell("improving"),
+
+            // scope
+            createCell("planning", true),
+            createCell("design", true),
+            createCell("execution", true),
+            createCell("analysis", true),
+
+            // context
+            createCell("people"),
+            createCell("information"),
+            createCell("sut"),
+            createCell("other"),
+
+            acceptBtn,
+            rejectBtn
+        ])
 
         // insert the row into the specified position
         if (position) {
-            $("#entries-table tbody tr:nth-child(" + position + ")").replaceWith($row);
+            $("#entries-table tbody tr:nth-child(" + position + ")").replaceWith(row);
         } else {
             // append row to the end of the table
-            $("#table-body").append($row);
+            document.getElementById("table-body").appendChild(row);
         }
 
         // refresh on-click listeners for all entries in first column;
@@ -97,10 +95,7 @@ $(document).ready(function() {
         });
 
         function createCell(subfacet, alternating) {
-            var $td = el("td");
-            classification[subfacet.toUpperCase()] ? $td.addClass("filled-cell") : "";
-            alternating ? $td.addClass("alternating-group") : "";
-            $row.append($td);
+            return el(`td${classification[subfacet.toUpperCase()] ? '.filled-cell' : ''}${alternating ? '.alternating-group' : ''}`)
         }
     }
 
@@ -110,152 +105,39 @@ $(document).ready(function() {
     }
 
     function buildModalView(entry, entryNumber) {
-        var $modal = el("div").addClass("modal");
-        var $close = el("div").addClass("close-btn");
-        $close.on("click", function(evt) {
-            // remove the modal view
-            $(".modal").remove();
-        });
-
-        // remove if the user clicks outside the inspection view
-        $("body").on("click", function(evt) {
-           if (evt.target.className === "modal") {
-                $(".modal").remove();
-            }
-        });
-
-        // remove modal view if escape key is pressed
-        $(document).keydown(function(e) {
-            if (e.keyCode === 27) {
-                $(".modal").remove();
-            }
-        });
-
-        var $content = el("div");
-        // add close btn
-        $content.append($close);
-
-        // start filling the view with entry data
-        $content.append(el("div").addClass("modal-entry-type").text(entry["type"]));
-        $content.append(el("div").addClass("modal-entry-title").text(entry["contact"]));
-        $content.append(el("div").addClass("modal-entry-title").text(entry["collection"]));
-        $content.append(el("div").addClass("modal-divider"));
-
-        // populate the classification data
-        var classifications = entry["serpClassification"];
-        var scope = ["planning", "design", "execution", "analysis"];
-        var effect = ["solving", "adapting", "assessing", "improving"];
-        var context = ["sut", "information", "people", "other"];
-
-        // map the data name shorthands to their actual names
-        var shorthandMap = {
-                "adapting": "Adapt testing",
-                "solving": "Solve new problem",
-                "assessing": "Assess testing",
-                "improving": "Improve testing",
-                "planning": "Test planning",
-                "design": "Test design",
-                "execution": "Test execution",
-                "analysis": "Test analysis",
-                "people": "People related constraints",
-                "information": "Availability of information",
-                "sut" : "Properties of SUT",
-                "other": "Other"
-        }
-
-        function handleFacetMatch(facetName, subfacet) {
-            if (!classifiedItems[facetName]) {
-                var $facet = el("div").addClass("modal-header-title").text(facetName.capitalize());
-                classifiedItems[facetName] = $facet;
-            }
-            var $subfacet = el("div").addClass("modal-sub-sub-item").text(shorthandMap[subfacet.toLowerCase()]);
-            var subfacetList = classifications[subfacet];
-            for (var i = 0; i < subfacetList.length; i++ ) {
-                var detailText = subfacetList[i]
-                var $subfacetDetail = el("div").addClass("modal-sub-sub-item").text(detailText);
-                $subfacet.append($subfacetDetail)
-            }
-            classifiedItems[facetName].append($subfacet);
-        }
-
-        var classifiedItems = {scope: null, effect: null, context: null};
-        for (var subfacet in classifications) {
-            if (classifications[subfacet]) {
-                if (scope.indexOf(subfacet.toLowerCase()) >= 0) {
-                    handleFacetMatch("scope", subfacet);
-                } else if (effect.indexOf(subfacet.toLowerCase()) >= 0) {
-                    handleFacetMatch("effect", subfacet);
-                } else if (context.indexOf(subfacet.toLowerCase()) >= 0) {
-                    handleFacetMatch("context", subfacet);
-                } else {
-                    // oh but wait, it does for intervention facet, otherwise true
-                    console.log("this shouldn't ever happen; inside buildModalView()");
-                }
-            }
-        }
-
-        for (var facet in classifiedItems) {
-            var $facet = classifiedItems[facet];
-            if ($facet) {
-                $content.append($facet);
-            }
-        }
-        $content.append(el("div").addClass("modal-divider"));
-
-        // deal with entry type specific information
-        if (entry["entryType"] === "challenge") {
-            $content.append(el("div").addClass("modal-header-title").text("Description"));
-            $content.append(el("div").addClass("modal-sub-item").text(entry["description"]));
-        } else {
-            $content.append(el("div").addClass("modal-header-title").text("Reference"));
-            $content.append(el("div").addClass("modal-sub-item").text(entry["reference"]));
-            $content.append(el("div").addClass("modal-header-title").text("DOI"));
-            $content.append(el("div").addClass("modal-sub-item").text(entry["doi"]));
-        }
-
-        var $acceptBtn = el("button").addClass("edit-btn").text("accept");
-        $acceptBtn.on("click", function(evt) {
+        var acceptBtn = el("button.btn", ["accept"]);
+        acceptBtn.addEventListener("click", function(evt) {
             commit(entryNumber, 'accept')
-        });
+        }, false);
 
-        $content.append($acceptBtn);
-        var $rejectBtn = el("button").addClass("edit-btn").text("reject");
-        $rejectBtn.on("click", function(evt) {
+        var rejectBtn = el("button.btn", ["reject"]);
+        rejectBtn.addEventListener("click", function(evt) {
             commit(entryNumber, 'reject')
-        });
-        $content.append($rejectBtn);
+        }, false);
 
-        var $editBtn = el("button").addClass("edit-btn").text("edit");
-        $editBtn.on("click", function(evt) {
-            window.location = "submit.html?e=" + entry.id
-        });
-        $content.append($editBtn);
+        var modalOpt = {
+            button: [acceptBtn, rejectBtn]
+        }
 
-        $modal.append($content);
-        $("body").append($modal);
-
+        modals.entryModal(entry, entry.serpClassification, modalOpt)
     }
 
     function removeEntry(entryNumber) {
+        var num = Number(entryNumber)
+        
+        console.log('remove', num, $("#table-body tr:nth-child(" + (num + 1) + ")"))
         // remove the entry from the table
-        $("#table-body tr:nth-child(" + (entryNumber + 1) + ")").remove();
+        $("#table-body tr:nth-child(" + (num + 1) + ")").remove();
+
         // remove from our internal array
-        entries.splice(entryNumber, 1);
+        entries.splice(num, 1);
+
         // update data attribute of the table cells after the removed entry
-        var $cells = $("td:first-child");
-        $cells.splice(0, entryNumber);
-        $cells.each(function(cell) {
-            var $cell = $($cells[cell]);
-            var oldEntryNumber = $cell.data("entryNumber");
-            $cell.data("entryNumber", oldEntryNumber - 1);
-        });
-        // clear the input boxes
+        var cells = document.querySelectorAll("td:first-child")
+        for (var i = num; i < cells.length; i++) {
+            console.log(i, cells[i], cells[i].dataset)
+            cells[i].dataset.entryNumber = cells[i].dataset.entryNumber - 1
+        }
     }
 
-
-// more efficient way of creating elements than purely using jquery;
-// basically an alias for document.createElement - returns a jquery element
-function el(elementType) {
-    return $(document.createElement(elementType));
-}
 });
