@@ -1,29 +1,27 @@
 $(function() {
-    // Load logged in user and proceed to setup otherwise redirect to login
-    window.user.self().done(setup).fail(toLogin)
     //stores friends emails of the logged in user
     var friends = [];
-    // Switch all buttons between disabled and enabled state
-    function toggleButtonState() {
-        var btns = document.querySelectorAll('.btn')
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.toggle('submit-disabled')
-            if (btns[i].getAttribute('disabled'))
-                btns[i].removeAttribute('disabled')
-            else
-                btns[i].setAttribute('disabled', true)
-        }
+
+    /* Add red text after the cancel button on a modal */
+    function complain(text) {
+        $('.modal-complaint').remove()
+        var modal = document.querySelector(".modal") || document.querySelector(".confirm")
+        var errors = modal.querySelectorAll('button')
+        var error = errors[errors.length - 1]
+        var complaint = el('div.modal-complaint', [text])
+        error.parentNode.insertBefore(complaint, error.nextSibling)
+    }
+
+    function cleanup(modal) {
+        modals.clearAll()
+        api.v1.account.self().done(update)
     }
     
     var deleteAccountModal = {  
         desc: "Delete Account",
         message: "This will delete your account, but your collections and entries will remain. Are you sure?",
-        //message above input boxes
         input: [],
-        //[textbox names, types, placeholder] //else put '[]'
-        //automatically takes input[0] as first paramater for method passed in.. etc
         btnText: "Delete"
-        //text on button
     };
 
     // Let user confirm account deletion before commencing orbital strike
@@ -32,16 +30,9 @@ $(function() {
             //A secondary box pops up to imply importance of the decision
             var message = "Delete Account - Are You Sure"
             window.modals.confirmPopUp(message, function ok() {
-                window.user.delete().done(toLogin)
-                .fail(xhr => {
-                    $('.modal-complaint').remove()
-                    var error = document.getElementById('cancel')
-                    error.parentNode.insertBefore(el('div.modal-complaint', [
-                        xhr.responseText
-                    ]), error.nextSibling)
-
-                    this.modal.toggleButtonState()
-                })
+                window.user.delete()
+                    .done(ok => window.location = "/")
+                    .fail(xhr => complain(xhr.responseText))
             })
         })
     })
@@ -49,28 +40,16 @@ $(function() {
     var newCollectionModal = {  
         desc: "create new collection",
         message: "",
-        //message above input boxes
         input: [['input0','text','collection name']],
-        //[textbox names, types, placeholder] //else put '[]'
-        //automatically takes input[0] as first paramater for method passed in.. etc
         btnText: "Create"
-        //text on button
     };
     
     // Create a new collection
     $("#create").click(evt => {
         window.modals.optionsModal(newCollectionModal, function (name) {
-            window.user.createCollection(name)
-                .done(ok => {
-                    // document.body.removeChild(this.modal)
-                    // window.user.self().done(update)
-                })
-                .fail(xhr => {
-                    $('.modal-complaint').remove()
-                    // var error = document.getElementById('cancel')
-                    // error.parentNode.insertBefore(el('div.modal-complaint', [
-                    // xhr.responseText ]), error.nextSibling)
-                })
+            api.v1.collection.create(name)
+                .done(ok => cleanup(this.modal))
+                .fail(xhr => complain(xhr.responseText))
         })
     })
 
@@ -78,50 +57,17 @@ $(function() {
     var newPasswordModal = {  
         desc: "Change your password",
         message: "",
-        //message above input boxes
         input: [['input0','password','old password'], ['input1','password','new password']],
-        //[textbox names, types, placeholder] //else put '[]'
-        //automatically takes input[0] as first paramater for method passed in.. etc
         btnText: "Save"
-        //text on button
     };
 
     $("#change").click(evt => {
         window.modals.optionsModal(newPasswordModal,function (oldpw, newpw) {
-            window.user.changePassword(oldpw, newpw)
-            .done(ok => {
-                document.body.removeChild(this.modal)
-                window.user.self().done(update)
-            })
-            .fail(xhr => {
-                $('.modal-complaint').remove()
-                var error = document.getElementById('cancel')
-                error.parentNode.insertBefore(el('div.modal-complaint', [
-                    xhr.responseText
-                ]), error.nextSibling)
-                this.modal.toggleButtonState()
-            })
+            api.v1.account.changePassword(oldpw, newpw)
+                .done(ok => cleanup(this.modal))
+                .fail(xhr => complain(xhr.responseText))
         })
     })
-
-    document.addEventListener('keydown', function (evt) {
-        if (evt.keyCode === 27) {
-            var modal = document.querySelector('.modal')
-            if (!modal) return
-            document.body.removeChild(modal)
-        }
-    })
-
-    window.addEventListener('load', () => {
-        document.body.addEventListener('click', function (evt) {
-            if (evt.target.className === "modal")
-                document.body.removeChild(evt.target)
-        }, false)
-    })
-
-    function toLogin() {
-    	window.location = "/login.html"
-    }
 
     function invite(evt) {
         var parent = this.parentNode.parentNode.parentNode
@@ -133,25 +79,15 @@ $(function() {
             message: "",
             input: [['input0','email','user email']],
             btnText: "Invite"
-            //text on button
         }   
 
         window.modals.optionsModal(inviteUserModal,function (email) {
-            window.user.collectionInvite(email,id)
-            .done(ok => {
-                document.body.removeChild(this.modal)
-                window.user.self().done(update)
-            })
-            .fail(xhr => {
-                $('.modal-complaint').remove()
-                var error = document.getElementById('cancel')
-                error.parentNode.insertBefore(el('div.modal-complaint', [
-                xhr.responseText ]), error.nextSibling)
-                this.modal.toggleButtonState()
-            })
+            api.v1.collection.invite(email, id)
+                .done(ok => cleanup(this.modal))
+                .fail(xhr => complain(xhr.responseText))
         })
 
-        document.getElementById("input0").autocomplete({
+        $("#input0").autocomplete({
             source: friends,
             appendTo: "#modal"
         });
@@ -177,54 +113,57 @@ $(function() {
         window.location = window.location.origin + "/collection.html#" + id
     }
 
+    function collectionOption(name, callback) {
+        var option = el('div.collection-option', [name])
+        option.addEventListener('click', callback, false)
+        return option
+    }
+
+
+    /* X member(s), Y entr(y|ies) */
+    function formatStats(members, entries) {
+        var mems = members === 1 ? "member" : "members"
+        var entr = entries === 1 ? "entry" : "entries"
+
+        return `${members} ${mems}, ${entries} ${entr}`
+    }
+
     function appendCollection(self, coll) {
-    	var addUser = el('div.collection-option', ['add user'])
-        var addEntry = el('div.collection-option', ['add entry'])
-        var manageCollection = el('div.collection-option', ['manage'])
-        var showCollection = el('div.collection-option', ['search'])
-    	var exploreCollection = el('div.collection-option', ['explore'])
-
-        addUser.addEventListener('click', invite, false)
-        addEntry.addEventListener('click', submit, false)
-    	manageCollection.addEventListener('click', manage, false)
-        showCollection.addEventListener('click', search, false)
-    	exploreCollection.addEventListener('click', explore, false)
-
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
-    			el('div.collection-title', [coll.name]),
-    			el('div.collection-stats', [
-                    `${coll.members} user${coll.members === 1 ? '' : 's'}, ${coll.entries} entr${coll.entries === 1 ? 'y' : 'ies'}`
-                ])
+    			el('a.collection-title', {href: "/collection.html#" + coll.id}, [coll.name]),
+    			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
             el('div.collection-options', [
                 el('div.collection-row', [
-                    showCollection,
-                    exploreCollection,
-                    manageCollection
+                    collectionOption('search', search),
+                    collectionOption('explore', explore),
+                    collectionOption('manage', manage)
                 ]),
                 el('div.collection-row', [
-                    addUser,
-                    addEntry
+                    collectionOption('add user', invite),
+                    collectionOption('add entry', submit)
                 ])
             ])
 		])
+        
 		obj.dataset.collectionId = coll.id
-
-    	$(".profile-content").append(obj)
+    	document.querySelector(".profile-content").appendChild(obj)
     }
 
     function update(self) {
-        $(".user-email").text(self.email + " (" + self.trust + ")")
+        $(".user-email").text(`${self.email} (${self.trust})`)
         $("div.collection-wrapper").remove()
+
         self.collections.forEach(coll => {
-            window.api.ajax("GET", window.api.host + `/v1/collection/${coll.id}/stats`)
-                .then(data => {
-                    coll.members = data.members
-                    coll.entries = data.entries
-                    appendCollection(self, coll)
-                })
+            api.v1.collection.stats(coll.id).then(data => {
+                coll.members = data.members
+                coll.entries = data.entries
+                appendCollection(self, coll)
+            })
         })
+
+        api.v1.account.friends(self.email).done(data => friends = data)
     }
 
     function setup(self) {
@@ -237,8 +176,10 @@ $(function() {
             div.insertBefore(a, div.lastChild)
             div.insertBefore(b, div.lastChild)
         }
-
-        window.user.friends(self.email).done(data => friends = data)
     }
 
+    // Load logged in user and proceed to setup otherwise redirect to login
+    api.v1.account.self()
+        .done(setup)
+        .fail(xhr => window.location = "/login.html")
 })
