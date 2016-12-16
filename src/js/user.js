@@ -36,6 +36,14 @@ $(function (){
             });
 	}	
 
+	user.putIntoCollection = function(url,eID){
+		return window.api.ajax("POST", url, {entryId: eID })
+	}
+
+	user.collectionUrl = function(cID){
+		return window.api.host + "/v1/collection/" + cID + "/addEntry"
+	}
+
 	user.invites = function () {
 		return window.api.ajax("GET", window.api.host + "/v1/account/invites")
 	}
@@ -68,13 +76,6 @@ $(function (){
 		})
 	}
 
-	user.resetpassword = function(passw){
-		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password-confirm", {
-			passw: passw
-		})
-	}
-
-
 	// Logout user when logout button is clicked
     $("#logout").click(evt => window.user.logout().done(toHome))
 
@@ -82,6 +83,19 @@ $(function (){
     function toHome() {
     	window.location = "/"
     }
+
+	user.resetpassword = function(passw){
+		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password-confirm", {
+			passw: passw
+		})
+	}
+
+	user.getEntry = function (id){
+		return window.api.ajax("GET", window.api.host + "/v1/entry/" + id)
+	}		
+	user.getTaxonomyEntry = function (id){
+		return window.api.ajax("GET", window.api.host + "/v1/entry/" + id + "/taxonomy")
+	}
 
 	// TODO: Get a somewhat better solution that doesn't flicker
 	//#logout is the id for both login/signup + logout

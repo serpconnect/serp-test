@@ -10,8 +10,7 @@
         position: relative;
         //not working for mozilla yet
     }
-//sets autocomplete pop out windows size and allows to scroll
-.ui-menu{
+.ui-menu{ 
      max-height: 190px; /*196px;*/
      overflow: scroll;
      width: -moz-min-content;/* Firefox */
@@ -268,8 +267,10 @@ td {
 #queue-table {
     font-size: 10pt;
     border-collapse: collapse;
-    cellpadding: 0;
-    cellspacing: 0;
+    
+    & th {
+        border: none;
+    }
 }
 
 .queue-area {
@@ -289,23 +290,18 @@ td {
     width: 22%;
 }
 
-td:first-child {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
 
-    border-right: none;
-    border-bottom: none;
+td {
+    &:first-child {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
 
-    cursor: pointer;
+        border-right: none;
+        border-bottom: none;
 
-    -webkit-transition: color 0.3s ease;
-    -moz-transition: color 0.3s ease;
-    -o-transition: color 0.3s ease;
-    -ms-transition: color 0.3s ease;
-    transition: color 0.3s ease;
-    &:hover {
-        color: @light-gray;
+        cursor: pointer;
+
         -webkit-transition: color 0.3s ease;
         -moz-transition: color 0.3s ease;
         -o-transition: color 0.3s ease;
@@ -320,6 +316,20 @@ td:first-child {
 
 td:last-child, th:last-child {
     border-right: none;
+
+        &:hover {
+            color: @light-gray;
+            -webkit-transition: color 0.3s ease;
+            -moz-transition: color 0.3s ease;
+            -o-transition: color 0.3s ease;
+            -ms-transition: color 0.3s ease;
+            transition: color 0.3s ease;
+        }
+    }
+
+    &:last-child, :first-child {
+        border-right: none;
+    }
 }
 
 .filled-cell {
