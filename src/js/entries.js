@@ -4,9 +4,9 @@ $(document).ready(function() {
 
     // stores all the queued entries
     var entries = [];
-    window.api.ajax("GET", window.api.host + "/v1/admin/pending").done(pending => {
+    api.v1.admin.pending().done(pending => {
         pending.forEach(entry => {
-            window.api.ajax("GET", window.api.host + "/v1/entry/" + entry.id + "/taxonomy").done(taxonomy => {
+            api.v1.entry.taxonomy(entry.id).done(taxonomy => {
                 entries.push(entry)
                 entry.serpClassification = taxonomy
                 insertIntoTable(entry)
@@ -19,17 +19,28 @@ $(document).ready(function() {
             window.location = "/login.html"
     })
 
+    function acceptEntry(entryNumber) {
+        return api.v1.admin.acceptEntry(entries[entryNumber].id)
+    }
+    function rejectEntry(entryNumber) {
+        return api.v1.admin.rejectEntry(entries[entryNumber].id)
+    }
+
     function commit(entryNumber, action) {
-        window.api.ajax("POST", `${window.api.host}/v1/admin/${action}-entry`, {
-            entry : entries[entryNumber].id
-        }).done(ok => {
-            $(".modal").remove();
-            removeEntry(entryNumber);
-        }).fail(xhr => window.alert(xhr.responseText))
+        action(entryNumber)
+            .done(ok => {
+                modals.clearAll()
+                removeEntry(entryNumber);
+            })
+            .fail(xhr => window.alert(xhr.responseText))
+    }
+    
+    function createCell(subfacet, alternating) {
+        return el(`td${classification[subfacet.toUpperCase()] ? '.filled-cell' : ''}${alternating ? '.alternating-group' : ''}`)
     }
 
     function insertIntoTable(entry, position) {
-        var classification = entry["serpClassification"];
+        var classification = entry.serpClassification
 
         // let's build the table row for this entry
         var maxLength = 35;
@@ -40,15 +51,14 @@ $(document).ready(function() {
 
         var acceptBtn = el("button.entries-accept-btn", ["accept"]);
         acceptBtn.addEventListener("click", function(evt) {
-            
             var entryNumber = this.parentNode.children[0].dataset.entryNumber
-            commit(entryNumber, 'accept')
+            commit(entryNumber, acceptEntry)
         }, false);
 
         var rejectBtn = el("button.entries-reject-btn", ["reject"]);
         rejectBtn.addEventListener("click", function(evt) {
             var entryNumber = this.parentNode.children[0].dataset.entryNumber
-            commit(entryNumber, 'reject')
+            commit(entryNumber, rejectEntry)
         }, false);
 
         var row = el('tr', [
@@ -78,25 +88,13 @@ $(document).ready(function() {
             rejectBtn
         ])
 
-        // insert the row into the specified position
-        if (position) {
-            $("#entries-table tbody tr:nth-child(" + position + ")").replaceWith(row);
-        } else {
-            // append row to the end of the table
-            document.getElementById("table-body").appendChild(row);
-        }
+        document.getElementById("table-body").appendChild(row);
 
-        // refresh on-click listeners for all entries in first column;
-        // (a click initiates an entry inspection)
-        $("td:first-child").unbind("click").on("click", function(evt) {
+        $("td:first-child").on("click", function(evt) {
             var entryNumber = $(this).data("entry-number");
             var entry = entries[entryNumber];
             buildModalView(entry, entryNumber);
         });
-
-        function createCell(subfacet, alternating) {
-            return el(`td${classification[subfacet.toUpperCase()] ? '.filled-cell' : ''}${alternating ? '.alternating-group' : ''}`)
-        }
     }
 
     // convenience function for capitalizing sentences
@@ -107,12 +105,12 @@ $(document).ready(function() {
     function buildModalView(entry, entryNumber) {
         var acceptBtn = el("button.btn", ["accept"]);
         acceptBtn.addEventListener("click", function(evt) {
-            commit(entryNumber, 'accept')
+            commit(entryNumber, acceptEntry)
         }, false);
 
         var rejectBtn = el("button.btn", ["reject"]);
         rejectBtn.addEventListener("click", function(evt) {
-            commit(entryNumber, 'reject')
+            commit(entryNumber, rejectEntry)
         }, false);
 
         var modalOpt = {
@@ -125,7 +123,6 @@ $(document).ready(function() {
     function removeEntry(entryNumber) {
         var num = Number(entryNumber)
         
-        console.log('remove', num, $("#table-body tr:nth-child(" + (num + 1) + ")"))
         // remove the entry from the table
         $("#table-body tr:nth-child(" + (num + 1) + ")").remove();
 

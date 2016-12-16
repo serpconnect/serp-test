@@ -36,7 +36,8 @@ $(function () {
 	var v1 = window.api.v1 = {
 		account: {},
 		entry: {},
-		collection: {}
+		collection: {},
+		admin: {}
 	}
 
 	// Account API
@@ -142,6 +143,28 @@ $(function () {
 	v1.collection.url = function(cID){
 		return endpoint("/v1/collection/" + cID + "/addEntry")
 	}
+
+	// Admin API
+	v1.admin.acceptEntry = function (id) {
+		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
+            entry : id
+        })
+	}
+
+    v1.admin.rejectEntry = function (id) {
+		return ajax("POST", endpoint('/v1/admin/reject-entry'), {
+            entry : id
+        })
+	}
+
+    v1.admin.pending = function () {
+        return ajax("GET", endpoint("/v1/admin/pending"))
+    }
+
+    //
+    v1.entry.taxonomy = function (id) {
+        return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
+    }
 
 	// Root API 
 	v1.getEntry = function (id){
