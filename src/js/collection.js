@@ -15,7 +15,7 @@ $(function () {
 
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
 
-	window.user.collections()
+	window.api.v1.account.collections()
 		.done(collections => collections.forEach(collection => {
 			if (collection.id === Number(cID))
 				setupName(collection)

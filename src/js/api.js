@@ -119,7 +119,11 @@ $(function () {
 	    return ajax("POST", endpoint("/v1/collection/" + id + "/invite"), {
             email: email
 		});
-	}	
+	}
+
+	v1.collection.leave = function(cID) {
+		return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
+	}
 
 	v1.collection.addEntry = function(cid, eid){
 		return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), { 
