@@ -106,6 +106,7 @@ $(document).ready(function() {
 
     function submitEntry(entry) {
         var id = entry.id
+
         if (!id)
             return window.api.json("POST", window.api.host + "/v1/entry/new", entry)
 
@@ -464,10 +465,10 @@ $(document).ready(function() {
 		    el('div.modal-header-title', ['create collection']),
             el('input.submit-input-box', {placeholder: 'my best entries'}, [])
         );
-        
+
         create.
 		    confirm('create', (evt) => {
-			    create.toggleButtonState()	
+			    create.toggleButtonState()
 
                 window.api.ajax("POST", window.api.host + "/v1/collection/", {
                     name: create.div.querySelector('input').value
@@ -519,20 +520,27 @@ $(document).ready(function() {
         clearComplaints();
         // used as the queue button
         if ($thisEl.text() === "queue") {
-            var entry = getEntry();
-            if (entryIsValid(entry)) {
-                clearPageState();
-                queuedEntries.push(entry);
-                insertIntoTable(entry);
-                discardEntryChanges();
-            } else {
-                complain(entry);
-            }
+            pushEntry(getEntry());
         // used as the cancel button
         } else {
             restoreButtons();
             discardEntryChanges();
         }
+    });
+
+    function pushEntry(entry){
+        if (entryIsValid(entry)) {
+          clearPageState();
+          queuedEntries.push(entry);
+          insertIntoTable(entry);
+          discardEntryChanges();
+        } else {
+            complain(entry);
+        }
+    }
+
+    $("#import-json-btn").on("click", function(evt) {
+        window.import.fromFile(pushEntry);
     });
 
     $("#remove-btn").on("click", function(evt) {
@@ -686,4 +694,3 @@ $(document).ready(function() {
         return $(document.createElement(elementType));
     }
 });
-

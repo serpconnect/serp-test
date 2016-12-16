@@ -191,7 +191,7 @@ $(document).ready(function() {
         $('.table-view-area')
             .append(Element('button').addClass('edit-btn').text('export').click(exportEntries))
             .append(Element('button').addClass('edit-btn').text('select all').click(selectAllEntries))
-
+      
         loggedIn = true
     })
 

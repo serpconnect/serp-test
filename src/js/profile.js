@@ -14,7 +14,7 @@ $(function() {
                 btns[i].setAttribute('disabled', true)
         }
     }
-    
+
     var deleteAccountModal = {  
         desc: "Delete Account",
         message: "This will delete your account, but your collections and entries will remain. Are you sure?",
@@ -123,7 +123,7 @@ $(function() {
     	window.location = "/login.html"
     }
 
-    function invite(evt) {
+function invite(evt) {
         var parent = this.parentNode.parentNode.parentNode
         var id = parent.dataset.collectionId
         var name = parent.querySelector('.collection-title').textContent

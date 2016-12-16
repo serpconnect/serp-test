@@ -4,7 +4,7 @@ $(document).ready(function() {
 	var modalAnimation = 121
 
 // Modal Template
-	// var modalObject = {  
+	// var modalObject = {
  //            desc: "create new collection",
  //            message: "",
  //            //single string message that goes above input boxes
@@ -15,15 +15,14 @@ $(document).ready(function() {
  //            //text on button
  //        };
  //        // Create a new collection
-
     function findModal(node) {
-        if (node.classList.contains('modal') || 
+        if (node.classList.contains('modal') ||
             node.classList.contains('confirm'))
             return node
         else
             return findModal(node.parentNode)
     }
-    
+
     function removeModal(evt) {
         // Close button is located in: div > div > closeBtn
         // but we cannot be sure of this, so loop upwards
@@ -74,7 +73,7 @@ $(document).ready(function() {
 				createBtn,
 				el("div.modal-divider"),
 				select, editBtn
-			])	
+			])
 		])
 
 		function submitToCollection(cID) {
@@ -95,7 +94,7 @@ $(document).ready(function() {
 		editBtn.addEventListener('click', (evt) => {
 		    submitToCollection($('#exportSelect').val())
 	    })
-		
+
 		setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
@@ -115,7 +114,7 @@ $(document).ready(function() {
 				el('ul.modal-ul'),
 				facets,
 				el('ul.modal-ul')
-			])	
+			])
 		])
 
         document.body.appendChild(modal)
@@ -150,14 +149,14 @@ $(document).ready(function() {
 					el("div.modal-divider")
 				],
 				editBtn
-			])	
+			])
 		])
 
 		editBtn.addEventListener("click", function(evt) {
             $(".modal").remove();
             window.location = `/submit.html?e=${entry.id}`;
         });
-	    
+
 	    document.body.appendChild(modal)
         setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
@@ -168,7 +167,7 @@ $(document).ready(function() {
     modals.confirmPopUp = function(desc, method) {
  		var closeBtn = el('div.close-btn', [''])
  		var confirmBtn = el('button#confirm.btn', ['confirm'])
- 		
+
  		var modal = el('div.confirm', [
             el('div', [
                 closeButton(),
@@ -176,14 +175,14 @@ $(document).ready(function() {
 	            //name of modal
 	            el("div#bottom-divider.confirm-divider"),
 	            confirmBtn, cancelButton()
-	        ]) 
+	        ])
         ])
 
         confirmBtn.addEventListener('click', (evt) => {
             method.apply({modal})
         })
 
-        document.body.appendChild(modal)	
+        document.body.appendChild(modal)
 	 }
 
     /**
@@ -195,13 +194,13 @@ $(document).ready(function() {
      *     input  : [inputConf, ..., inputConf],
      *     btnText: 'ok button text'
      * }
-     * 
+     *
      * inputConf = [input-name, input-type, input-placeholder]
-     * 
+     *
      * Method is called when ok button is clicked. It is called
      * with modal as context and input values are arguments.
-     * 
-     **/     
+     *
+     **/
     modals.optionsModal = function(obj, method) {
         var message = [el("div.modal-sub-item", [obj.message])]
 
@@ -225,10 +224,10 @@ $(document).ready(function() {
                 el("div.modal-divider"),
                 message,
                 inputboxes,
-                
+
                 el("div#bottom-divider.modal-divider"),
                 button1, cancelButton()
-            ]) 
+            ])
         ])
 
         button1.addEventListener('click', (evt) => {
@@ -249,10 +248,9 @@ $(document).ready(function() {
     }
 })
 
-// Remove active modal when clicking outside modal
-window.addEventListener('load', () => {
+document.addEventListener('load', () => {
 	document.body.addEventListener('click', (evt) => {
-		var remove = evt.target.classList.contains('modal') || 
+		var remove = evt.target.classList.contains('modal') ||
 					 evt.target.classList.contains('confirm')
 		if (remove)
 			document.body.removeChild(evt.target)
@@ -272,4 +270,3 @@ window.addEventListener('load', () => {
 			confirm.parentNode.removeChild(confirm)
 	}, false)
 }, false)
-
