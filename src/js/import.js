@@ -264,6 +264,7 @@
         el('button#cancelBtn.btn', ["Cancel"])
       ])
     ]);
+    setTimeout(() => modal.classList.add("appear"), 100)
     document.body.appendChild(modal);
     return modal;
   }
