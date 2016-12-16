@@ -4,14 +4,14 @@
     display: none;
 }
 //hides additional scroll bar
-.ui-menu::-webkit-scrollbar { 
-        display: none; 
+.ui-menu::-webkit-scrollbar {
+        display: none;
         z-index:1;
         position: relative;
         //not working for mozilla yet
-    }  
+    }
 //sets autocomplete pop out windows size and allows to scroll
-.ui-menu{ 
+.ui-menu{
      max-height: 190px; /*196px;*/
      overflow: scroll;
      width: -moz-min-content;/* Firefox */
@@ -157,9 +157,41 @@ input[type="radio"] {display:none;}
     text-align: right;
     width: 250px;
 }
+
+.import-file {
+    margin-left: 240px;
+    text-align: right;
+    width: 250px;
+}
+
+.import-heading {
+    vertical-align: top;
+    font-size: @facet-title-size;
+    display: inline-block;
+}
+
+.import-checkbox-heading {
+    vertical-align: top;
+    font-size: @facet-title-size;
+    color: red;
+    width: 115px;
+    display: inline-block;
+}
+
+.import-serp-select-complaint-wrapper {
+    display: flex;
+}
+
+.import-serp-select-wrapper {
+    display: flex;
+    justify-content: space-between;
+    width: 350px;
+}
+
 .queue-button-wrapper {
     margin-left: 83px;
 }
+
 .submit-input-box {
     font-family: "Open Sans";
     font-size: 12pt;
@@ -312,7 +344,7 @@ th {
 }
 
 .additional-data-wrapper{
-    width: 12rem; /*220px;*/ 
+    width: 12rem; /*220px;*/
     padding-left:25%; /*37px;*/
 }
 .facet-additional-input {

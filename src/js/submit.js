@@ -106,6 +106,7 @@ $(document).ready(function() {
 
     function submitEntry(entry) {
         var id = entry.id
+
         if (!id)
             return window.api.json("POST", window.api.host + "/v1/entry/new", entry)
 
@@ -527,138 +528,20 @@ $(document).ready(function() {
         }
     });
 
-    $("#import-json-btn").on("click", function(evt) {
-      $("#input_file").click();
-      $("#input_file").change(function(evt){
-        var inputFiles = document.getElementById("input_file");
-        if ('files' in inputFiles) {
-          if (inputFiles.files.length > 0) {
-            for (var i = 0; i < inputFiles.files.length; i++) {
-                var file = inputFiles.files[i];
-                var reader = new FileReader();
-                reader.onload = function(){
-                  var data = reader.result.substring(0,file.size);
-                  if(file.name.indexOf(".json") != -1){
-                    convertStringToJsonAndQueue(data);
-                  }
-                  else if(file.name.indexOf(".csv") != -1){
-                    convertCSVtoJsonAndQueue(data);
-                  } else {
-                    alert("File has to be in either json or CSV format");
-                  }
-                };
-                reader.readAsText(file);
-            }
-          }
-        }
-        document.getElementById("input_file").value = "";
-      });
-    });
-
-    function convertStringToJsonAndQueue(data){
-      var splitted = data.split("{");
-      var json = JSON.parse(data);
-      console.log(json);
-      var entries = jsonToEntry(json);
-      for(i = 0; i < entries.length; i++){
-        pushEntry(entries[i]);
-      }
-    }
-
-    function convertCSVtoJsonAndQueue(csv){
-      var lines=csv.split("\n");
-      var headers=lines[0].split(",");
-      var jsons = [];
-      var obj = {};
-      for(var i=1;i<lines.length;i++){
-        if(lines[i]){
-      	  var currentline=lines[i].split(",");
-      	  for(var j=0;j<headers.length;j++){
-            obj[headers[j]] = currentline[j];
-      	  }
-          json = JSON.parse(JSON.stringify(obj));
-          json.serpClassification = {}; //This is wrong but leaving it for now.
-          jsons[i-1] = json;
-        }
-      }
-      var entries = jsonToEntry(jsons);
-      console.log(entries);
-      for(var i = 0; i < entries.length; i++){
-        pushEntry(entries[i]);
-      }
-    }
-
-    function jsonToEntry(json){
-      var entries = [];
-      var counter = 0; //Invalid jsons will not be queued.
-      for(i = 0; i < json.length; i++){
-
-        var cur_entryType = json[i].entryType;
-        if(!cur_entryType){
-          alert("Entry must contain entry type \"challenge\" or \"research\"."
-          + "\nContinuing adding entries");
-          continue;
-        }
-        else if(cur_entryType == "challenge"){
-          json[i].doi = null;
-          json[i].reference = null;
-          if(!json[i].description){
-            alert("Entry type: " + cur_entryType + " must have a description."
-            + "\nContinuing adding entries");
-            continue;
-          }
-        } else if (cur_entryType == "research"){
-          json[i].description = null;
-          if(!json[i].doi || !json[i].reference){
-            alert("Entry type: " + cur_entryType + " must have a reference and doi."
-            + "\nContinuing adding entries");
-            continue;
-          }
-        } else {
-          alert("Entry \"" + cur_entryType + "\" must be one of the entry types " +
-          "\"challenge\" or \"research\"." + "\nContinuing adding entries");
-          continue;
-        }
-
-        //fix id
-
-        json[i].collection = parseInt(json[i].collection);
-        if(isNaN(json[i].collection)){
-          json[i].collection = 15;  //Should be default for user. Also, should collection be a string?
-        }
-
-        json[i].date = new Date(json[i].date);
-        if(isNaN(json[i].date.getTime())){
-          json[i].date = new Date();
-        }
-
-        entries[counter] = {
-            entryType: json[i].entryType,
-            collection: json[i].collection,
-            reference: json[i].reference,
-            description: json[i].description,
-            doi: json[i].doi,
-            date: json[i].date,
-            serpClassification: json[i].serpClassification,
-            id: json[i].id,
-            contact: json[i].contact
-        };
-        counter++;
-      }
-
-      return entries;
-    }
-
     function pushEntry(entry){
         if (entryIsValid(entry)) {
-            clearPageState();
-            queuedEntries.push(entry);
-            insertIntoTable(entry);
-            discardEntryChanges();
+          clearPageState();
+          queuedEntries.push(entry);
+          insertIntoTable(entry);
+          discardEntryChanges();
         } else {
             complain(entry);
         }
     }
+
+    $("#import-json-btn").on("click", function(evt) {
+        window.import.fromFile(pushEntry);
+    });
 
     $("#remove-btn").on("click", function(evt) {
         // data's stored in the submit button
