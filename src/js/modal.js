@@ -1,5 +1,16 @@
 $(document).ready(function() {
 
+	function toggleButtonState() {
+        var btns = document.querySelectorAll('.btn')
+        for (var i = 0; i < btns.length; i++) {
+            btns[i].classList.toggle('submit-disabled')
+            if (btns[i].getAttribute('disabled'))
+                btns[i].removeAttribute('disabled')
+            else
+                btns[i].setAttribute('disabled', true)
+        }
+    }
+
 	var modals = window.modals = {}
 	var modalAnimation = 121
 
@@ -247,6 +258,16 @@ $(document).ready(function() {
             inputboxes[0].focus()
         }
     }
+
+	modals.clearAll = function() {
+		var modal = document.querySelector('.modal')
+		if (modal)
+			modal.parentNode.removeChild(modal)
+
+		var confirm = document.querySelector('.confirm')
+		if (confirm)
+			confirm.parentNode.removeChild(confirm)
+	}
 })
 
 // Remove active modal when clicking outside modal
@@ -262,14 +283,8 @@ window.addEventListener('load', () => {
 	document.addEventListener('keydown', (evt) => {
 		if (evt.keyCode !== 27)
 			return
-
-		var modal = document.querySelector('.modal')
-		if (modal)
-			modal.parentNode.removeChild(modal)
-
-		var confirm = document.querySelector('.confirm')
-		if (confirm)
-			confirm.parentNode.removeChild(confirm)
+		
+		window.modals.clearAll()
 	}, false)
 }, false)
 
