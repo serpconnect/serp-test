@@ -2,107 +2,43 @@ $(function (){
 
 	var user = window.user = {}
 
-	user.resetPassword = function (email) {
-		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password", {
-			email: email
-		})
+    user.resetPassword = window.api.v1.account.resetPassword
+    user.changePassword = window.api.v1.account.changePassword
+    user.self = window.api.v1.account.self
+    user.collections = window.api.v1.account.collections
+    user.createCollection = window.api.v1.collection.create
+    user.collectionInvite = window.api.v1.collection.invite
+
+	user.putIntoCollection = function(url, eID){
+		return window.api.ajax("POST", url, { entryId: eID })
 	}
 
-	// requires logged in, both passwords should be in plaintext
-	user.changePassword = function (oldpw, newpw) {
-		return window.api.ajax("POST", window.api.host + "/v1/account/change-password", {
-			old: oldpw,
-			new: newpw
-		})
-	}
-
-	user.self = function () {
-		return window.api.ajax("GET", window.api.host + "/v1/account/self")
-	}
-
-	user.collections = function () {
-		return window.api.ajax("GET", window.api.host + "/v1/account/collections")
-	}
-
-	user.createCollection = function (name) {
-		 return window.api.ajax("POST", window.api.host + "/v1/collection/", {
-		 	name: name
-		 });
-	}
-
-	user.collectionInvite = function(email,id){
-		return window.api.ajax("POST", window.api.host + "/v1/collection/" + id + "/invite", {
-                email: email
-            });
-	}	
-
-	user.putIntoCollection = function(url,eID){
-		return window.api.ajax("POST", url, {entryId: eID })
-	}
-
-	user.collectionUrl = function(cID){
-		return window.api.host + "/v1/collection/" + cID + "/addEntry"
-	}
-
-	user.invites = function () {
-		return window.api.ajax("GET", window.api.host + "/v1/account/invites")
-	}
-
-	user.lookup = function (email) {
-		return window.api.ajax("GET", window.api.host + "/v1/account/" + email)
-	}
-
-	user.register = function (email, passw) {
-		return window.api.ajax("POST", window.api.host + "/v1/account/register", {
-			email: email,
-			passw: passw
-		})
-	}
-
-	user.delete = function () {
-		return window.api.ajax("POST", window.api.host + "/v1/account/delete")
-	}
-
-	//
-	user.logout = function () {
-		return window.api.ajax("POST", window.api.host + "/v1/account/logout")
-	}
-
-	// .done(() => {}), .fail(xhr => console.log(xhr.responseText))
-	user.login = function (email, passw) {
-		return window.api.ajax("POST", window.api.host + "/v1/account/login", {
-			email: email,
-			passw: passw
-		})
-	}
+	user.collectionUrl = window.api.v1.collection.url
+	user.invites = window.api.v1.account.invites
+	user.friends = window.api.v1.account.friends
+	user.lookup = window.api.v1.account.lookup
+	user.register = window.api.v1.account.register
+	user.delete = window.api.v1.account.delete
+	user.logout = window.api.v1.account.logout
+	user.login = window.api.v1.account.login
+	user.resetpassword = window.api.v1.account.confirmNewPassword
+	user.getEntry = window.api.v1.getEntry
+	user.getTaxonomyEntry = window.api.v1.getTaxonomyEntry
 
 	// Logout user when logout button is clicked
-    $("#logout").click(evt => window.user.logout().done(toHome))
-
-    //logout to home page
-    function toHome() {
-    	window.location = "/"
+    function logout() {
+        api.v1.account.logout().done(ok => window.location = "/")
     }
 
-	user.resetpassword = function(passw){
-		return window.api.ajax("POST", window.api.host + "/v1/account/reset-password-confirm", {
-			passw: passw
-		})
-	}
+    $("#logout").click(logout)
 
-	user.getEntry = function (id){
-		return window.api.ajax("GET", window.api.host + "/v1/entry/" + id)
-	}		
-	user.getTaxonomyEntry = function (id){
-		return window.api.ajax("GET", window.api.host + "/v1/entry/" + id + "/taxonomy")
-	}
+
+    function loggedIn() {
+        $("#logout").text("logout").attr("href", "/")
+        $("#profile").text("profile").attr("href", "/profile.html")
+    }
 
 	// TODO: Get a somewhat better solution that doesn't flicker
 	//#logout is the id for both login/signup + logout
-	window.api.ajax("GET", window.api.host + "/v1/account/login")
-	.done(() => $("#logout").text("logout").attr("href", "/"))
-
-	window.api.ajax("GET", window.api.host + "/v1/account/login")
-	.done(() => $("#profile").text("profile").attr("href", "/profile.html"))
-
+	api.v1.account.loggedIn().done(loggedIn)
 })
