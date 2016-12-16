@@ -459,33 +459,29 @@ $(document).ready(function() {
         submit()
     });
 
+    var newCollectionModal = {  
+        desc: "create new collection",
+        message: "",
+        input: [['input0','text','collection name']],
+        btnText: "Create"
+    };
+
     $("#submit-create-collection").on("click", function(evt) {
-        var create = new window.modal(
-		    el('div.modal-header-title', ['create collection']),
-            el('input.submit-input-box', {placeholder: 'my best entries'}, [])
-        );
-        
-        create.
-		    confirm('create', (evt) => {
-			    create.toggleButtonState()	
-
-                window.api.ajax("POST", window.api.host + "/v1/collection/", {
-                    name: create.div.querySelector('input').value
+        modals.optionsModal(newCollectionModal, function (name) {
+            api.v1.collection.create(name)
+                .done(ok => {
+                    document.body.removeChild(this.modal)
+                    querystring.c = ok.id
+                    updateCollectionList()
                 })
-                    .done(ok => {
-                        document.body.removeChild(create.div)
-
-                        // Use internal qs to avoid messing up user
-                        querystring.c = ok.id
-                        updateCollectionList()
-                    })
-                    .fail(xhr => {
-                        window.alert(xhr.responseText)
-                        modal.toggleButtonState()
-                    })
-            }).
-            cancel('cancel').
-            show();
+                .fail(xhr => {
+                    $('.modal-complaint').remove()
+                    var modal = document.querySelector(".modal") || document.querySelector(".confirm")
+                    var error = modal.querySelector('#input0')
+                    var complaint = el('div.modal-complaint', [xhr.responseText])
+                    error.parentNode.insertBefore(complaint, error.nextSibling)
+                })
+        })
     });
 
     $("#submit-btn").on("click", function(evt) {
