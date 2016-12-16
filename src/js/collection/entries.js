@@ -71,81 +71,26 @@ $(function () {
 	function inspectEntry(evt) {
 		var id = this.dataset.entryId
 
+		function removeFromCollection() {
+            toggleButtonState()
+			window.api.ajax("POST", window.api.host + "/v1/collection/" + cID + "/removeEntry", {
+				entryId: id
+			})
+				.done(() => {
+					document.body.removeChild(modal)
+					refresh()
+				})
+				.fail(xhr => alert(xhr.responseText))
+		}
+
+        var removeBtn = el("button.btn", ["remove from collection"])
+        removeBtn.addEventListener('click', removeFromCollection, false)
+
 		window.api.ajax("GET", window.api.host + "/v1/entry/" + id).done(entry => {
 			window.api.ajax("GET", window.api.host + "/v1/entry/" + id + "/taxonomy").done(taxonomy => {
-				var close = el('div.close-btn')
-
-				close.addEventListener('click', function (evt) {
-					document.body.removeChild(close.parentNode.parentNode)
-				}, false)
-
-				var constructFacet = function(name) {
-					var samples = Object.keys(taxonomy).filter(
-						facet => reverseMap[facet.toLowerCase()] === name
-					) || []
-
-					if (!samples.length) return undefined
-
-					return el("div.modal-header-title", [
-						name,
-						samples.map(facet => {
-							var filtered = taxonomy[facet] || []
-							return el('div.modal-sub-sub-item', [
-								shorthandMap[facet.toLowerCase()],
-								filtered.map(sample => (sample === "unspecified"
-									? undefined : el('div.modal-sub-sub-item', [sample])))
-							])
-						})
-					])
-				}
-
-				var extraInfo = []
-				if (entry.type === "challenge") {
-					extraInfo.push(
-						el('div.modal-header-title', ['Description']),
-						el('div.modal-sub-item', [entry.description]))
-				} else {
-					extraInfo.push(
-						el('div.modal-header-title', ['References']),
-						el('div.modal-sub-item', [entry.reference]),
-						el('div.modal-header-title', ['DOI']),
-						el('div.modal-sub-item', [entry.doi]))
-				}
-
-				var editBtn = el('button.edit-btn', ['edit'])
-				var removeBtn = el('button.edit-btn', ['remove from collection'])
-
-				editBtn.addEventListener('click', () => {
-					toggleButtonState()
-					window.location = "/submit.html?e=" + id
-				}, false)
-
-				removeBtn.addEventListener('click', () => {
-					toggleButtonState()
-					window.api.ajax("POST", window.api.host + "/v1/collection/" + cID + "/removeEntry", {
-			    		entryId: id
-			    	})
-			    		.done(() => {
-			    			document.body.removeChild(modal)
-			    			refresh()
-			    		})
-			    		.fail(xhr => window.alert(JSON.stringify(xhr)))
-    			}, false)
-
-				var modal = el('div.modal', [el('div', [
-					close, el("div.modal-entry-type", [entry.type]),
-					el("div.modal-header-title", [`entry #${entry.id}`]),
-					el("div.modal-divider"),
-					constructFacet("Effect"),
-					constructFacet("Scope"),
-					constructFacet("Context"),
-					el("div.modal-divider"),
-					extraInfo,
-					el("div.modal-divider"),
-					removeBtn, editBtn
-				])])
-
-				document.body.appendChild(modal)
+				modals.entryModal(entry, taxonomy, {
+                    button: [removeBtn]
+				})
 			})
 		})
 	}
