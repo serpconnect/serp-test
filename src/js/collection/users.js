@@ -15,8 +15,8 @@ $(function () {
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
 
 	function refresh(){
-		window.api.ajax("GET", window.api.host + "/v1/collection/" + cID + "/members")
-			.done(setupMembers)
+		api.v1.collection.members(cID, "all")
+            .done(setupMembers)
 			.fail(toProfilePage)
 	}
 
@@ -35,77 +35,22 @@ $(function () {
 			}))
 	}
 
-	function invite(evt) {
-        var send = el('button.btn', ['send'])
-        var cancel = el('button.btn', ['cancel'])
-        var modal = el('div.modal', [el('div', [
-            el("div.modal-header-title", ["send invite"]),
-            el("div.modal-divider"),
-            el('input#email.submit-input-box', {
-                placeholder : 'user email',
-                type : 'email',
-                name : 'email'
-            }),
-            el("div.modal-divider"),
-            send, cancel
-        ])])
+    var inviteModal = {
+        desc: "Invite user",
+        message: "",
+        input: [["input0", "email", "user@email.com"]],
+        btnText: "invite"
+    }
 
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        send.addEventListener('click', (evt) => {
-            toggleButtonState()
-
-            window.api.ajax("POST", window.api.host + "/v1/collection/" + cID + "/invite", {
-                email: $('#email').val(),
-            })
+    $('#invite').click(evt => {
+        modals.optionsModal(inviteModal, function (email) {
+            api.v1.collection.invite(email, cID)
                 .done(ok => {
-                    document.body.removeChild(modal)
+                    modals.clearAll()
                     refresh()
                 })
-                .fail(xhr => {
-                    $('.complaint').remove()
-                    var div = document.getElementById('name')
-                    div.parentNode.insertBefore(el('div.complaint', [
-                        xhr.responseText
-                    ]), div.nextSibling)
-                    toggleButtonState()
-                })
-        }, false)
-
-        document.body.appendChild(modal)
-        modal.querySelector('input').focus()
-    }
-
-    // Switch all buttons between disabled and enabled state
-    function toggleButtonState() {
-        var btns = document.querySelectorAll('.btn')
-        for (var i = 0; i < btns.length; i++) {
-            btns[i].classList.toggle('submit-disabled')
-            if (btns[i].getAttribute('disabled'))
-                btns[i].removeAttribute('disabled')
-            else
-                btns[i].setAttribute('disabled', true)
-
-        }
-    }
-
-    document.addEventListener('keydown', function (evt) {
-        if (evt.keyCode === 27) {
-            var modal = document.querySelector('.modal')
-            if (!modal) return
-            document.body.removeChild(modal)
-        }
+                .fail(xhr => alert(xhr.responseText))
+        })
     })
-
-    window.addEventListener('load', () => {
-        document.body.addEventListener('click', function (evt) {
-            if (evt.target.className === "modal")
-                document.body.removeChild(evt.target)
-        }, false)
-    })
-
-    $('#logout').click(invite)
 
 })

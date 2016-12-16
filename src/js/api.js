@@ -135,6 +135,10 @@ $(function () {
 		return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
 	}
 
+	v1.collection.members = function (id, q) {
+		return ajax("GET", endpoint("/v1/collection/" + id + "/members"), {q:q})
+	}
+
 	v1.collection.url = function(cID){
 		return endpoint("/v1/collection/" + cID + "/addEntry")
 	}
