@@ -239,7 +239,7 @@ $(document).ready(function() {
         // position + 2 rationale: nth-child(1) === table head
         // => we need to offset with 1
         // insert the updated row
-        if (position) {
+        if (position!=null) {
             $("#queue-table tr:nth-child(" + (position + 2 /* to account for table header */) + ")").replaceWith($row);
         } else {
             // append row to the end of the table
@@ -250,6 +250,7 @@ $(document).ready(function() {
         // this click initiates an inspection and possibly change of the entry
         // contents
         $("td:first-child").on("click", function(evt) {
+
             var entryNumber = $(this).data("entry-number");
             $("#submit-btn").data("currentEntry", entryNumber);
             var entry = queuedEntries[entryNumber];
