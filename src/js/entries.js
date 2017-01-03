@@ -8,7 +8,7 @@ $(document).ready(function() {
         pending.forEach(entry => {
             api.v1.entry.taxonomy(entry.id).done(taxonomy => {
                 entries.push(entry)
-                entry.serpClassification = taxonomy
+                entry.taxonomy = taxonomy
                 insertIntoTable(entry, entries.length - 1)
             })
         })
@@ -34,12 +34,6 @@ $(document).ready(function() {
             })
             .fail(xhr => window.alert(xhr.responseText))
     }
-    
-    function createCell(taxonomy, subfacet, alternating) {
-        var filled = taxonomy[subfacet.toUpperCase()] ? '.filled-cell' : ''
-        var alt = alternating ? '.alternating-group' : ''
-        return el(`td${filled}${alt}`)
-    }
 
     function acceptEntryCallback(evt) {
         commit(Number(this.dataset.entryNumber), acceptEntry)
@@ -53,8 +47,19 @@ $(document).ready(function() {
         var btn = el(`button.${style}`, {
             'data-entry-number': entryNumber
         }, [name]);
-        btn.addEventListener("click", fn, false);
+
+        if (name === 'accept')
+            btn.addEventListener("click", acceptEntryCallback, false);
+        else
+            btn.addEventListener("click", rejectEntryCallback, false);
+
         return btn;
+    }
+    
+    function createCell(taxonomy, subfacet, alternating) {
+        var filled = taxonomy[subfacet.toUpperCase()] ? '.filled-cell' : ''
+        var alt = alternating ? '.alternating-group' : ''
+        return el(`td${filled}${alt}`)
     }
 
     var maxLength = 35;
@@ -70,28 +75,28 @@ $(document).ready(function() {
         var row = el('tr', {'data-entry-number': entryNumber }, [
             title,
 
-            createCell(entry.serpClassification, "intervention", true),
+            createCell(entry.taxonomy, "intervention", true),
 
             // effect
-            createCell(entry.serpClassification, "solving"),
-            createCell(entry.serpClassification, "adapting"),
-            createCell(entry.serpClassification, "assessing"),
-            createCell(entry.serpClassification, "improving"),
+            createCell(entry.taxonomy, "solving"),
+            createCell(entry.taxonomy, "adapting"),
+            createCell(entry.taxonomy, "assessing"),
+            createCell(entry.taxonomy, "improving"),
 
             // scope
-            createCell(entry.serpClassification, "planning", true),
-            createCell(entry.serpClassification, "design", true),
-            createCell(entry.serpClassification, "execution", true),
-            createCell(entry.serpClassification, "analysis", true),
+            createCell(entry.taxonomy, "planning", true),
+            createCell(entry.taxonomy, "design", true),
+            createCell(entry.taxonomy, "execution", true),
+            createCell(entry.taxonomy, "analysis", true),
 
             // context
-            createCell(entry.serpClassification, "people"),
-            createCell(entry.serpClassification, "information"),
-            createCell(entry.serpClassification, "sut"),
-            createCell(entry.serpClassification, "other"),
+            createCell(entry.taxonomy, "people"),
+            createCell(entry.taxonomy, "information"),
+            createCell(entry.taxonomy, "sut"),
+            createCell(entry.taxonomy, "other"),
 
-            el('td', [entryButton('accept', 'entries-accept-btn', entryNumber, acceptEntryCallback)]),
-            el('td', [entryButton('reject', 'entries-reject-btn', entryNumber, rejectEntryCallback)])
+            el('td', [entryButton('accept', 'entries-accept-btn', entryNumber)]),
+            el('td', [entryButton('reject', 'entries-reject-btn', entryNumber)])
         ])
 
         document.getElementById("table-body").appendChild(row);
@@ -103,35 +108,33 @@ $(document).ready(function() {
 
         var modalOpt = {
             button: [
-                entryButton('accept', 'btn', entryNumber, acceptEntryCallback),
-                entryButton('reject', 'btn', entryNumber, rejectEntryCallback)
+                entryButton('accept', 'btn', entryNumber),
+                entryButton('reject', 'btn', entryNumber)
             ]
         }
 
-        modals.entryModal(entry, entry.serpClassification, modalOpt)
+        modals.entryModal(entry, entry.taxonomy, modalOpt)
     }
 
     function removeEntry(entryNumber) {
         var table = document.getElementById("table-body")
 
-        // update data attribute of the table cells after the removed entry
+        entries.splice(entryNumber, 1); 
+
+        // Update data attribute of the table cells _after_ the entry
         for (var i = entryNumber + 1; i < table.children.length; i++) {
             var row = table.children[i]
             var num = Number(row.dataset.entryNumber) - 1
 
-            row.dataset.entryNumber = num
-
             var btns = row.querySelectorAll('button')
             for (var j = 0; j < btns.length; j++)
                 btns[i].dataset.entryNumber = num
+                
+            row.dataset.entryNumber = num
         }
 
-        // remove the entry from the table, entryNumber+1 since nth-child starts from 1
-        var row = table.children[entryNumber]
-        row.parentNode.removeChild(row)
-
-        // remove from our internal array
-        entries.splice(entryNumber, 1);        
+        // Remove after loop to reduce jank
+        table.removeChild(table.children[entryNumber])
     }
 
 });

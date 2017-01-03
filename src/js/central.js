@@ -32,7 +32,6 @@ $(document).ready(function() {
         "other": "Other"
     }
 
-
 	central.constructEntities= function(taxonomy, facet) {
 		var filtered = taxonomy[facet] || []
 
@@ -64,4 +63,5 @@ $(document).ready(function() {
 			samples.map(facet => central.constructSubfacet(taxonomy, facet))
 		])
 	}
+
 })
