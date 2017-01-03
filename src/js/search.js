@@ -174,7 +174,7 @@ $(document).ready(function() {
     }
 
     function exportEntries(){
-        if (selectedEntries.length) {
+        if (!selectedEntries.length) {
             return
         }
 
