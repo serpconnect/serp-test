@@ -301,7 +301,7 @@ $(document).ready(function() {
 		});
 
 		//cancel button is a standard feature
-		var modal = el('div.modal', [
+		var modal = el('div#modal.modal', [
 			el('div', [
 				closeButton(),
 				el("div.modal-header-title", [obj.desc]),
@@ -323,7 +323,7 @@ $(document).ready(function() {
 	}
 })
 
-document.addEventListener('load', () => {
+window.addEventListener('load', () => {
 	document.body.addEventListener('click', (evt) => {
 		var remove = evt.target.classList.contains('modal') ||
 					 evt.target.classList.contains('confirm')
