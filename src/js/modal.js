@@ -165,24 +165,26 @@ $(document).ready(function() {
 
 	/* Create simple modal */
     modals.confirmPopUp = function(desc, method) {
- 		var closeBtn = el('div.close-btn', [''])
- 		var confirmBtn = el('button#confirm.btn', ['confirm'])
-
- 		var modal = el('div.confirm', [
-            el('div', [
-                closeButton(),
-	            el("div.confirm-header-title", [desc]),
-	            //name of modal
-	            el("div#bottom-divider.confirm-divider"),
-	            confirmBtn, cancelButton()
-	        ])
-        ])
+      var confirmBtn = el('button#confirm.btn', ['confirm'])
+      var modal = el('div.confirm', [
+              el('div', [
+                  closeButton(),
+                el("div.confirm-header-title", [desc]),
+                //name of modal
+                el("div#bottom-divider.confirm-divider"),
+                confirmBtn, cancelButton()
+            ])
+          ])
 
         confirmBtn.addEventListener('click', (evt) => {
             method.apply({modal})
         })
-
-        document.body.appendChild(modal)
+      
+      setTimeout(function(){
+			  document.getElementById('modal').classList.add('appear');
+      }, modalAnimation)
+      
+      document.body.appendChild(modal)
 	 }
 
     /**
@@ -237,15 +239,54 @@ $(document).ready(function() {
         })
 
         document.body.appendChild(modal)
-		setTimeout(function() {
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+		    setTimeout(function() {
+			    document.getElementById('modal').classList.add('appear');
+		    }, modalAnimation)
 
         // Focus on first input element
         if (obj.input.length > 0) {
             inputboxes[0].focus()
         }
     }
+
+	 //adds entries to a modal and returns the id of the entry that got clicked
+	 modals.listModal = function(obj, method) {
+ 	        var message = [el("div.modal-sub-item", [obj.message])]
+ 	        // The X in the top-right corner
+          
+					var entries = obj.input.map(entry => {
+							var elEntry = el('div.modal-option-li', {
+								'data-entry-id': entry.id
+							}, [entry.description || entry.reference || entry.DOI])
+
+							elEntry.addEventListener('click', (evt) => {
+									var args=[entry.id];
+									document.body.removeChild(modal)
+								  method.apply({modal}, args)
+		 	        });
+							
+              return elEntry;
+					});
+     
+ 	          //cancel button is a standard feature
+ 	        var modal = el('div.modal', [el('div', [
+ 	        	  closeButton(),
+ 	            el("div.modal-header-title", [obj.desc]),
+ 	            //name of modal
+
+ 	            el("div.modal-divider"),
+ 	            message,
+ 		          entries,
+
+ 	            el("div#bottom-divider.modal-divider"),
+ 	            cancelButton()
+ 	        ]) ])
+
+ 	        document.body.appendChild(modal)
+         setTimeout(function() {
+              document.getElementById('modal').classList.add('appear');
+         }, modalAnimation)
+ 	 }
 })
 
 document.addEventListener('load', () => {

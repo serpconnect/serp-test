@@ -527,6 +527,21 @@ $(document).ready(function() {
         }
     });
 
+    $("#load-btn").on("click", function(evt) {
+        var test = window.user.self().done(ok=>{
+            var deleteAccountModal = {
+                desc: "Load an entry",
+                input: ok.entries
+            };
+            window.modals.listModal(deleteAccountModal,function (args) {
+                window.api.ajax("GET", window.api.host + "/v1/entry/"+args).done(ok=>{
+                      $("#" + ok.type + "-button").trigger("click");
+                      fillAccordingToEntry(ok,true);
+                })
+            })
+        })
+    });
+
     $("#queue-btn").on("click", function(evt) {
         var $thisEl = $(this);
         clearComplaints();
