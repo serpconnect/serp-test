@@ -16,7 +16,7 @@ $(function() {
         modals.clearAll()
         api.v1.account.self().done(update)
     }
-    
+
     var deleteAccountModal = {  
         desc: "Delete Account",
         message: "This will delete your account, but your collections and entries will remain. Are you sure?",
@@ -118,7 +118,6 @@ $(function() {
         option.addEventListener('click', callback, false)
         return option
     }
-
 
     /* X member(s), Y entr(y|ies) */
     function formatStats(members, entries) {
