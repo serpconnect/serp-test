@@ -4,6 +4,7 @@
     fromFile:importFromFile
   }
 
+  var entryType = ""
   var researchMustHave = ["reference", "doi"];
   var challengeMustHave = ["description"];
   var extraHeaders = ["contact", "date"];
