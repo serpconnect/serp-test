@@ -1,9 +1,5 @@
 (function (){
 
-  //Lägga till plus om man vill ha t ex author + title för reference.
-  //Du har valt fel fil/entries är fel, komma som alert?
-  //true secret headers?
-
   window.import = {
     fromFile:importFromFile
   }
@@ -75,11 +71,13 @@
       else {
         var jsons = JSON.parse(data);
 
-        var invalidEntries = makeEntriesAndCreateCollection(
-            jsons, newCollectionName, pushEntry, this.modal
-        );
+        var allEntries = jsonToEntry(jsons);
+        var validEntries = allEntries.validEntries;
 
-        printInvalidEntriesjson(invalidEntries);
+        if(printStatistics(allEntries, "json")){
+          createCollection(validEntries, newCollectionName, pushEntry, modal);
+        }
+
       }
     })
   }
@@ -95,22 +93,6 @@
             btnText: "Create"
             //text on button
     };
-  }
-
-  //Returns the invaliedEntries for printing purposes.
-  function makeEntriesAndCreateCollection(jsons, newCollectionName, pushEntry, modal) {
-    var allEntries = jsonToEntry(jsons);
-    var validEntries = allEntries.validEntries;
-    var invalidEntries = allEntries.invalidEntries;
-
-    //Collection will only be created if at least one entry was valid.
-    if(validEntries.length !== 0){
-      createCollection(validEntries, newCollectionName, pushEntry, modal);
-    }
-    else {
-      destroy(modal);
-    }
-    return invalidEntries;
   }
 
   function createCollection(validEntries, newCollectionName, pushEntry, modal){
@@ -151,8 +133,12 @@
 
     var modal = createImportModal(CSVHeaders);
 
-    closeBtn.addEventListener('click', destroy, false);
-    cancelBtn.addEventListener('click', destroy, false);
+    closeBtn.addEventListener('click', function() {
+      destroy(modal);
+    }, false);
+    cancelBtn.addEventListener('click', function() {
+      destroy(modal);
+    }, false);
 
     importCheckResearch.addEventListener('change', (evt) => {
       clearComplaintsImportHeaders();
@@ -205,11 +191,12 @@
 
         var jsons = createjsons(selected, lines, CSVHeaders);
 
-        var invalidEntries = makeEntriesAndCreateCollection(
-            jsons, newCollectionName, pushEntry, modal
-        );
+        var allEntries = jsonToEntry(jsons);
+        var validEntries = allEntries.validEntries;
 
-        printInvalidEntriesCSV(invalidEntries);
+        if (printStatistics(allEntries, "CSV")){
+            createCollection(validEntries, newCollectionName, pushEntry, modal);
+        }
       }
     });
   }
@@ -483,38 +470,46 @@
     return allEntries;
   }
 
-  function printInvalidEntriesjson(invalidEntries){
-    //Could be any number but if there are too many the alert box will be difficult to read.
-    if(invalidEntries.length > 50){
-      alert(invalidEntries.length
-      + " json objects does not have enough information to make entries.\n"
-      + "The entries must follow that:\n"
-      + "\"challenge\" entries must have a description.\n"
-      + "\"research\" entries must have a reference and a doi.");
-    }else if(invalidEntries.length > 0){
-      alert("The json objects with index " + invalidEntries.toString() +
-      " does not have enough information to make entries.\n"
-      + "The entries must follow that:\n"
-      + "\"challenge\" entries must have a description.\n"
-      + "\"research\" entries must have a reference and a doi.");
-    }
-  }
+  function printStatistics(allEntries, fileType){
+    var entriesFormat = "The entries must follow that:\n"
+                      + "\"challenge\" entries must have a description.\n"
+                      + "\"research\" entries must have a reference and a doi.";
 
-  function printInvalidEntriesCSV(invalidEntries){
+    var queueQuestion = "Do you want to queue the "
+                      + allEntries.validEntries.length
+                      + " valid entries?";
+
+    var notEnoughInformation = "does not have enough information to make entries.";
+
+    var typePlural;
+    var specifiedEntries;
+    if(fileType === "json"){
+      typePlural = " json objects ";
+      specifiedEntries = "The json objects with index " + allEntries.invalidEntries.toString() + " ";
+    } else if(fileType === "CSV"){
+      typePlural = " rows in the CSV ";
+      specifiedEntries = "The CSV rows " + allEntries.invalidEntries.toString()
+        + " (counting starts after the headers row and empty rows are not counted) ";
+    }
+
+    if(allEntries.validEntries.length === 0){
+      alert("0" + typePlural + "are valid.\n\n"
+      + entriesFormat);
+      return false;
+    }
     //Could be any number but if there are too many the alert box will be difficult to read.
-    if(invalidEntries.length > 50){
-      alert(invalidEntries.length
-      + " rows in the CSV does not have enough information to make entries.\n"
-      + "The entries must follow that:\n"
-      + "\"challenge\" entries must have a description.\n"
-      + "\"research\" entries must have a reference and a doi.");
-    }else if(invalidEntries.length > 0){
-      alert("The rows " + invalidEntries.toString() +
-      " (counting starts after the headers row and empty rows are not counted) "
-      + "in the CSV does not have enough information to make entries.\n"
-      + "The entries must follow that:\n"
-      + "\"challenge\" entries must have a description.\n"
-      + "\"research\" entries must have a reference and a doi.");
+    else if(allEntries.invalidEntries.length > 50){
+      return confirm(allEntries.invalidEntries.length
+      + typePlural + notEnoughInformation + "\n\n"
+      + entriesFormat + "\n\n"
+      + queueQuestion);
+    }else if(allEntries.invalidEntries.length > 0){
+      return confirm(specifiedEntries
+      + notEnoughInformation + "\n\n"
+      + entriesFormat + "\n\n"
+      + queueQuestion);
+    } else {
+      return true;
     }
   }
 

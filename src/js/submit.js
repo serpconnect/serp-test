@@ -1,4 +1,14 @@
 $(document).ready(function() {
+
+    window.addEventListener("beforeunload", function (e) {
+      if(queuedEntries.length > 0){
+         var message = "You have unsaved entries queued.\n\n"
+            + "Do you still want to leave?";
+         e.returnValue = message;
+         return message;
+      }
+    });
+
     var querystring = {}
     // find a more permanent fix for this
     // without setTimeout the additional-data elements don't appear in firefox,
@@ -250,9 +260,11 @@ $(document).ready(function() {
         // this click initiates an inspection and possibly change of the entry
         // contents
         $("td:first-child").on("click", function(evt) {
+            $("td:first-child").removeClass("selected-entry-in-queue");
             var entryNumber = $(this).data("entry-number");
             $("#submit-btn").data("currentEntry", entryNumber);
             var entry = queuedEntries[entryNumber];
+            $(this).addClass("selected-entry-in-queue");
             discardEntryChanges();
             fillAccordingToEntry(entry);
         });
@@ -523,6 +535,7 @@ $(document).ready(function() {
             pushEntry(getEntry());
         // used as the cancel button
         } else {
+            $("td:first-child").removeClass("selected-entry-in-queue");
             restoreButtons();
             discardEntryChanges();
         }
