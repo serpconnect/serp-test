@@ -181,4 +181,6 @@ $(function() {
     api.v1.account.self()
         .done(setup)
         .fail(xhr => window.location = "/login.html")
+
+    $("#profile").addClass("current-view");
 })

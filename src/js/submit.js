@@ -162,6 +162,7 @@ $(document).ready(function() {
         clearInputBoxes();
         clearCheckboxes();
         enableEffectFacet();
+        clearComplaints();
     }
 
     function clearCheckboxes() {
@@ -524,16 +525,16 @@ $(document).ready(function() {
     });
 
     $("#load-btn").on("click", function(evt) {
-        var test = window.user.self().done(ok=>{
-            var deleteAccountModal = {
+        window.user.self().done(user => {
+            var conf = {
                 desc: "Load an entry",
-                input: ok.entries
+                input: user.entries
             };
-            window.modals.listModal(deleteAccountModal,function (args) {
-                window.api.ajax("GET", window.api.host + "/v1/entry/"+args).done(ok=>{
-                      $("#" + ok.type + "-button").trigger("click");
-                      fillAccordingToEntry(ok,true);
-                })
+            window.modals.listModal(conf, function (entryId) {
+                api.v1.getEntry(entryId).done(entry => {
+                      $("#" + entry.type + "-button").trigger("click");
+                      fillAccordingToEntry(entry, true);
+                }) // Only error if race condition?
             })
         })
     });
