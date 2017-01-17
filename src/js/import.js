@@ -5,10 +5,11 @@
   }
 
   var entryType = ""
-  var researchMustHave = ["reference", "doi"];
+  var researchMustHave = ["reference"];
+  var researchOptional = ["doi"];
   var challengeMustHave = ["description"];
   var extraHeaders = ["contact", "date"];
-  var serp_secret_headers = researchMustHave.concat(challengeMustHave.concat(extraHeaders));
+  var serp_secret_headers = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
   var serp_taxonomy_leaves = ["Supply interventions",
                               "Solve new problem",
                               "Adapt testing",
@@ -147,11 +148,13 @@
         entryType = "research";
         $(".import-serp-select-wrapper.research").show().css("color", "red");
         $(".import-serp-select-wrapper.challenge").hide().css("color", "");
+        $(".import-serp-select-wrapper.researchOptional").show();
         document.getElementById("importCheckChallenge").checked = false;
       } else {
         entryType = "nothing";
         $(".import-serp-select-wrapper.research").show().css("color", "");
         $(".import-serp-select-wrapper.challenge").show().css("color", "");
+        $(".import-serp-select-wrapper.researchOptional").show();
       }
     });
     importCheckChallenge.addEventListener('change', (evt) => {
@@ -160,11 +163,13 @@
         entryType = "challenge";
         $(".import-serp-select-wrapper.research").hide().css("color", "");
         $(".import-serp-select-wrapper.challenge").show().css("color", "red");
+        $(".import-serp-select-wrapper.researchOptional").hide();
         document.getElementById("importCheckResearch").checked = false;
       } else {
         entryType = "nothing";
         $(".import-serp-select-wrapper.research").show().css("color", "");
         $(".import-serp-select-wrapper.challenge").show().css("color", "");
+        $(".import-serp-select-wrapper.researchOptional").show();
       }
     });
     //Default is research.
@@ -173,14 +178,18 @@
     uploadBtn.addEventListener('click', (evt) => {
       clearComplaintsImport();
       var newCollectionName = document.getElementById("importCollectionName").value;
+      var collectionNameValid = isCollectionNameValid(newCollectionName);
+      var entryTypeValid = isEntryTypeDataValid();
 
-      if(isUserInputValid(newCollectionName)){
-
+      if(collectionNameValid && entryTypeValid){
         var selected = [];
         $(".import-research").each(function() {
           selected.push($(this).val());
         });
         $(".import-challenge").each(function() {
+          selected.push($(this).val());
+        });
+        $(".import-researchOptional").each(function() {
           selected.push($(this).val());
         });
         $(".import-extraHeaders").each(function() {
@@ -191,7 +200,6 @@
         });
 
         var jsons = createjsons(selected, lines, CSVHeaders);
-
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
@@ -240,6 +248,8 @@
 
         mapToHeaders("challenge", challengeMustHave, CSVHeaders),
 
+        mapToHeaders("researchOptional", researchOptional, CSVHeaders),
+
         mapToHeaders("extraHeaders", extraHeaders, CSVHeaders),
 
         el("div.modal-divider"),
@@ -275,17 +285,20 @@
     })
   }
 
-  function isUserInputValid(newCollectionName){
-    var validUserInputData = true;
+  function isCollectionNameValid(newCollectionName){
     if(newCollectionName === ""){
-      validUserInputData = false;
       document.getElementById("importCollectionWrapper").appendChild(
         el("div.complaint#collectionComplaint", {text:"Please supply information"})
       );
+      return false;
     }
+    return true;
+  }
 
+  function isEntryTypeDataValid(){
+    var validEntryTypeData = true;
     if(entryType === "nothing"){
-      validUserInputData = false;
+      validEntryTypeData = false;
       document.getElementById("importEntryTypeWrapper").appendChild(
         el("div.complaint#entryTypeComplaint", {text:"Please supply information"})
       );
@@ -293,14 +306,14 @@
     else if(entryType === "research" ){
       var nothing = $(".import-research").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validUserInputData = !nothing.length
+      validEntryTypeData = !nothing.length
     }
     else if (entryType === "challenge" ){
       var nothing = $(".import-challenge").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validUserInputData = !nothing.length
+      validEntryTypeData = !nothing.length
     }
-    return validUserInputData;
+    return validEntryTypeData;
   }
 
   function createjsons(selected, lines, CSVHeaders){
@@ -432,15 +445,18 @@
         continue;
       }
       else if(curEntryType === "challenge"){
-        curjson.doi = null;
-        curjson.reference = null;
+        curjson.reference = "";
+        curjson.doi = "";
         if(!curjson.description){
           invalidEntries.push(i+1);
           continue;
         }
       } else if (curEntryType === "research"){
-        curjson.description = null;
-        if(!curjson.doi || !curjson.reference){
+        if(curjson.doi === undefined){
+          curjson.doi = "";
+        }
+        curjson.description = "";
+        if(!curjson.reference){
           invalidEntries.push(i+1);
           continue;
         }
