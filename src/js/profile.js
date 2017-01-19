@@ -87,10 +87,24 @@ $(function() {
                 .fail(xhr => complain(xhr.responseText))
         })
 
-        $("#input0").autocomplete({
-            source: friends,
-            appendTo: "#modal"
+        $("#input0").attr("data-list", friends );
+
+        new Awesomplete( ("#input0"), {
+            
+            filter: function(text, input) {
+                return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
+            },
+
+            replace: function(text) {
+                var before = this.input.value.match(/^.+,\s*|/)[0];
+                this.input.value = before + text;
+            }
         });
+
+        // $("#input0").autocomplete({
+        //     source: friends,
+        //     appendTo: "#modal"
+        // });
     }
 
     function submit(evt) {

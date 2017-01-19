@@ -691,13 +691,15 @@ $(document).ready(function() {
         var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
         var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
         $input.addClass("facet-additional-input");
+      
 
         // we need an id for jquery ui's autocomplete to work
         // idName e.g. "analysis" from "analysis-box" etc
         var idName = element.children().children().attr("id").split("-")[0];
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
-
+        $input.attr("data-list", autocompleteMap[idName] );
+       
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
@@ -708,8 +710,26 @@ $(document).ready(function() {
         $inputParent.append($removeBtn);
         element.append($inputParent);
 
+        $input.on("click", function(evt) { 
+            scrollDown()
+        })
+        //scrolls user to bottom of page so user
+        //can see all of the autocomplete window
+
+        new Awesomplete( ( "#"+idAttr ), {
+            
+            filter: function(text, input) {
+                return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
+            },
+
+            replace: function(text) {
+                var before = this.input.value.match(/^.+,\s*|/)[0];
+                this.input.value = before + text;
+            }
+        });
+
         // need an id for jquery ui's autocomplete to work
-        $("#" + idAttr).autocomplete({source: autocompleteMap[idName]});
+        // $("#" + idAttr).autocomplete({source: autocompleteMap[idName]});
         return $input;
     }
 
@@ -718,4 +738,9 @@ $(document).ready(function() {
     function jqEl(elementType) {
         return $(document.createElement(elementType));
     }
+
+    function scrollDown(){
+        $("html, body").animate({ scrollTop: $(document).height() }, 1000);
+    }
+
 });
