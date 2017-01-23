@@ -1,4 +1,5 @@
 (function (){
+  "use strict";
 
   window.import = {
     fromFile:importFromFile
@@ -29,6 +30,9 @@
                                    "improving", "planning", "design",
                                    "execution", "analysis", "people",
                                    "information", "sut", "other"];
+
+  var delimiters = ["Comma (,)" , "Semi-colon (;)" , "Colon (:)" , "Pipe (|)" , "Caret (^)", "Tilde (~)" , "Tab" , "Space"];
+  var delimitersTrue = ["," , ";" , ":" , "|" , "^", "~" , "\t", " "];
 
   function importFromFile(pushEntry){
     $("#input_file").click();
@@ -130,10 +134,9 @@
   }
 
   function convertCSVfiletoJsonAndQueue(csv, pushEntry){
-    var lines = CSVToArray(csv, ",");
-    var CSVHeaders = lines[0];
-
-    var modal = createImportModal(CSVHeaders);
+    var lines;
+    var CSVHeaders;
+    var modal = createImportModal();
 
     closeBtn.addEventListener('click', function() {
       destroy(modal);
@@ -141,6 +144,21 @@
     cancelBtn.addEventListener('click', function() {
       destroy(modal);
     }, false);
+
+    selectDelimiter.addEventListener("change", function() {
+      var delimiter = document.getElementById("selectDelimiter").value;
+      var trueDelimiter = delimitersTrue[delimiters.indexOf(delimiter)];
+      lines = CSVToArray(csv, trueDelimiter);
+      CSVHeaders = lines[0];
+      $(".import-option").each(function() {
+        $(this).remove();
+      });
+      for (var i = 0; i < CSVHeaders.length; i++){
+        var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
+        $(".import-select").append(option);
+      }
+
+    });
 
     importCheckResearch.addEventListener('change', (evt) => {
       clearComplaintsImportHeaders();
@@ -172,8 +190,9 @@
         $(".import-serp-select-wrapper.researchOptional").show();
       }
     });
-    //Default is research.
+    //Default entrytype is research and default delimiter is comma.
     document.getElementById("importCheckResearch").click();
+    document.getElementById("selectDelimiter").dispatchEvent(new Event('change'));
 
     uploadBtn.addEventListener('click', (evt) => {
       clearComplaintsImport();
@@ -183,19 +202,7 @@
 
       if(collectionNameValid && entryTypeValid){
         var selected = [];
-        $(".import-research").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-challenge").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-researchOptional").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-extraHeaders").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-leave").each(function() {
+        $(".import-select").each(function() {
           selected.push($(this).val());
         });
 
@@ -220,7 +227,7 @@
     $(".complaint.import-CSV").remove();
   }
 
-  function createImportModal(CSVHeaders){
+  function createImportModal(){
     var modal =
     el('div.modal', [
       el('div', [
@@ -231,7 +238,19 @@
           el("input.modal-input-box#importCollectionName",
               {type:"text", placeholder:"Name of new collection"}),
         ]),
-        el("div.bottom-divider.modal-divider"),
+        el("div.modal-divider"),
+
+        el("div.import-serp-select-complaint-wrapper.", [
+          el("div.import-serp-select-wrapper.", [
+            el("label", ["Select delimiter"]),
+            el("select#selectDelimiter", [
+              delimiters.map(function (e) {
+                return el("option", {value:e}, [e]);
+              })
+            ])
+          ])
+        ]),
+
         el("h1", ["Select your mapping"]),
         el("div#importEntryTypeWrapper", [
           el("div.import-checkbox-heading", ["Entry type "]),
@@ -244,18 +263,18 @@
 
         el("div.import-heading", ["General information"]),
 
-        mapToHeaders("research", researchMustHave, CSVHeaders),
+        mapToHeaders("research", researchMustHave),
 
-        mapToHeaders("challenge", challengeMustHave, CSVHeaders),
+        mapToHeaders("challenge", challengeMustHave),
 
-        mapToHeaders("researchOptional", researchOptional, CSVHeaders),
+        mapToHeaders("researchOptional", researchOptional),
 
-        mapToHeaders("extraHeaders", extraHeaders, CSVHeaders),
+        mapToHeaders("extraHeaders", extraHeaders),
 
         el("div.modal-divider"),
         el("div.import-heading", ["Taxonomy"]),
 
-        mapToHeaders("leave", serp_taxonomy_leaves, CSVHeaders),
+        mapToHeaders("leave", serp_taxonomy_leaves),
 
         el("div.modal-divider"),
         el('button#uploadBtn.btn', ["Upload"]),
@@ -267,17 +286,14 @@
     return modal;
   }
 
-  function mapToHeaders(serp, serpArray, CSVHeaders){
+  function mapToHeaders(serp, serpArray){
     return serpArray.map(function (h,i) {
       var serps =
       el("div.import-serp-select-complaint-wrapper." + serp, [
         el("div.import-serp-select-wrapper." + serp, [
           el("label", [h]),
-          el("select.import-"+serp, [
+          el("select.import-select."+serp, [
             el("option", {value:"nothing"}, ["ignore"]),
-            CSVHeaders.map(function (e) {
-              return el("option", {value:e}, [e]);
-            })
           ])
         ])
       ])
@@ -304,12 +320,12 @@
       );
     }
     else if(entryType === "research" ){
-      var nothing = $(".import-research").filter((i,e) => e.value === "nothing");
+      var nothing = $(".import-select.research").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
     else if (entryType === "challenge" ){
-      var nothing = $(".import-challenge").filter((i,e) => e.value === "nothing");
+      var nothing = $(".import-select.challenge").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
