@@ -6,6 +6,14 @@
  */
 
 (function () {
+var ausomplete = window.ausomplete = {}
+ ausomplete.autocompleteFilter = function(text, input) {
+	                return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
+}
+ ausomplete.autocompleteUpdate =function(text) {
+	                var before = this.input.value.match(/^.+,\s*|/)[0];
+	                this.input.value = before + text;
+}
 
 var _ = function (input, o) {
 	var me = this;
@@ -447,4 +455,4 @@ if (typeof module === "object" && module.exports) {
 
 return _;
 
-}());
+}(window));

@@ -698,7 +698,6 @@ $(document).ready(function() {
         var idName = element.children().children().attr("id").split("-")[0];
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
-        $input.attr("data-list", autocompleteMap[idName] );
        
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
@@ -716,20 +715,11 @@ $(document).ready(function() {
         //scrolls user to bottom of page so user
         //can see all of the autocomplete window
 
-        new Awesomplete( ( "#"+idAttr ), {
-            
-            filter: function(text, input) {
-                return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
-            },
-
-            replace: function(text) {
-                var before = this.input.value.match(/^.+,\s*|/)[0];
-                this.input.value = before + text;
-            }
-        });
-
-        // need an id for jquery ui's autocomplete to work
-        // $("#" + idAttr).autocomplete({source: autocompleteMap[idName]});
+        new Awesomplete( "#"+idAttr, { 
+            list: autocompleteMap[idName], 
+            filter: ausomplete.autocompleteFilter, 
+            replace: ausomplete.autocompleteUpdate
+        })
         return $input;
     }
 
