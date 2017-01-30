@@ -5,31 +5,56 @@
     fromFile:importFromFile
   }
 
+  // vars with "True" refers to the strings that will be handled by the system.
+  // vars without "True" is what the user will see.
   var entryType = ""
-  var researchMustHave = ["reference"];
-  var researchOptional = ["doi"];
-  var challengeMustHave = ["description"];
-  var extraHeaders = ["contact", "date"];
-  var serp_secret_headers = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
-  var serp_taxonomy_leaves = ["Supply interventions",
-                              "Solve new problem",
-                              "Adapt testing",
-                              "Assess testing",
-                              "Improve testing",
-                              "Test planning",
-                              "Test design",
-                              "Test execution",
-                              "Test analysis",
-                              "People related constraints",
-                              "Availability of information",
-                              "Properties of SUT",
-                              "Other"];
-  var serp = serp_secret_headers.concat(serp_taxonomy_leaves);
-  var serp_taxonomy_leaves_true = ["intervention",
-                                   "solving", "adapting", "assessing",
-                                   "improving", "planning", "design",
-                                   "execution", "analysis", "people",
-                                   "information", "sut", "other"];
+  var researchMustHave = ["Reference"];
+  var researchMustHaveTrue = ["reference"];
+  var researchOptional = ["DOI"];
+  var researchOptionalTrue = ["doi"];
+  var challengeMustHave = ["Description"];
+  var challengeMustHaveTrue = ["description"];
+  var extraHeaders = ["Contact",
+                      "Date"];
+  var extraHeadersTrue = ["contact",
+                          "date"];
+  var serpSecretHeaders = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
+  var serpSecretHeadersTrue = researchMustHaveTrue.concat(challengeMustHaveTrue.concat(researchOptionalTrue.concat(extraHeadersTrue)));
+
+  var intervention = ["Intervention"];
+  var interventionLeaves = ["Supply interventions"];
+  var interventionLeavesTrue = ["intervention"];
+  var effect = ["Effect"];
+  var effectLeaves = ["Solve new problem",
+                      "Adapt testing",
+                      "Assess testing",
+                      "Improve testing"];
+  var effectLeavesTrue = ["solving",
+                          "adapting",
+                          "assessing",
+                          "improving"];
+  var scope = ["Scope"];
+  var scopeLeaves = ["Test planning",
+                    "Test design",
+                    "Test execution",
+                    "Test analysis"];
+  var scopeLeavesTrue = ["planning",
+                         "design",
+                         "execution",
+                         "analysis"];
+  var context = ["Context"];
+  var contextLeaves = ["People related constraints",
+                       "Availability of information",
+                       "Properties of SUT",
+                       "Other"];
+  var contextLeavesTrue = ["people",
+                           "information",
+                           "sut",
+                           "other"];
+  var serpTaxonomyLeaves = interventionLeaves.concat(effectLeaves.concat(scopeLeaves.concat(contextLeaves)));
+  var serpTaxonomyLeavesTrue = interventionLeavesTrue.concat(effectLeavesTrue.concat(scopeLeavesTrue.concat(contextLeavesTrue)));
+
+  var serp = serpSecretHeaders.concat(serpTaxonomyLeaves);
 
   var delimiters = ["Comma (,)" , "Semi-colon (;)" , "Colon (:)" , "Pipe (|)" , "Caret (^)", "Tilde (~)" , "Tab" , "Space"];
   var delimitersTrue = ["," , ";" , ":" , "|" , "^", "~" , "\t", " "];
@@ -261,7 +286,7 @@
         ]),
         el("div.modal-divider"),
 
-        el("div.import-heading", ["General information"]),
+        el("h3", ["General information"]),
 
         mapToHeaders("research", researchMustHave),
 
@@ -272,9 +297,19 @@
         mapToHeaders("extraHeaders", extraHeaders),
 
         el("div.modal-divider"),
-        el("div.import-heading", ["Taxonomy"]),
+        el("h3", ["Taxonomy"]),
 
-        mapToHeaders("leave", serp_taxonomy_leaves),
+        el("div.taxonomy-heading", intervention),
+        mapToHeaders("intervention", interventionLeaves),
+
+        el("div.taxonomy-heading", effect),
+        mapToHeaders("effect", effectLeaves),
+
+        el("div.taxonomy-heading", scope),
+        mapToHeaders("scope", scopeLeaves),
+
+        el("div.taxonomy-heading", context),
+        mapToHeaders("context", contextLeaves),
 
         el("div.modal-divider"),
         el('button#uploadBtn.btn', ["Upload"]),
@@ -344,18 +379,25 @@
         if(currentcell) {
           if(selected[j] != "nothing"){
             var currentHeader = serp[j];
-            var serpIndex = serp_taxonomy_leaves.indexOf(currentHeader);
+
+            var secretIndex = serpSecretHeaders.indexOf(currentHeader);
+            if(secretIndex !== -1){
+              var trueSecret = serpSecretHeadersTrue[secretIndex];
+              obj[trueSecret] = currentcell;
+              continue;
+            }
+
+            var serpIndex = serpTaxonomyLeaves.indexOf(currentHeader);
             if(serpIndex !== -1){
               var serpArray = [];
-              //The leave can be a vector of strings. Split on comma.
+              //The taxonomy leave can be a vector of strings. Split on comma.
               var taxonomyLeaveStrings = currentcell.split(",");
               for(var k = 0; k < taxonomyLeaveStrings.length; k++){
                 serpArray.push(taxonomyLeaveStrings[k]);
               }
-              var trueSerp = serp_taxonomy_leaves_true[serpIndex];
+              var trueSerp = serpTaxonomyLeavesTrue[serpIndex];
               serpClassification[trueSerp] = serpArray;
-            }else {
-              obj[currentHeader] = currentcell;
+              continue;
             }
           }
         }
@@ -506,7 +548,7 @@
   function printStatistics(allEntries, fileType){
     var entriesFormat = "The entries must follow that:\n"
                       + "\"challenge\" entries must have a description.\n"
-                      + "\"research\" entries must have a reference and a doi.";
+                      + "\"research\" entries must have a reference.";
 
     var queueQuestion = "Do you want to queue the "
                       + allEntries.validEntries.length
