@@ -691,13 +691,14 @@ $(document).ready(function() {
         var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
         var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
         $input.addClass("facet-additional-input");
+      
 
         // we need an id for jquery ui's autocomplete to work
         // idName e.g. "analysis" from "analysis-box" etc
         var idName = element.children().children().attr("id").split("-")[0];
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
-
+       
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
@@ -708,8 +709,17 @@ $(document).ready(function() {
         $inputParent.append($removeBtn);
         element.append($inputParent);
 
-        // need an id for jquery ui's autocomplete to work
-        $("#" + idAttr).autocomplete({source: autocompleteMap[idName]});
+        $input.on("click", function(evt) { 
+            scrollDown()
+        })
+        //scrolls user to bottom of page so user
+        //can see all of the autocomplete window
+
+        new Awesomplete( "#"+idAttr, { 
+            list: autocompleteMap[idName], 
+            filter: ausomplete.autocompleteFilter, 
+            replace: ausomplete.autocompleteUpdate
+        })
         return $input;
     }
 
@@ -718,4 +728,9 @@ $(document).ready(function() {
     function jqEl(elementType) {
         return $(document.createElement(elementType));
     }
+
+    function scrollDown(){
+        $("html, body").animate({ scrollTop: $(document).height() }, 1000);
+    }
+
 });

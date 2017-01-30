@@ -1,10 +1,11 @@
 extends base
 block view-specific-scripts
-    script(src="//code.jquery.com/ui/1.11.4/jquery-ui.js")
     script(src="js/util/el.js")
     script(src="js/modal.js")
     script(src="js/submit.js")
     script(src="js/import.js")
+    script(src="js/util/awesomplete.js")
+
 block content
     div.submit-view-area-wrapper
         div.form-content
@@ -81,7 +82,7 @@ does not consider any benchmark with which to compare the effects \
 of an intervention. Novelty relates to the testing rather than the \
 testing context. Furthermore, the focus is on solving a problem \
 rather than assessing the situation.").sub-facet Solve new problem
-                label.checkbox.ui-widget
+                label.checkbox
                     input(name="solving" type="checkbox")#solving-box
                     span
             label(alt="Adapting: The focus of the challenge description or \

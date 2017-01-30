@@ -87,10 +87,11 @@ $(function() {
                 .fail(xhr => complain(xhr.responseText))
         })
 
-        $("#input0").autocomplete({
-            source: friends,
-            appendTo: "#modal"
-        });
+        new Awesomplete('#input0', { 
+                        list: friends, 
+                        filter: ausomplete.autocompleteFilter, 
+                        replace: ausomplete.autocompleteUpdate
+                })
     }
 
     function submit(evt) {
