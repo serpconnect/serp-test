@@ -5,59 +5,61 @@
     fromFile:importFromFile
   }
 
-  // vars with "True" refers to the strings that will be handled by the system.
-  // vars without "True" is what the user will see.
   var entryType = ""
-  var researchMustHave = ["Reference"];
-  var researchMustHaveTrue = ["reference"];
-  var researchOptional = ["DOI"];
-  var researchOptionalTrue = ["doi"];
-  var challengeMustHave = ["Description"];
-  var challengeMustHaveTrue = ["description"];
-  var extraHeaders = ["Contact",
-                      "Date"];
-  var extraHeadersTrue = ["contact",
-                          "date"];
+  var researchMustHave = [
+      {value: "reference", display: "Reference"}
+  ];
+  var researchOptional = [
+      {value: "doi", display: "DOI"}
+  ];
+  var challengeMustHave = [
+      {value: "description", display: "Description"}
+  ];
+  var extraHeaders = [
+      {value: "contact", display: "Contact"},
+      {value: "date", display: "Date"}
+  ];
   var serpSecretHeaders = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
-  var serpSecretHeadersTrue = researchMustHaveTrue.concat(challengeMustHaveTrue.concat(researchOptionalTrue.concat(extraHeadersTrue)));
 
   var intervention = ["Intervention"];
-  var interventionLeaves = ["Supply interventions"];
-  var interventionLeavesTrue = ["intervention"];
+  var interventionLeaves = [
+      {value: "intervention", display: "Supply interventions"},
+  ];
   var effect = ["Effect"];
-  var effectLeaves = ["Solve new problem",
-                      "Adapt testing",
-                      "Assess testing",
-                      "Improve testing"];
-  var effectLeavesTrue = ["solving",
-                          "adapting",
-                          "assessing",
-                          "improving"];
+  var effectLeaves = [
+      {value: "solving", display: "Solve new problem"},
+      {value: "adapting", display: "Adapt testing"},
+      {value: "assessing", display: "Assess testing"},
+      {value: "improving", display: "Improve testing"}
+  ];
   var scope = ["Scope"];
-  var scopeLeaves = ["Test planning",
-                    "Test design",
-                    "Test execution",
-                    "Test analysis"];
-  var scopeLeavesTrue = ["planning",
-                         "design",
-                         "execution",
-                         "analysis"];
+  var scopeLeaves = [
+      {value: "planning", display: "Test planning"},
+      {value: "design", display: "Test design"},
+      {value: "execution", display: "Test execution"},
+      {value: "analysis", display: "Test analysis"}
+  ];
   var context = ["Context"];
-  var contextLeaves = ["People related constraints",
-                       "Availability of information",
-                       "Properties of SUT",
-                       "Other"];
-  var contextLeavesTrue = ["people",
-                           "information",
-                           "sut",
-                           "other"];
+  var contextLeaves = [
+      {value: "people", display: "People related constraints"},
+      {value: "information", display: "Availability of information"},
+      {value: "sut", display: "Properties of SUT"},
+      {value: "other", display: "Other"}
+  ];
   var serpTaxonomyLeaves = interventionLeaves.concat(effectLeaves.concat(scopeLeaves.concat(contextLeaves)));
-  var serpTaxonomyLeavesTrue = interventionLeavesTrue.concat(effectLeavesTrue.concat(scopeLeavesTrue.concat(contextLeavesTrue)));
 
   var serp = serpSecretHeaders.concat(serpTaxonomyLeaves);
 
-  var delimiters = ["Comma (,)" , "Semi-colon (;)" , "Colon (:)" , "Pipe (|)" , "Caret (^)", "Tilde (~)" , "Tab" , "Space"];
-  var delimitersTrue = ["," , ";" , ":" , "|" , "^", "~" , "\t", " "];
+  var delimiters = [
+      {value: ',' , display: 'Comma (,)'},
+      {value: ';' , display: 'Semi-Colon (;)'},
+      {value: ':' , display: 'Colon (:)'},
+      {value: '|' , display: 'Pipe (|)'},
+      {value: '^' , display: 'Caret (^)'},
+      {value: '~' , display: 'Tilde (~)'},
+      {value: '\t' , display: 'Tab'},
+      {value: ' ' , display: 'Space'}
+  ];
 
   function importFromFile(pushEntry){
     $("#input_file").click();
@@ -171,9 +173,8 @@
     }, false);
 
     selectDelimiter.addEventListener("change", function() {
-      var delimiter = document.getElementById("selectDelimiter").value;
-      var trueDelimiter = delimitersTrue[delimiters.indexOf(delimiter)];
-      lines = CSVToArray(csv, trueDelimiter);
+      var delimiter = this.value;
+      lines = CSVToArray(csv, delimiter);
       CSVHeaders = lines[0];
       $(".import-option").each(function() {
         $(this).remove();
@@ -265,13 +266,12 @@
         ]),
         el("div.modal-divider"),
 
-        el("div.import-serp-select-complaint-wrapper.", [
-          el("div.import-serp-select-wrapper.", [
+        el("div.import-serp-select-complaint-wrapper." + "delimiter", [
+          el("div.import-serp-select-wrapper." + "delimiter", [
             el("label", ["Select delimiter"]),
             el("select#selectDelimiter", [
-              delimiters.map(function (e) {
-                return el("option", {value:e}, [e]);
-              })
+              delimiters.map(delimiter =>
+              el('option', { value: delimiter.value }, [ delimiter.display ])),
             ])
           ])
         ]),
@@ -322,19 +322,19 @@
   }
 
   function mapToHeaders(serp, serpArray){
-    return serpArray.map(function (h,i) {
+    return serpArray.map(serpItem => {
       var serps =
       el("div.import-serp-select-complaint-wrapper." + serp, [
         el("div.import-serp-select-wrapper." + serp, [
-          el("label", [h]),
-          el("select.import-select."+serp, [
+          el("label", [serpItem.display]),
+          el("select.import-select." + serp, [
             el("option", {value:"nothing"}, ["ignore"]),
           ])
         ])
       ])
       return serps;
-    })
-  }
+  })
+}
 
   function isCollectionNameValid(newCollectionName){
     if(newCollectionName === ""){
@@ -374,30 +374,22 @@
       var currentline = lines[i];
       var serpClassification = {};
       for(var j=0;j<serp.length;j++){
-        var currentcell = currentline[CSVHeaders.indexOf(selected[j])];
+        var currentCell = currentline[CSVHeaders.indexOf(selected[j])];
         //Check that the cell is not empty.
-        if(currentcell) {
+        if(currentCell) {
           if(selected[j] != "nothing"){
             var currentHeader = serp[j];
-
-            var secretIndex = serpSecretHeaders.indexOf(currentHeader);
-            if(secretIndex !== -1){
-              var trueSecret = serpSecretHeadersTrue[secretIndex];
-              obj[trueSecret] = currentcell;
-              continue;
-            }
-
-            var serpIndex = serpTaxonomyLeaves.indexOf(currentHeader);
-            if(serpIndex !== -1){
+            //Check if currentHeader is a taxonomy leave.
+            if(serpTaxonomyLeaves.indexOf(currentHeader) !== -1){
               var serpArray = [];
               //The taxonomy leave can be a vector of strings. Split on comma.
-              var taxonomyLeaveStrings = currentcell.split(",");
+              var taxonomyLeaveStrings = currentCell.split(",");
               for(var k = 0; k < taxonomyLeaveStrings.length; k++){
                 serpArray.push(taxonomyLeaveStrings[k]);
               }
-              var trueSerp = serpTaxonomyLeavesTrue[serpIndex];
-              serpClassification[trueSerp] = serpArray;
-              continue;
+              serpClassification[currentHeader.value] = serpArray;
+            } else {
+              obj[currentHeader.value] = currentCell;
             }
           }
         }
