@@ -6,6 +6,17 @@
  */
 
 (function () {
+	
+var ausomplete = window.ausomplete = {}
+ ausomplete.autocompleteFilter = function(text, input) {
+	  return Awesomplete.FILTER_CONTAINS(text, input.match(/[^,]*$/)[0]);
+//afaik this regex takes matches strings with the input
+// at the begginning, end and middle of the input
+}
+ ausomplete.autocompleteUpdate =function(text) {
+	var before = this.input.value.match(/^.+,\s*|/)[0];
+	this.input.value = before + text;
+}
 
 var _ = function (input, o) {
 	var me = this;
@@ -92,7 +103,6 @@ var _ = function (input, o) {
 			if (li && evt.button === 0) {  // Only select on left click
 				evt.preventDefault();
 				me.select(li, evt.target);
-				console.log('here')
 			}
 		}
 	}});
@@ -447,4 +457,4 @@ if (typeof module === "object" && module.exports) {
 
 return _;
 
-}());
+}(window));

@@ -1,34 +1,65 @@
 (function (){
+  "use strict";
 
   window.import = {
     fromFile:importFromFile
   }
 
   var entryType = ""
-  var researchMustHave = ["reference"];
-  var researchOptional = ["doi"];
-  var challengeMustHave = ["description"];
-  var extraHeaders = ["contact", "date"];
-  var serp_secret_headers = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
-  var serp_taxonomy_leaves = ["Supply interventions",
-                              "Solve new problem",
-                              "Adapt testing",
-                              "Assess testing",
-                              "Improve testing",
-                              "Test planning",
-                              "Test design",
-                              "Test execution",
-                              "Test analysis",
-                              "People related constraints",
-                              "Availability of information",
-                              "Properties of SUT",
-                              "Other"];
-  var serp = serp_secret_headers.concat(serp_taxonomy_leaves);
-  var serp_taxonomy_leaves_true = ["intervention",
-                                   "solving", "adapting", "assessing",
-                                   "improving", "planning", "design",
-                                   "execution", "analysis", "people",
-                                   "information", "sut", "other"];
+  var researchMustHave = [
+      {value: "reference", display: "Reference"}
+  ];
+  var researchOptional = [
+      {value: "doi", display: "DOI"}
+  ];
+  var challengeMustHave = [
+      {value: "description", display: "Description"}
+  ];
+  var extraHeaders = [
+      {value: "contact", display: "Contact"},
+      {value: "date", display: "Date"}
+  ];
+  var serpSecretHeaders = researchMustHave.concat(challengeMustHave.concat(researchOptional.concat(extraHeaders)));
+
+  var intervention = ["Intervention"];
+  var interventionLeaves = [
+      {value: "intervention", display: "Supply interventions"},
+  ];
+  var effect = ["Effect"];
+  var effectLeaves = [
+      {value: "solving", display: "Solve new problem"},
+      {value: "adapting", display: "Adapt testing"},
+      {value: "assessing", display: "Assess testing"},
+      {value: "improving", display: "Improve testing"}
+  ];
+  var scope = ["Scope"];
+  var scopeLeaves = [
+      {value: "planning", display: "Test planning"},
+      {value: "design", display: "Test design"},
+      {value: "execution", display: "Test execution"},
+      {value: "analysis", display: "Test analysis"}
+  ];
+  var context = ["Context"];
+  var contextLeaves = [
+      {value: "people", display: "People related constraints"},
+      {value: "information", display: "Availability of information"},
+      {value: "sut", display: "Properties of SUT"},
+      {value: "other", display: "Other"}
+  ];
+  var serpTaxonomyLeaves = interventionLeaves.concat(effectLeaves.concat(scopeLeaves.concat(contextLeaves)));
+
+  var serp = serpSecretHeaders.concat(serpTaxonomyLeaves);
+
+  var delimiters = [
+      {value: ',' , display: 'Comma (,)'},
+      {value: ';' , display: 'Semi-Colon (;)'},
+      {value: ':' , display: 'Colon (:)'},
+      {value: '|' , display: 'Pipe (|)'},
+      {value: '^' , display: 'Caret (^)'},
+      {value: '~' , display: 'Tilde (~)'},
+      {value: '\t' , display: 'Tab'},
+      {value: ' ' , display: 'Space'}
+  ];
 
   function importFromFile(pushEntry){
     $("#input_file").click();
@@ -130,10 +161,9 @@
   }
 
   function convertCSVfiletoJsonAndQueue(csv, pushEntry){
-    var lines = CSVToArray(csv, ",");
-    var CSVHeaders = lines[0];
-
-    var modal = createImportModal(CSVHeaders);
+    var lines;
+    var CSVHeaders;
+    var modal = createImportModal();
 
     closeBtn.addEventListener('click', function() {
       destroy(modal);
@@ -141,6 +171,20 @@
     cancelBtn.addEventListener('click', function() {
       destroy(modal);
     }, false);
+
+    selectDelimiter.addEventListener("change", function() {
+      var delimiter = this.value;
+      lines = CSVToArray(csv, delimiter);
+      CSVHeaders = lines[0];
+      $(".import-option").each(function() {
+        $(this).remove();
+      });
+      for (var i = 0; i < CSVHeaders.length; i++){
+        var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
+        $(".import-select").append(option);
+      }
+
+    });
 
     importCheckResearch.addEventListener('change', (evt) => {
       clearComplaintsImportHeaders();
@@ -172,8 +216,9 @@
         $(".import-serp-select-wrapper.researchOptional").show();
       }
     });
-    //Default is research.
+    //Default entrytype is research and default delimiter is comma.
     document.getElementById("importCheckResearch").click();
+    document.getElementById("selectDelimiter").dispatchEvent(new Event('change'));
 
     uploadBtn.addEventListener('click', (evt) => {
       clearComplaintsImport();
@@ -183,19 +228,7 @@
 
       if(collectionNameValid && entryTypeValid){
         var selected = [];
-        $(".import-research").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-challenge").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-researchOptional").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-extraHeaders").each(function() {
-          selected.push($(this).val());
-        });
-        $(".import-leave").each(function() {
+        $(".import-select").each(function() {
           selected.push($(this).val());
         });
 
@@ -220,7 +253,7 @@
     $(".complaint.import-CSV").remove();
   }
 
-  function createImportModal(CSVHeaders){
+  function createImportModal(){
     var modal =
     el('div.modal', [
       el('div', [
@@ -231,7 +264,18 @@
           el("input.modal-input-box#importCollectionName",
               {type:"text", placeholder:"Name of new collection"}),
         ]),
-        el("div.bottom-divider.modal-divider"),
+        el("div.modal-divider"),
+
+        el("div.import-serp-select-complaint-wrapper." + "delimiter", [
+          el("div.import-serp-select-wrapper." + "delimiter", [
+            el("label", ["Select delimiter"]),
+            el("select#selectDelimiter", [
+              delimiters.map(delimiter =>
+              el('option', { value: delimiter.value }, [ delimiter.display ])),
+            ])
+          ])
+        ]),
+
         el("h1", ["Select your mapping"]),
         el("div#importEntryTypeWrapper", [
           el("div.import-checkbox-heading", ["Entry type "]),
@@ -242,20 +286,30 @@
         ]),
         el("div.modal-divider"),
 
-        el("div.import-heading", ["General information"]),
+        el("h3", ["General information"]),
 
-        mapToHeaders("research", researchMustHave, CSVHeaders),
+        mapToHeaders("research", researchMustHave),
 
-        mapToHeaders("challenge", challengeMustHave, CSVHeaders),
+        mapToHeaders("challenge", challengeMustHave),
 
-        mapToHeaders("researchOptional", researchOptional, CSVHeaders),
+        mapToHeaders("researchOptional", researchOptional),
 
-        mapToHeaders("extraHeaders", extraHeaders, CSVHeaders),
+        mapToHeaders("extraHeaders", extraHeaders),
 
         el("div.modal-divider"),
-        el("div.import-heading", ["Taxonomy"]),
+        el("h3", ["Taxonomy"]),
 
-        mapToHeaders("leave", serp_taxonomy_leaves, CSVHeaders),
+        el("div.taxonomy-heading", intervention),
+        mapToHeaders("intervention", interventionLeaves),
+
+        el("div.taxonomy-heading", effect),
+        mapToHeaders("effect", effectLeaves),
+
+        el("div.taxonomy-heading", scope),
+        mapToHeaders("scope", scopeLeaves),
+
+        el("div.taxonomy-heading", context),
+        mapToHeaders("context", contextLeaves),
 
         el("div.modal-divider"),
         el('button#uploadBtn.btn', ["Upload"]),
@@ -267,23 +321,20 @@
     return modal;
   }
 
-  function mapToHeaders(serp, serpArray, CSVHeaders){
-    return serpArray.map(function (h,i) {
+  function mapToHeaders(serp, serpArray){
+    return serpArray.map(serpItem => {
       var serps =
       el("div.import-serp-select-complaint-wrapper." + serp, [
         el("div.import-serp-select-wrapper." + serp, [
-          el("label", [h]),
-          el("select.import-"+serp, [
+          el("label", [serpItem.display]),
+          el("select.import-select." + serp, [
             el("option", {value:"nothing"}, ["ignore"]),
-            CSVHeaders.map(function (e) {
-              return el("option", {value:e}, [e]);
-            })
           ])
         ])
       ])
       return serps;
-    })
-  }
+  })
+}
 
   function isCollectionNameValid(newCollectionName){
     if(newCollectionName === ""){
@@ -304,12 +355,12 @@
       );
     }
     else if(entryType === "research" ){
-      var nothing = $(".import-research").filter((i,e) => e.value === "nothing");
+      var nothing = $(".import-select.research").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
     else if (entryType === "challenge" ){
-      var nothing = $(".import-challenge").filter((i,e) => e.value === "nothing");
+      var nothing = $(".import-select.challenge").filter((i,e) => e.value === "nothing");
       nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
@@ -323,23 +374,22 @@
       var currentline = lines[i];
       var serpClassification = {};
       for(var j=0;j<serp.length;j++){
-        var currentcell = currentline[CSVHeaders.indexOf(selected[j])];
+        var currentCell = currentline[CSVHeaders.indexOf(selected[j])];
         //Check that the cell is not empty.
-        if(currentcell) {
+        if(currentCell) {
           if(selected[j] != "nothing"){
             var currentHeader = serp[j];
-            var serpIndex = serp_taxonomy_leaves.indexOf(currentHeader);
-            if(serpIndex !== -1){
+            //Check if currentHeader is a taxonomy leave.
+            if(serpTaxonomyLeaves.indexOf(currentHeader) !== -1){
               var serpArray = [];
-              //The leave can be a vector of strings. Split on comma.
-              var taxonomyLeaveStrings = currentcell.split(",");
+              //The taxonomy leave can be a vector of strings. Split on comma.
+              var taxonomyLeaveStrings = currentCell.split(",");
               for(var k = 0; k < taxonomyLeaveStrings.length; k++){
                 serpArray.push(taxonomyLeaveStrings[k]);
               }
-              var trueSerp = serp_taxonomy_leaves_true[serpIndex];
-              serpClassification[trueSerp] = serpArray;
-            }else {
-              obj[currentHeader] = currentcell;
+              serpClassification[currentHeader.value] = serpArray;
+            } else {
+              obj[currentHeader.value] = currentCell;
             }
           }
         }
@@ -490,7 +540,7 @@
   function printStatistics(allEntries, fileType){
     var entriesFormat = "The entries must follow that:\n"
                       + "\"challenge\" entries must have a description.\n"
-                      + "\"research\" entries must have a reference and a doi.";
+                      + "\"research\" entries must have a reference.";
 
     var queueQuestion = "Do you want to queue the "
                       + allEntries.validEntries.length
