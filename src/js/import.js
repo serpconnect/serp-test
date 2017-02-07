@@ -90,7 +90,6 @@
   }
 
   function convertJsonfileToJsonAndQueue(data, pushEntry){
-
     var newCollectionModal = createjsonModal();
 
     window.modals.optionsModal(newCollectionModal,function (newCollectionName) {
@@ -103,14 +102,12 @@
       }
       else {
         var jsons = JSON.parse(data);
-
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
         if(printStatistics(allEntries, "json")){
           createCollection(validEntries, newCollectionName, pushEntry, modal);
         }
-
       }
     })
   }
@@ -176,14 +173,11 @@
       var delimiter = this.value;
       lines = CSVToArray(csv, delimiter);
       CSVHeaders = lines[0];
-      $(".import-option").each(function() {
-        $(this).remove();
-      });
+      $(".import-option").remove();
       for (var i = 0; i < CSVHeaders.length; i++){
         var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
         $(".import-select").append(option);
       }
-
     });
 
     importCheckResearch.addEventListener('change', (evt) => {
@@ -219,6 +213,15 @@
     //Default entrytype is research and default delimiter is comma.
     document.getElementById("importCheckResearch").click();
     document.getElementById("selectDelimiter").dispatchEvent(new Event('change'));
+    $(".import-select").css("visibility", "hidden");
+
+    $(".import-checkbox").click(function() {
+      if($(this).is(":checked")){
+        $(this).parent().find(".import-select").css("visibility", "visible");
+      } else {
+        $(this).parent().find(".import-select").css("visibility", "hidden");
+      }
+    });
 
     uploadBtn.addEventListener('click', (evt) => {
       clearComplaintsImport();
@@ -227,12 +230,7 @@
       var entryTypeValid = isEntryTypeDataValid();
 
       if(collectionNameValid && entryTypeValid){
-        var selected = [];
-        $(".import-select").each(function() {
-          selected.push($(this).val());
-        });
-
-        var jsons = createjsons(selected, lines, CSVHeaders);
+        var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
@@ -327,8 +325,11 @@
       el("div.import-serp-select-complaint-wrapper." + serp, [
         el("div.import-serp-select-wrapper." + serp, [
           el("label", [serpItem.display]),
-          el("select.import-select." + serp, [
-            el("option", {value:"nothing"}, ["ignore"]),
+          el("div.import-checkbox-and-select." + serp, [
+            el("input.import-checkbox." + serp, {type:"checkbox"}),
+            el("select.import-select." + serp, [
+              el("option", {value:"unspecified"}, ["ignore"]),
+            ])
           ])
         ])
       ])
@@ -355,42 +356,53 @@
       );
     }
     else if(entryType === "research" ){
-      var nothing = $(".import-select.research").filter((i,e) => e.value === "nothing");
-      nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
+      var nothing = $(".import-checkbox.research").filter(":not(:checked)");
+      nothing.parent().parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
     else if (entryType === "challenge" ){
-      var nothing = $(".import-select.challenge").filter((i,e) => e.value === "nothing");
-      nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
+      var nothing = $(".import-checkbox.challenge").filter(":not(:checked)");
+      nothing.parent().parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
       validEntryTypeData = !nothing.length
     }
     return validEntryTypeData;
   }
 
-  function createjsons(selected, lines, CSVHeaders){
+  function createjsons(lines, CSVHeaders){
+    var selected = $(".import-checkbox").filter(":checked").
+          parent().find(".import-select").map((i, e) => e.value).toArray();
+    var labels = $(".import-checkbox").filter(":checked").
+          parent().parent().find("label").map((i, e) => e.textContent).toArray();
     var jsons = [];
     for(var i=1;i<lines.length;i++){
+      var currentLine = lines[i];
       var obj = {};
-      var currentline = lines[i];
       var serpClassification = {};
-      for(var j=0;j<serp.length;j++){
-        var currentCell = currentline[CSVHeaders.indexOf(selected[j])];
-        //Check that the cell is not empty.
-        if(currentCell) {
-          if(selected[j] != "nothing"){
-            var currentHeader = serp[j];
-            //Check if currentHeader is a taxonomy leave.
-            if(serpTaxonomyLeaves.indexOf(currentHeader) !== -1){
-              var serpArray = [];
-              //The taxonomy leave can be a vector of strings. Split on comma.
-              var taxonomyLeaveStrings = currentCell.split(",");
-              for(var k = 0; k < taxonomyLeaveStrings.length; k++){
-                serpArray.push(taxonomyLeaveStrings[k]);
+      for(var j=0;j<selected.length;j++){
+        var currentHeader = serp.find(value => value.display === labels[j]);
+        var isTaxonomyLeave = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
+        if(selected[j] !== "unspecified"){
+          var currentCell = currentLine[CSVHeaders.indexOf(selected[j])];
+          //Check that the cell is not empty.
+          if(currentCell) {
+              //Check if currentHeader is a taxonomy leave.
+              if(isTaxonomyLeave){
+                var serpArray = [];
+                //The taxonomy leave can be a vector of strings. Split on comma.
+                var taxonomyLeaveStrings = currentCell.split(",");
+                for(var k = 0; k < taxonomyLeaveStrings.length; k++){
+                  serpArray.push(taxonomyLeaveStrings[k]);
+                }
+                serpClassification[currentHeader.value] = serpArray;
+              } else {
+                obj[currentHeader.value] = currentCell;
               }
-              serpClassification[currentHeader.value] = serpArray;
-            } else {
-              obj[currentHeader.value] = currentCell;
-            }
+          }
+        } else {
+          if(isTaxonomyLeave){
+            serpClassification[currentHeader.value] = ["unspecified"];
+          } else {
+            obj[currentHeader.value] = "unspecified";
           }
         }
       }
