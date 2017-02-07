@@ -230,9 +230,7 @@
       var entryTypeValid = isEntryTypeDataValid();
 
       if(collectionNameValid && entryTypeValid){
-        var selected = $(".import-checkbox").filter(":checked").parent().find(".import-select").map((i, e) => e.value).toArray();
-        var labels = $(".import-checkbox").filter(":checked").parent().parent().find("label").map((i, e) => e.innerHTML).toArray();
-        var jsons = createjsons(selected, labels, lines, CSVHeaders);
+        var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
@@ -370,7 +368,11 @@
     return validEntryTypeData;
   }
 
-  function createjsons(selected, labels, lines, CSVHeaders){
+  function createjsons(lines, CSVHeaders){
+    var selected = $(".import-checkbox").filter(":checked").
+          parent().find(".import-select").map((i, e) => e.value).toArray();
+    var labels = $(".import-checkbox").filter(":checked").
+          parent().parent().find("label").map((i, e) => e.textContent).toArray();
     var jsons = [];
     for(var i=1;i<lines.length;i++){
       var currentLine = lines[i];
