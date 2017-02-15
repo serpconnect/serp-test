@@ -5,19 +5,28 @@
 
 	function toggleDiv(sel) {
 		var e = $$(sel)
-		return function() {
+		 return function() {
 			if (e.style.display === 'block')
 				e.style.display = 'none'
 			else
 				e.style.display = 'block'
-
+			
 			this.classList.toggle('down')
+		}
+	}
+
+	function resetAll(div, btn){
+		var e = $$(div)
+		var button = $$(btn)
+		if (e.style.display === 'block'){
+			button.click()
 		}
 	}
 
 	var instance = undefined,
 		ctrl = undefined,
 		list = undefined
+
 	function explore(dataset, into) {
 		var graph = window.graph(dataset, window.explore_conf)
 		if (instance) {
@@ -47,6 +56,11 @@
 			list = new window.listing($$('#listing'), instance, dataset)
 			list.registerEvents(ctrl)
 
+			ctrl.bind('reset', function(){
+				resetAll('#listing','#matches')
+				resetAll('#helpbox', '#help')
+			})//resets other buttons if active.
+
 			$$('#matches').addEventListener('click', () => {
 				var showView = $$('#matches').classList.contains('down')
 				instance.graph.nodes().forEach(n => {
@@ -71,7 +85,6 @@
 		$$('#explore').classList.add('current-view')
 		$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
 		$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
-
 		var hasCollection = window.location.hash.length > 0
 		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
 		var found = false
@@ -120,6 +133,7 @@
 			$$('#graph').style.height = height
 			$$('#listing').style.height = height
 		}
-	}
 
+	}
+	
 })();

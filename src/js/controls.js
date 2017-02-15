@@ -56,13 +56,7 @@
 				n.color = n._color
 		})
 		this.filter.undo().apply()
-		this._fire('#reset')
-
-		//resets other buttons if active.
-		if($$('#listing').style.display === 'block')
-			$$('#matches').click()
-		if($$('#helpbox').style.display === 'block')
-			$$('#help').click()
+		this._fire('reset')
 	}
 
 	/* sneaky api, _ = might change so don't depend on it */
