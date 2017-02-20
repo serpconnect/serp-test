@@ -174,10 +174,7 @@
       lines = CSVToArray(csv, delimiter);
       CSVHeaders = lines[0];
       $(".import-option").remove();
-      for (var i = 0; i < CSVHeaders.length; i++){
-        var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
-        $(".import-select").append(option);
-      }
+      addOptions(CSVHeaders, ".import-select");
     });
 
     importCheckResearch.addEventListener('change', (evt) => {
@@ -213,14 +210,9 @@
     //Default entrytype is research and default delimiter is comma.
     document.getElementById("importCheckResearch").click();
     document.getElementById("selectDelimiter").dispatchEvent(new Event('change'));
-    $(".import-select").css("visibility", "hidden");
 
-    $(".import-checkbox").click(function() {
-      if($(this).is(":checked")){
-        $(this).parent().find(".import-select").css("visibility", "visible");
-      } else {
-        $(this).parent().find(".import-select").css("visibility", "hidden");
-      }
+    $(".import-checkbox").each(function(i, el) {
+      addClickableButtonEventListener($(el), CSVHeaders);
     });
 
     uploadBtn.addEventListener('click', (evt) => {
@@ -239,6 +231,31 @@
         }
       }
     });
+  }
+
+  function addClickableButtonEventListener(button, CSVHeaders){
+    button.click(function() {
+      if(button.is(":checked")){
+        var potentialComplaint = button.parent().nextAll();
+        potentialComplaint.remove();
+        var className = button.attr('class').split(" ");
+        var serpType = className[className.length-1];
+        button.parent().parent().append(elCheckboxAndSelect(serpType, true));
+        var newSelect = button.parent().next().find(".import-select");
+        addOptions(CSVHeaders, newSelect);
+        var newCheckbox = button.parent().next().find(".import-checkbox");
+        addClickableButtonEventListener(newCheckbox, CSVHeaders);
+      } else {
+        button.parent().nextAll().remove();
+      }
+    });
+  }
+
+  function addOptions(CSVHeaders, divClass){
+    for (var i = 0; i < CSVHeaders.length; i++){
+      var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
+      $(divClass).append(option);
+    }
   }
 
   function clearComplaintsImport(){
@@ -286,28 +303,28 @@
 
         el("h3", ["General information"]),
 
-        mapToHeaders("research", researchMustHave),
+        mapToHeaders("research", researchMustHave, false),
 
-        mapToHeaders("challenge", challengeMustHave),
+        mapToHeaders("challenge", challengeMustHave, false),
 
-        mapToHeaders("researchOptional", researchOptional),
+        mapToHeaders("researchOptional", researchOptional, false),
 
-        mapToHeaders("extraHeaders", extraHeaders),
+        mapToHeaders("extraHeaders", extraHeaders, false),
 
         el("div.modal-divider"),
         el("h3", ["Taxonomy"]),
 
         el("div.taxonomy-heading", intervention),
-        mapToHeaders("intervention", interventionLeaves),
+        mapToHeaders("intervention", interventionLeaves, true),
 
         el("div.taxonomy-heading", effect),
-        mapToHeaders("effect", effectLeaves),
+        mapToHeaders("effect", effectLeaves, true),
 
         el("div.taxonomy-heading", scope),
-        mapToHeaders("scope", scopeLeaves),
+        mapToHeaders("scope", scopeLeaves, true),
 
         el("div.taxonomy-heading", context),
-        mapToHeaders("context", contextLeaves),
+        mapToHeaders("context", contextLeaves, true),
 
         el("div.modal-divider"),
         el('button#uploadBtn.btn', ["Upload"]),
@@ -319,23 +336,31 @@
     return modal;
   }
 
-  function mapToHeaders(serp, serpArray){
+  function mapToHeaders(serp, serpArray, isTaxonomyLeave){
+    var leave = (isTaxonomyLeave) ? "-leave" : "";
     return serpArray.map(serpItem => {
-      var serps =
+      var divs =
       el("div.import-serp-select-complaint-wrapper." + serp, [
         el("div.import-serp-select-wrapper." + serp, [
           el("label", [serpItem.display]),
-          el("div.import-checkbox-and-select." + serp, [
-            el("input.import-checkbox." + serp, {type:"checkbox"}),
-            el("select.import-select." + serp, [
-              el("option", {value:"unspecified"}, ["ignore"]),
-            ])
-          ])
+          el("input.import-checkbox.first." + serp, {type:"checkbox"}),
         ])
       ])
-      return serps;
-  })
-}
+      return divs;
+    })
+  }
+
+  function elCheckboxAndSelect(serp, isTaxonomyLeave){
+    var leave = (isTaxonomyLeave) ? "-leave" : "";
+    var serps =
+    el("div.import-checkbox-and-select" + leave + "." + serp, [
+      el("select.import-select." + serp, [
+        el("option", {value:"unspecified"}, ["ignore"]),
+      ]),
+      el("input.import-checkbox." + serp, {type:"checkbox"}),
+    ])
+    return serps;
+  }
 
   function isCollectionNameValid(newCollectionName){
     if(newCollectionName === ""){
@@ -356,55 +381,63 @@
       );
     }
     else if(entryType === "research" ){
-      var nothing = $(".import-checkbox.research").filter(":not(:checked)");
-      nothing.parent().parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validEntryTypeData = !nothing.length
+      var checked = $(".import-checkbox.research").filter(":checked");
+      if(checked.length === 0){
+        $(".import-checkbox.research").parent().parent().
+            append(el("div.complaint.import-CSV", {text:"Please supply information"}));
+      }
+      validEntryTypeData = checked.length;
     }
     else if (entryType === "challenge" ){
-      var nothing = $(".import-checkbox.challenge").filter(":not(:checked)");
-      nothing.parent().parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validEntryTypeData = !nothing.length
+      var checked = $(".import-checkbox.challenge").filter(":checked");
+      if(checked.length === 0){
+        $(".import-checkbox.challenge").parent().parent().
+            append(el("div.complaint.import-CSV", {text:"Please supply information"}));
+      }
+      validEntryTypeData = checked.length;
     }
     return validEntryTypeData;
   }
 
   function createjsons(lines, CSVHeaders){
-    var selected = $(".import-checkbox").filter(":checked").
-          parent().find(".import-select").map((i, e) => e.value).toArray();
-    var labels = $(".import-checkbox").filter(":checked").
-          parent().parent().find("label").map((i, e) => e.textContent).toArray();
+    var selectedFirst = $(".import-checkbox.first").filter(":checked");
+    var labels = selectedFirst.parent().parent().find("label").map((i, e) => e.textContent).toArray();
     var jsons = [];
     for(var i=1;i<lines.length;i++){
       var currentLine = lines[i];
       var obj = {};
       var serpClassification = {};
-      for(var j=0;j<selected.length;j++){
+      for(var j=0;j<selectedFirst.length;j++){
+        var onlySelectedInputs = $(selectedFirst[j]).parent().parent().
+            find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
+            map((i, e) => e.value).toArray();
         var currentHeader = serp.find(value => value.display === labels[j]);
         var isTaxonomyLeave = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
-        if(selected[j] !== "unspecified"){
-          var currentCell = currentLine[CSVHeaders.indexOf(selected[j])];
-          //Check that the cell is not empty.
-          if(currentCell) {
-              //Check if currentHeader is a taxonomy leave.
-              if(isTaxonomyLeave){
-                var serpArray = [];
-                //The taxonomy leave can be a vector of strings. Split on comma.
-                var taxonomyLeaveStrings = currentCell.split(",");
-                for(var k = 0; k < taxonomyLeaveStrings.length; k++){
-                  serpArray.push(taxonomyLeaveStrings[k]);
+
+        var currentValue;
+        if(onlySelectedInputs.length === 0){
+          currentValue = isTaxonomyLeave ? ["unspecified"] : "unspecified";
+        } else {
+          currentValue = isTaxonomyLeave ? [] : "";
+          for(var k=0;k<onlySelectedInputs.length;k++){
+              var currentCell = currentLine[CSVHeaders.indexOf(onlySelectedInputs[k])];
+              if(currentCell){
+                if(isTaxonomyLeave){
+                  currentValue.push(currentCell);
+                } else {
+                  var separator = k === 0 ? "" : ", ";
+                  currentValue = currentValue + separator + currentCell;
                 }
-                serpClassification[currentHeader.value] = serpArray;
-              } else {
-                obj[currentHeader.value] = currentCell;
               }
           }
-        } else {
-          if(isTaxonomyLeave){
-            serpClassification[currentHeader.value] = ["unspecified"];
-          } else {
-            obj[currentHeader.value] = "unspecified";
+          if(!currentValue){
+            currentValue = "unspecified";
+          } if(currentValue instanceof Array && currentValue.length === 0){
+            currentValue = ["unspecified"];
           }
         }
+        isTaxonomyLeave ? serpClassification[currentHeader.value] = currentValue
+                        : obj[currentHeader.value] = currentValue;
       }
       obj.serpClassification = serpClassification;
       obj.entryType = entryType;
