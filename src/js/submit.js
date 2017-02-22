@@ -211,7 +211,6 @@ $(document).ready(function() {
 
         // let's build the table row for this entry
         var $row = jqEl("tr");
-        var maxLength = 35;
 
         // choose as the row descriptor either the description (for challenges)
         if (entry.entryType === "challenge") {
@@ -220,11 +219,12 @@ $(document).ready(function() {
         } else {
             var entryTitle = entry["reference"];
         }
-        entryTitle = entryTitle.length > maxLength ?
-            entryTitle.substring(0, maxLength - 3) + "..." :
-            entryTitle.substring(0, maxLength);
+        
         var entryNumber = position ? position : queuedEntries.length - 1;
-        var titleCell = jqEl("td").text(entryTitle || entry["description"] || entry["reference"]);
+        var cellDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
+        cellDiv.addClass("table-cell-div")
+        var titleCell = jqEl("td")
+        titleCell.append(cellDiv)
         titleCell.data("entry-number", entryNumber);
 
         $row.append(titleCell);
