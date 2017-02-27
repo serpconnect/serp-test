@@ -221,10 +221,13 @@ $(document).ready(function() {
         }
         
         var entryNumber = position ? position : queuedEntries.length - 1;
-        var cellDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
-        cellDiv.addClass("table-cell-div")
+        var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
+        scrollDiv.addClass("table-cell-div")
+        var wrapper = jqEl("div")
+        wrapper.addClass("scroll-wrapper")
+        wrapper.append(scrollDiv)
         var titleCell = jqEl("td")
-        titleCell.append(cellDiv)
+        titleCell.append(wrapper)
         titleCell.data("entry-number", entryNumber);
 
         $row.append(titleCell);

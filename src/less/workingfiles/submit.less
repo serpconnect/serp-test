@@ -259,7 +259,15 @@ td {
 div .table-cell-div{
     overflow: scroll;
     max-height: 7rem;
+    padding-right:2rem;
+    width: 15.5rem;
 }// sets height of first cell of queue table
+
+.scroll-wrapper{ //wraps ^div so that scroll bar is hidden but table cell is scrollable
+    width: 16rem;
+    overflow: hidden;
+}
+  
 
 td {
     &:first-child {
