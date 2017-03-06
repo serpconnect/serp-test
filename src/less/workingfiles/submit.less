@@ -116,7 +116,7 @@ input[type="radio"] {display:none;}
     width: 250px;
 }
 
-.taxonomy-heading {
+.import-taxonomy-heading {
     vertical-align: top;
     font-size: @facet-title-size;
     color: black;
@@ -133,14 +133,37 @@ input[type="radio"] {display:none;}
     display: inline-block;
 }
 
-.import-serp-select-complaint-wrapper {
+.import-all-selects-wrapper {
+    margin-bottom: 2px;
     display: flex;
 }
 
-.import-serp-select-wrapper {
+.import-extra-headings {
+    max-width: 405px;
+}
+
+.import-checkbox-and-select {
+    height: 23px;
+    display: inline-block;
+}
+
+.import-select-first-box-wrapper {
+    margin-bottom: 1px;
     display: flex;
     justify-content: space-between;
-    width: 250px;
+    width: 100%;
+    max-width: 250px;
+}
+
+input.import-checkbox.extra[type=checkbox]:before {
+    content:"\2795";
+    display:inline-block;
+    width:12px;
+    height:12px;
+    background: @bg-color
+}
+input.import-checkbox.extra[type=checkbox]:checked:before {
+    content: "\2796";
 }
 
 .queue-button-wrapper {
