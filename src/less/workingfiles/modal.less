@@ -17,6 +17,7 @@
     // hide initially
     opacity: 1;
     pointer-events: auto;
+
 }
 
 // modal content
@@ -44,11 +45,18 @@
     -webkit-transition: all 200ms ease-in;
     -moz-transition: all 200ms ease-in;
     transition: all 200ms ease-in;
+
 }
 
 .modal.appear > div {
   opacity:1;
   transform:translateY(0);
+}
+
+//for smaller confrimation modals
+.modal.confirm > div{
+    max-width: 25%;
+    max-height: 10%;
 }
 
 .modal h2 {

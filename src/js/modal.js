@@ -188,12 +188,12 @@ $(document).ready(function() {
 	/* Create simple modal */
     modals.confirmPopUp = function(desc, method) {
       var confirmBtn = el('button#confirm.btn', ['confirm'])
-      var modal = el('div.confirm', [
-              el('div', [
-                  closeButton(),
-                el("div.confirm-header-title", [desc]),
+      var modal = el('div#modal.modal.confirm', [
+              	el('div', [
+                closeButton(),
+                el("div.modal-header-title", [desc]),
                 //name of modal
-                el("div#bottom-divider.confirm-divider"),
+                el("div#bottom-divider.modal-divider"),
                 confirmBtn, cancelButton()
             ])
           ])
@@ -204,6 +204,7 @@ $(document).ready(function() {
       
       setTimeout(function(){
 			  document.getElementById('modal').classList.add('appear');
+			  document.getElementById('modal').classList.add('confirm')
       }, modalAnimation)
       
       document.body.appendChild(modal)

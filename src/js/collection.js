@@ -43,34 +43,10 @@ $(function () {
 		$('.collection-stats').text(formatStats(stats.members, stats.entries))
 	}
 
-	function leave() {
-        var confirm = el('button.btn', ['leave'])
-        var cancel = el('button.btn', ['cancel'])
-
-        var modal = el('div.modal', [
-			el('div', [
-				el("div.modal-header-title", [$('#name').text()]),
-				el("div.modal-divider"),
-				el("div.modal-sub-item", ['Leave collection?']),
-				el("div.modal-divider"),
-				confirm, cancel
-        	])
-		])
-
-        cancel.addEventListener('click', (evt) => {
-            document.body.removeChild(modal)
-        }, false)
-
-        confirm.addEventListener('click', (evt) => {
-            confirm.classList.add('submit-disabled')
-            cancel.classList.add('submit-disabled')
-            confirm.setAttribute('disabled', true)
-            cancel.setAttribute('disabled', true)
-            window.api.v1.collection.leave(cID).always(toProfilePage)
+    // Create leave collection modal
+    	document.getElementById('leave').addEventListener('click', (evt) => {
+      		window.modals.confirmPopUp("Leave Collection '" + $('#name').text() + " " + cID + "'", function () {
+            	window.api.v1.collection.leave(cID).always(toProfilePage)
         })
-
-        document.body.appendChild(modal)
-    }
-
-	document.getElementById('leave').addEventListener('click', leave, false)
+    })
 })
