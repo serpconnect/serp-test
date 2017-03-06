@@ -3,7 +3,7 @@ Contributing
 
 Licensing
 ---------
-connect is licensed under the BSD 2-clause license. By contributing code you claim that 1) the contributed code is yours and you have the right to license it and 2) you grant the connect project a license to distribute your code under the BSD 2-clause license.
+connect is licensed under the BSD 2-clause license. By contributing code agree point 1 and 3 from the [github cla](https://cla.github.com/agreement).
 
 Documentation
 -------------
@@ -13,7 +13,7 @@ Depedencies
 -----------
  - [nodejs](https://nodejs.org/en) (compatible with 6.1.0) and npm (bundled with nodejs)
  - (optional) `make` for some convenience
- 
+
 Versioning strategy
 -------------------
 The `master` branch receives all development work via merges from feature branches.
