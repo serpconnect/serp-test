@@ -473,7 +473,7 @@ $(document).ready(function() {
         submit()
     });
 
-    var newCollectionModal = {  
+    var newCollectionModal = {
         desc: "create new collection",
         message: "",
         input: [['input0','text','collection name']],
@@ -533,7 +533,11 @@ $(document).ready(function() {
             window.modals.listModal(conf, function (entryId) {
                 api.v1.getEntry(entryId).done(entry => {
                       $("#" + entry.type + "-button").trigger("click");
-                      fillAccordingToEntry(entry, true);
+                      api.v1.getTaxonomyEntry(entryId).done(taxonomy =>{
+                        entry["serpClassification"] = taxonomy;
+                        fillAccordingToEntry(entry, true);
+                      })
+
                 }) // Only error if race condition?
             })
         })
@@ -691,14 +695,14 @@ $(document).ready(function() {
         var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
         var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
         $input.addClass("facet-additional-input");
-      
+
 
         // we need an id for jquery ui's autocomplete to work
         // idName e.g. "analysis" from "analysis-box" etc
         var idName = element.children().children().attr("id").split("-")[0];
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
-       
+
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
@@ -709,15 +713,15 @@ $(document).ready(function() {
         $inputParent.append($removeBtn);
         element.append($inputParent);
 
-        $input.on("click", function(evt) { 
+        $input.on("click", function(evt) {
             scrollDown()
         })
         //scrolls user to bottom of page so user
         //can see all of the autocomplete window
 
-        new Awesomplete( "#"+idAttr, { 
-            list: autocompleteMap[idName], 
-            filter: ausomplete.autocompleteFilter, 
+        new Awesomplete( "#"+idAttr, {
+            list: autocompleteMap[idName],
+            filter: ausomplete.autocompleteFilter,
             replace: ausomplete.autocompleteUpdate
         })
         return $input;
