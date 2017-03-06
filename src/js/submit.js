@@ -459,18 +459,17 @@ $(document).ready(function() {
 
             // Post entries in the same order as the table
             var entry = queuedEntries[0]
-            removeEntry(0)
 
             submitEntry(entry)
             .fail(xhr => {
-                // Stop queue submission on failure and re-add the failed entry
-                // to allow quick-fixes and prevent ppl from losing work.
-                queuedEntries.unshift(entry)
-                insertIntoTable(entry, 0)
                 flashErrorMessage(xhr.responseText)
                 enableButton($this)
             })
-            .done(() => setTimeout(submit, 0))
+            .done(() => {
+                // Only remove entries if they are successfully added - improves workflow
+                removeEntry(0)
+                setTimeout(submit, 0)
+            })
         }
 
         submit()
@@ -602,6 +601,7 @@ $(document).ready(function() {
     });
 
   // event handler for classifying submissions
+
     $(".checkbox input").on("click", function(evt) {
         var thisEl = $(this);
         var name = thisEl.attr("name");
