@@ -44,9 +44,10 @@ $(function () {
 	}
 
     // Create leave collection modal
-    	document.getElementById('leave').addEventListener('click', (evt) => {
-      		window.modals.confirmPopUp("Leave Collection '" + $('#name').text() + " " + cID + "'", function () {
-            	window.api.v1.collection.leave(cID).always(toProfilePage)
-        })
-    })
+	document.getElementById('leave').addEventListener('click', (evt) => {
+		var title = `${$('#name').text()} (#${cID})`
+		window.modals.confirmPopUp(`Leave ${title}?`, () => {
+			window.api.v1.collection.leave(cID).always(toProfilePage)
+		})
+    }, false)
 })
