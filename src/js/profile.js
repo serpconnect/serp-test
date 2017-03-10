@@ -17,7 +17,7 @@ $(function() {
         api.v1.account.self().done(update)
     }
 
-    var deleteAccountModal = {  
+    var deleteAccountModal = {
         desc: "Delete Account",
         message: "This will delete your account, but your collections and entries will remain. Are you sure?",
         input: [],
@@ -25,7 +25,7 @@ $(function() {
     };
 
     // Let user confirm account deletion before commencing orbital strike
-    $("#delete").click(evt => { 
+    $("#delete").click(evt => {
         window.modals.optionsModal(deleteAccountModal, function () {
             //A secondary box pops up to imply importance of the decision
             var message = "Delete Account - Are You Sure"
@@ -37,13 +37,13 @@ $(function() {
         })
     })
 
-    var newCollectionModal = {  
+    var newCollectionModal = {
         desc: "create new collection",
         message: "",
         input: [['input0','text','collection name']],
         btnText: "Create"
     };
-    
+
     // Create a new collection
     $("#create").click(evt => {
         window.modals.optionsModal(newCollectionModal, function (name) {
@@ -54,7 +54,7 @@ $(function() {
     })
 
     // Change password dialog, must submit current and new passwords to api
-    var newPasswordModal = {  
+    var newPasswordModal = {
         desc: "Change your password",
         message: "",
         input: [['input0','password','old password'], ['input1','password','new password']],
@@ -74,12 +74,12 @@ $(function() {
         var id = parent.dataset.collectionId
         var name = parent.querySelector('.collection-title').textContent
 
-        var inviteUserModal = {  
+        var inviteUserModal = {
             desc: "Invite User to " + name,
             message: "",
             input: [['input0','email','user email']],
             btnText: "Invite"
-        }   
+        }
 
         window.modals.optionsModal(inviteUserModal,function (email) {
             api.v1.collection.invite(email, id)
@@ -87,9 +87,9 @@ $(function() {
                 .fail(xhr => complain(xhr.responseText))
         })
 
-        new Awesomplete('#input0', { 
-                        list: friends, 
-                        filter: ausomplete.autocompleteFilter, 
+        new Awesomplete('#input0', {
+                        list: friends,
+                        filter: ausomplete.autocompleteFilter,
                         replace: ausomplete.autocompleteUpdate
                 })
     }
@@ -128,12 +128,16 @@ $(function() {
         return `${members} ${mems}, ${entries} ${entr}`
     }
 
-    function appendCollection(self, coll) {
+    function appendCollection(self, coll, isOwner) {
+      var owner;
+      if(isOwner)
+        owner =" (owner)"
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
                     el('span', [coll.name]),
-                    el('span.collection-id', [" #" + coll.id])
+                    el('span.collection-id', [" #" + coll.id]),
+                    el('span.collection-owner',[owner])
                 ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
@@ -149,7 +153,7 @@ $(function() {
                 ])
             ])
 		])
-        
+
 		obj.dataset.collectionId = coll.id
     	document.querySelector(".profile-content").appendChild(obj)
     }
@@ -157,12 +161,14 @@ $(function() {
     function update(self) {
         $(".user-email").text(`${self.email} (${self.trust})`)
         $("div.collection-wrapper").remove()
-
         self.collections.forEach(coll => {
             api.v1.collection.stats(coll.id).then(data => {
                 coll.members = data.members
                 coll.entries = data.entries
-                appendCollection(self, coll)
+            }).then(function(){
+                return api.v1.collection.isOwner(coll.id)
+            }).then(owner => {
+                appendCollection(self, coll, owner)
             })
         })
 
