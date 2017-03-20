@@ -8,8 +8,8 @@ $(function() {
         if(invites.length > 0 ){
             var invitationsContainer = el('div.invitationContainer')
             var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
-            invitationsContainer.append(new_Invitations)
-            $("#invitations").append(invitationsContainer)
+            invitationsContainer.appendChild(new_Invitations)
+            document.getElementById("invitations").appendChild(invitationsContainer)
          }
     }
 
