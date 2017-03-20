@@ -429,12 +429,27 @@ $(document).ready(function() {
         $newCollection.val("");
     }
 
-    /* Wrapper for toggling buttons */
-    function disableButton(el) {
-        el.prop("disabled", true).addClass("submit-disabled")
+    /* All interactive/clickable elements */
+    function getUIElements() {
+        return ["#submit-queue-btn", "#submit-btn", "#queue-btn", 
+                "#load-btn", "#import-json-btn", "#collection",
+                "#submit-create-collection"
+        ]
     }
-    function enableButton(el) {
-        el.prop("disabled", false).removeClass("submit-disabled")
+    /* Wrapper for toggling buttons */
+    function disableButton(btn) {
+        btn.disabled = true
+        btn.classList.add('submit-disabled')
+    }
+    function enableButton(btn) {
+        btn.disabled = false
+        btn.classList.remove('submit-disabled')    
+    }
+    function updateUI(enableDisable) {
+        getUIElements().forEach(selector => {
+            var btn = document.querySelector(selector)
+            enableDisable(btn)
+        })
     }
 
     /* Placeholder for something more legit */
@@ -447,32 +462,37 @@ $(document).ready(function() {
      * the button while submitting to prevent multiple submissions. Will stop
      * when any entry didn't succeed, or when all entries were posted.
      */
-    $("#submit-queue-btn").on("click", function(evt) {
-        var $this = $(this)
-        disableButton($this)
+    function submitQueue() {
+        return new Promise(function startSubmit(resolve, reject) {
+            var submitNext = function () {
+                if (queuedEntries.length === 0) {
+                    resolve()
+                    return
+                }
 
-        var submit = () => {
-            if (queuedEntries.length === 0) {
-                enableButton($this)
-                return
+                // Post entries in the same order as the table
+                var entry = queuedEntries[0]
+
+                submitEntry(entry).fail(reject)
+                .done(() => {
+                    // Only remove entries if they are successfully added - improves workflow
+                    removeEntry(0)
+                    setTimeout(submitNext, 0)
+                })
             }
 
-            // Post entries in the same order as the table
-            var entry = queuedEntries[0]
+            submitNext()
+        })
+    }
 
-            submitEntry(entry)
-            .fail(xhr => {
-                flashErrorMessage(xhr.responseText)
-                enableButton($this)
-            })
-            .done(() => {
-                // Only remove entries if they are successfully added - improves workflow
-                removeEntry(0)
-                setTimeout(submit, 0)
-            })
-        }
+    $("#submit-queue-btn").on("click", function(evt) {
+        updateUI(disableButton)
 
-        submit()
+        submitQueue().catch(xhr => {
+            flashErrorMessage(xhr.responseText)
+        }).then(() => {
+            updateUI(enableButton)
+        })
     });
 
     var newCollectionModal = {
@@ -501,24 +521,26 @@ $(document).ready(function() {
     });
 
     $("#submit-btn").on("click", function(evt) {
-        var $thisEl = $(this);
-        if ($thisEl.text() === "submit") {
-            var entry = getEntry();
-            if (entryIsValid(entry)) {
-                submitEntry(entry)
-                    .done(ok => clearPageState())
-                    .fail((xhr, err, aa) => {
-                        window.alert(`Submit failed: ${xhr.responseText}`)
-                    })
-                    .always(() => {
-                        enableButton($thisEl)
-                    })
-            } else {
-                complain(entry);
+
+        var isSubmitBtn = this.textContent === "submit"
+        if (isSubmitBtn) {
+            var entry = getEntry()
+
+            if (!entryIsValid(entry)) {
+                complain(entry)
+                return
             }
+
+            updateUI(disableButton)
+            submitEntry(entry).done(ok => clearPageState())
+                .fail(xhr => {
+                    flashErrorMessage(xhr.responseText)
+                }).always(() => {
+                    updateUI(enableButton)
+                })
         // acts as save button
         } else {
-            var entryNumber = $thisEl.data("currentEntry");
+            var entryNumber = $(this).data("currentEntry");
             saveEntryChanges(entryNumber);
             clearPageState();
             restoreButtons();
@@ -709,18 +731,28 @@ $(document).ready(function() {
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
-            $(this).parent().remove();
+            $input.remove();
         });
 
         $inputParent.append($input);
         $inputParent.append($removeBtn);
         element.append($inputParent);
 
+        // Scroll down if autocomplete box isn't fully visible.
         $input.on("click", function(evt) {
-            scrollDown()
+            var len = 230 // max height of autocomplete (ish)
+
+            // Imagine a box (autocomplete) within another box (browser).
+            var winMinY = window.scrollY
+            var winMaxY = winMinY + window.innerHeight
+            var divMinY = $input.offset().top
+            var divMaxY = divMinY + len
+
+            // User must have been able to click the input field, i.e.
+            // divMinY < winMinY, otherwise it shouldn't be visible.
+             if (divMaxY > winMaxY)
+                scrollDown(winMinY + (divMaxY - winMaxY))
         })
-        //scrolls user to bottom of page so user
-        //can see all of the autocomplete window
 
         new Awesomplete( "#"+idAttr, {
             list: autocompleteMap[idName],
@@ -736,8 +768,8 @@ $(document).ready(function() {
         return $(document.createElement(elementType));
     }
 
-    function scrollDown(){
-        $("html, body").animate({ scrollTop: $(document).height() }, 1000);
+    function scrollDown(target){
+        $("html, body").animate({ scrollTop: target }, 300);
     }
 
 });
