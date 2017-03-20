@@ -2,6 +2,17 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+    user.invites().done(showInvites)
+    //check if invites exist and display number above invitations tab on profile page
+    function showInvites(invites) {
+        if(invites.length > 0 ){
+            var invitationsContainer = el('div').addClass('invitationContainer')
+            var new_Invitations = el('a').addClass('newInvitation').attr('href', "/invitations.html").text(invites.length + " " )
+            invitationsContainer.append(new_Invitations)
+            $("[href='/invitations.html']").append(invitationsContainer)
+         }
+    }
+
     var emails = [];
     var emailMappings = {};
 

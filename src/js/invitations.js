@@ -2,7 +2,10 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
-    window.user.invites().done(showPending).fail(somethingWentWrong)
+    window.user.invites()
+        .done(showPending)
+        .done(showInvites)
+        .fail(somethingWentWrong)
 
     window.api.ajax("GET", window.api.host + "/v1/admin").done(ok => {
         var a = el('a.view-area-tab.unactive-tab', {href : "/users.html"}, ['users'])
@@ -11,6 +14,27 @@ $(document).ready(function() {
         div.insertBefore(a, div.lastChild)
         div.insertBefore(b, div.lastChild)
     })
+
+    //check if invites exist and display number above invitations tab on profile page
+    function showInvites(invites) {
+        if(invites.length > 0 ){
+            var invitationsContainer = el('div.invitationContainer')
+            var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
+            invitationsContainer.appendChild(new_Invitations)
+            document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
+         }
+    }
+    function decreaseInviteCounter() {
+        var invitations = document.querySelector("[href='/invitations.html']")
+        var container = invitations.querySelector('.invitationContainer')
+        var invitation = container.querySelector('.newInvitation')
+        var invites = parseInt(invitation.textContent, 10) - 1
+        
+        if (invites === 0)
+            invitations.removeChild(container)
+        else
+            invitation.textContent = invites.toString()
+    }
 
     function somethingWentWrong(reason, xhr) {}
 
@@ -44,7 +68,9 @@ $(document).ready(function() {
         parent.children("button").attr("disabled", true)
 
         window.api.ajax("POST", window.api.host + "/v1/collection/" + id + action)
-        .done(obj => parent.slideToggle()).fail(reason => window.alert(JSON.stringify(reason)))
+        .done(obj => parent.slideToggle())
+        .done(obj => decreaseInviteCounter())
+        .fail(reason => window.alert(JSON.stringify(reason)))
     }
 
     function accept(evt) {
