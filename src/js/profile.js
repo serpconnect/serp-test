@@ -9,7 +9,7 @@ $(function() {
             var invitationsContainer = el('div.invitationContainer')
             var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
             invitationsContainer.appendChild(new_Invitations)
-            document.getElementById("invitations").appendChild(invitationsContainer)
+            document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
          }
     }
 
