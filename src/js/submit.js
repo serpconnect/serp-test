@@ -211,7 +211,6 @@ $(document).ready(function() {
 
         // let's build the table row for this entry
         var $row = jqEl("tr");
-        var maxLength = 35;
 
         // choose as the row descriptor either the description (for challenges)
         if (entry.entryType === "challenge") {
@@ -220,11 +219,15 @@ $(document).ready(function() {
         } else {
             var entryTitle = entry["reference"];
         }
-        entryTitle = entryTitle.length > maxLength ?
-            entryTitle.substring(0, maxLength - 3) + "..." :
-            entryTitle.substring(0, maxLength);
+        
         var entryNumber = position ? position : queuedEntries.length - 1;
-        var titleCell = jqEl("td").text(entryTitle || entry["description"] || entry["reference"]);
+        var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
+        scrollDiv.addClass("table-cell-div")
+        var wrapper = jqEl("div")
+        wrapper.addClass("scroll-wrapper")
+        wrapper.append(scrollDiv)
+        var titleCell = jqEl("td")
+        titleCell.append(wrapper)
         titleCell.data("entry-number", entryNumber);
 
         $row.append(titleCell);
@@ -456,18 +459,17 @@ $(document).ready(function() {
 
             // Post entries in the same order as the table
             var entry = queuedEntries[0]
-            removeEntry(0)
 
             submitEntry(entry)
             .fail(xhr => {
-                // Stop queue submission on failure and re-add the failed entry
-                // to allow quick-fixes and prevent ppl from losing work.
-                queuedEntries.unshift(entry)
-                insertIntoTable(entry, 0)
                 flashErrorMessage(xhr.responseText)
                 enableButton($this)
             })
-            .done(() => setTimeout(submit, 0))
+            .done(() => {
+                // Only remove entries if they are successfully added - improves workflow
+                removeEntry(0)
+                setTimeout(submit, 0)
+            })
         }
 
         submit()
@@ -603,6 +605,7 @@ $(document).ready(function() {
     });
 
   // event handler for classifying submissions
+
     $(".checkbox input").on("click", function(evt) {
         var thisEl = $(this);
         var name = thisEl.attr("name");

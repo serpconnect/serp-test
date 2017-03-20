@@ -142,7 +142,10 @@ $(function() {
     function appendCollection(self, coll) {
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
-    			el('a.collection-title', {href: "/collection.html#" + coll.id}, [coll.name]),
+    			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
+                    el('span', [coll.name]),
+                    el('span.collection-id', [" #" + coll.id])
+                ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
             el('div.collection-options', [

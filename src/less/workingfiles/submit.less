@@ -10,8 +10,9 @@
     }
 }
 .submit-view-area-wrapper {
-    margin-left: 230px;
-    width: 80%;
+    margin: 0 auto;
+    width: 560px;
+    max-width: 80%;
 }
 
 #submit-form{
@@ -26,17 +27,15 @@
     margin-bottom: 15px;
 }
 .submit-facets {
-    display: inline-block;
-    margin-left: -25px;
+    justify-content:space-between;
+    display: flex;
 }
 
 .submit-facet-title {
-    text-align: right;
     padding-right: 5px;
     vertical-align: top;
     font-size: @facet-title-size;
     margin-top: 10px;
-    display: inline-block;
     -webkit-transition: color 0.2s ease;
     -moz-transition: color 0.2s ease;
     -o-transition: color 0.2s ease;
@@ -60,7 +59,7 @@ input[type="radio"] {display:none;}
     cursor: pointer;
     width: 16px;
     height: 16px;
-    margin-left: 5px;
+    margin-right: 5px;
     margin-bottom: -3.5px;
     display: inline-block;
     background: url("/img/radiobutton-unselected.png");
@@ -98,8 +97,7 @@ input[type="radio"] {display:none;}
 }
 .complaint {
     .optional();
-    margin-top: -5px;
-    margin-bottom: 10px;
+    position: absolute;
     vertical-align: top;
     color: @red;
 }
@@ -148,7 +146,8 @@ input[type="radio"] {display:none;}
 }
 
 .queue-button-wrapper {
-    margin-left: 83px;
+    text-align: center;
+    padding: 20px;
 }
 
 .submit-input-box {
@@ -225,6 +224,7 @@ td {
 }
 
 #queue-table {
+    margin: 0 auto;
     font-size: 10pt;
     border-collapse: collapse;
 
@@ -235,7 +235,7 @@ td {
 
 .queue-area {
     margin-top: 20px;
-    margin-left: -50px;
+    padding-bottom: 1.5rem;
 }
 
 .submit-queue-title {
@@ -250,17 +250,29 @@ td {
     background-color: @super-light-gray;
 }
 
+
 #queue-table th:first-child {
-    width: 22%;
+
 }
 
+div .table-cell-div{
+    overflow: scroll;
+    max-height: 7rem;
+    padding-right:2rem;
+    width: 15.5rem;
+}// sets height of first cell of queue table
+
+.scroll-wrapper{ //wraps ^div so that scroll bar is hidden but table cell is scrollable
+    width: 16rem;
+    overflow: hidden;
+}
+  
 
 td {
     &:first-child {
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
-
+        max-width: 150px;
+        width: 25%;
+        z-index: 1;
         border-right: none;
         border-bottom: none;
 
@@ -301,8 +313,7 @@ th {
 }
 
 .additional-data-wrapper{
-    width: 12rem; /*220px;*/
-    padding-left:3.6rem; /*37px;*/
+    position: relative;
 }
 .facet-additional-input {
     .submit-input-box();
@@ -312,11 +323,16 @@ th {
     //margin-left: -45px; /*45px;*/
 }
 
+.facet-classification{
+    display: inline-block;
+    cursor: pointer;
+     margin: 0;
+}
+
 .hide-queue {
     cursor: pointer;
     color: @light-gray;
     display: inline-block;
-    margin-left: 6%;
     font-size: 9pt;
     &:hover {
         color: @light-gray - #333;
@@ -345,11 +361,8 @@ th {
 }
 
 .remove-additional-data {
-    margin-top: .6rem;
     position: absolute;
-    margin-left: 5px;
-    margin-right: -1px;
-    margin-bottom: -3.5px;
+    top: 9px;
     width: 16px;
     height: 16px;
     display: inline-block;
@@ -375,31 +388,23 @@ th {
     text-align: center;
 }
 
-#submit-queue-btn {
-    margin-bottom: 15px;
-    margin-left: 43%;
-    margin-top: 20px;
-}
 #remove-btn {
     display: none;
 }
 
 .divider-wrapper {
-    text-align: center;
-    margin-top: 20px;
+    white-space: nowrap;
+    display: flex;
+    align-items:center;
 }
 
 .divider {
-    display: inline-block;
-    margin-left: 15px;
-    margin-right: 15px;
-    margin-top: -7px;
     border-bottom: 1px solid @dark-gray;
 }
 
 .classification-divider {
     .divider();
-    width: 34%;
+    width: 100%;
 }
 .queued-divider {
     .divider();
@@ -409,4 +414,5 @@ th {
 .divider-title {
     font-size: 17pt;
     display: inline-block;
+    padding: 15px;
 }
