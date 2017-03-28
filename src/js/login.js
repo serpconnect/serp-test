@@ -67,11 +67,19 @@ $(document).ready(function() {
         $("#login-btn").prop("disabled", false).removeClass("submit-disabled")
     }
 
-    //
+    //    
+    //allows user to press Enter Key to login. Timeout is for functionality on chrome
+    document.addEventListener('keydown', (evt) => {
+        if (evt.keyCode !== 13)
+            return
+        setTimeout(function() {
+            $("#login-btn").click()
+        }, 50)
+    }, false)
 
     $("#login-btn").on("click", function(evt) {
         var email = $("#email").val();
-
+        
         disableButtons()
         clearComplaints()
 
