@@ -187,8 +187,13 @@ $(function() {
 
     function appendCollection(self, coll, isOwner) {
       var owner;
-      if(isOwner)
+      var kick;
+      var invite;
+      if(isOwner){
         owner =" (owner)"
+        kick = collectionOption('kick user', kick);
+        invite = collectionOption('add user', invite);
+      }
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
@@ -205,9 +210,9 @@ $(function() {
                     collectionOption('manage', manage)
                 ]),
                 el('div.collection-row', [
-                    collectionOption('add user', invite),
                     collectionOption('add entry', submit),
-                    collectionOption('kick user', kick)
+                    invite,
+                    kick
                 ])
             ])
 		])
