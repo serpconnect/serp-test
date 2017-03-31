@@ -16,6 +16,7 @@ $(function() {
     /* Add red text after the cancel button on a modal */
     function complain(text) {
         $('.modal-complaint').remove()
+        modals.clearConfirm()
         var modal = document.querySelector(".modal") || document.querySelector(".confirm")
         var errors = modal.querySelectorAll('button')
         var error = errors[errors.length - 1]
@@ -105,6 +106,51 @@ $(function() {
                 })
     }
 
+    function kick(evt) {
+        var parent = this.parentNode.parentNode.parentNode
+        var id = parent.dataset.collectionId
+        var name = parent.querySelector('.collection-title').textContent
+
+        var myemail = document.getElementsByClassName('user-email')[0].innerHTML
+        var indx = myemail.indexOf(' ')
+        myemail=myemail.substring(0,indx);
+      //  alert(myemail + ", "  + id)
+        api.v1.collection.members(id,"all").done(data =>  {
+          var emails=[];
+          for(i = 0; i<data.length;i++){
+            if(data[i].email != myemail){
+              emails[i]=data[i].email;
+            }
+          }
+
+
+        var kickUserModal = {
+            desc: "Kick User from " + name,
+            message: "",
+            list: emails,
+            input: [['input0','email','user email']],
+            btnText: "Kick"
+        }
+
+        //fix alternatives so only people in the collection shows up
+        window.modals.fuzzyModal(kickUserModal,function (email) {
+            window.modals.confirmKickPopUp(`Are you sure you want to Kick ${email}?`, () => {
+                api.v1.collection.kick(email, id)
+                    .done(ok => cleanup(this.modal))
+                    .fail(xhr => complain(xhr.responseText))
+            })
+
+        })
+
+
+          new Awesomplete('#input0', {
+                          list: emails,
+                          filter: ausomplete.autocompleteFilter,
+                          replace: ausomplete.autocompleteUpdate
+                  })
+        })
+    }
+
     function submit(evt) {
         var id = this.parentNode.parentNode.parentNode.dataset.collectionId
         window.location = window.location.origin + "/submit.html?c=" + id
@@ -160,7 +206,8 @@ $(function() {
                 ]),
                 el('div.collection-row', [
                     collectionOption('add user', invite),
-                    collectionOption('add entry', submit)
+                    collectionOption('add entry', submit),
+                    collectionOption('kick user', kick)
                 ])
             ])
 		])

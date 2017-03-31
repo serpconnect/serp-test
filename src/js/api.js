@@ -122,6 +122,12 @@ $(function () {
 		});
 	}
 
+	v1.collection.kick = function(email, id){
+			return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
+						email: email
+			});
+	}
+
 	v1.collection.leave = function(cID) {
 		return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
 	}
