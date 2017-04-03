@@ -114,7 +114,6 @@ $(function() {
         var myemail = document.getElementsByClassName('user-email')[0].innerHTML
         var indx = myemail.indexOf(' ')
         myemail=myemail.substring(0,indx);
-      //  alert(myemail + ", "  + id)
         api.v1.collection.members(id,"all").done(data =>  {
           var emails=[];
           for(i = 0; i<data.length;i++){
@@ -187,12 +186,12 @@ $(function() {
 
     function appendCollection(self, coll, isOwner) {
       var owner;
-      var kick;
-      var invite;
+      var kickb;
+      var inviteb;
       if(isOwner){
         owner =" (owner)"
-        kick = collectionOption('kick user', kick);
-        invite = collectionOption('add user', invite);
+        kickb = collectionOption('kick user', kick);
+        inviteb = collectionOption('add user', invite);
       }
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
@@ -211,8 +210,8 @@ $(function() {
                 ]),
                 el('div.collection-row', [
                     collectionOption('add entry', submit),
-                    invite,
-                    kick
+                    inviteb,
+                    kickb
                 ])
             ])
 		])
