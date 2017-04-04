@@ -185,20 +185,16 @@ $(function() {
     }
 
     function appendCollection(self, coll, isOwner) {
-      var owner;
-      var kickb;
-      var inviteb;
-      if(isOwner){
-        owner =" (owner)"
-        kickb = collectionOption('kick user', kick);
-        inviteb = collectionOption('add user', invite);
-      }
+        var ownerActions = el('div.collection-row', [
+             collectionOption('add user', invite),
+             collectionOption('kick user', kick)
+        ])
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
                     el('span', [coll.name]),
                     el('span.collection-id', [" #" + coll.id]),
-                    el('span.collection-owner',[owner])
+                    el('span.collection-owner',[isOwner ? " (owner)" : ""])
                 ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
@@ -206,13 +202,12 @@ $(function() {
                 el('div.collection-row', [
                     collectionOption('search', search),
                     collectionOption('explore', explore),
-                    collectionOption('manage', manage)
                 ]),
                 el('div.collection-row', [
+                    collectionOption('manage', manage),
                     collectionOption('add entry', submit),
-                    inviteb,
-                    kickb
-                ])
+                ]),
+                isOwner ? ownerActions : undefined
             ])
 		])
 
@@ -227,12 +222,10 @@ $(function() {
             api.v1.collection.stats(coll.id).then(data => {
                 coll.members = data.members
                 coll.entries = data.entries
-
-
             }).then(function(){
-                api.v1.collection.isOwner(coll.id).then(owner=>{
+                return api.v1.collection.isOwner(coll.id)
+            }).then(owner => {
                 appendCollection(self, coll, owner)
-              })
             })
         })
 
