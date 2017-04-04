@@ -3,13 +3,6 @@ $(function () {
 	var collectionName;
 	var friends =[]
 	var userEmail = "undefined"
-	window.api.v1.account.collections()
-		.done(collections => collections.forEach(collection => {
-			if (collection.id === Number(cID)){
-				collectionName = collection.name
-			}
-		}))
-		.fail(toProfilePage)
 
 	// Only allow user to inspect specific collection
 	if (window.location.hash.length === 0)
@@ -45,8 +38,7 @@ $(function () {
 			}))
 	}	
 
-    $('#invite').click(evt => {
-    	
+   	function inviteUser(evt) {
 	    var inviteModal = {
 	        desc: "Invite user to " + collectionName,
 	        message: "",
@@ -61,14 +53,14 @@ $(function () {
                 })
                 .fail(xhr => alert(xhr.responseText))
         })
-                new Awesomplete('#input0', { 
-                        list: friends, 
-                        filter: ausomplete.autocompleteFilter, 
-                        replace: ausomplete.autocompleteUpdate
-                })
-    })
+		new Awesomplete('#input0', { 
+				list: friends, 
+				filter: ausomplete.autocompleteFilter, 
+				replace: ausomplete.autocompleteUpdate
+		})
+    }
 
-	$('#kick').click(evt => {
+	function kickUser(evt) {
 		api.v1.collection.members(cID, "all").done(members => {
 			var emails = members.map(user => user.email)
 			emails.splice(emails.indexOf(userEmail), 1)
@@ -98,15 +90,31 @@ $(function () {
 				replace: ausomplete.autocompleteUpdate
 			})
 		})
-	})
-
-    function setup(self) {
-		userEmail = self.email
-    	window.api.v1.account.friends(self.email).done(data => friends = data)
-    }
+	}
 
     window.api.v1.account.self()
-        .done(setup)
-        .fail(xhr => window.location = "/login.html")
+        .then(function (self) {
+			userEmail = self.email
+    		return window.api.v1.account.friends(self.email)
+		}).then(function (myFriends) {
+			friends = myFriends
+			return window.api.v1.account.collections()
+		}).then(function (collections) {
+			collections.forEach(collection => {
+				if (collection.id === Number(cID)){
+					collectionName = collection.name
+				}
+			})
+			return window.api.v1.collection.isOwner(cID)
+		}).then(function (owner) {
+			if (!owner)
+				return
+			$('.user-options').append(
+				$('<button>').addClass('btn').text('kick user').click(kickUser)
+			).append(
+				$('<button>').addClass('btn').text('invite user').click(inviteUser)
+			)
+		})
+        .fail(toProfilePage)
 
 })
