@@ -3,14 +3,15 @@ block view-specific-scripts
     script(src="/js/util/el.js")
     script(src="/js/modal.js")
     script(src="/js/collection/users.js")
+    script(src="/js/vendor/fuse.min.js")
     script(src="/js/util/awesomplete.js")
 block content
     div.profile-area-wrapper
+        a(href="/profile.html")#profile.view-area-tab.unactive-tab profile
         a(href="/collection.html")#general.view-area-tab.unactive-tab general
         a(href="/collection/users.html")#users.view-area-tab.active-tab users
         a(href="/collection/entries.html")#entries.view-area-tab.unactive-tab entries
         div.profile-container
             div.profile-content
                 div.user-options
-                    button#invite.btn invite user
                 div#members

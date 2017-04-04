@@ -1,5 +1,5 @@
-$(document).ready(function() {
 
+$(document).ready(function() {
 	function toggleButtonState() {
         var btns = document.querySelectorAll('.btn')
         for (var i = 0; i < btns.length; i++) {
@@ -134,13 +134,13 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	/** 
+	/**
 	 * Create a modal that displays contents of an entry & an edit button.
-	 * 
+	 *
 	 * @param {object} entry 	straight from the API
 	 * @param {object} taxonomy also straight from the API
 	 * @param {object} options 	configure some stuff
-	 * 
+	 *
 	 * options.button = [buttonEl, ..., buttonEl]
 	 *     - button elements are added after the edit button
 	 * */
@@ -170,9 +170,9 @@ $(document).ready(function() {
 					el('div.modal-sub-item', [entry.doi]),
 					el("div.modal-divider")
 				],
-				editBtn, 
+				editBtn,
 				extraButtons
-			])	
+			])
 		])
 
 		editBtn.addEventListener("click", function(evt) {
@@ -185,29 +185,92 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	/* Create simple modal */
-    modals.confirmPopUp = function(desc, method) {
-      var confirmBtn = el('button#confirm.btn', ['confirm'])
-      var modal = el('div#modal.modal.confirm', [
-              	el('div', [
-                closeButton(),
-                el("div.modal-header-title", [desc]),
-                //name of modal
-                el("div#bottom-divider.modal-divider"),
-                confirmBtn, cancelButton()
-            ])
-          ])
+	 //creates a modal with fuzzy search
+	 modals.fuzzyModal = function(obj,method) {
+		 var message = [el("div.modal-sub-item", [obj.message])]
 
-        confirmBtn.addEventListener('click', (evt) => {
-            method.apply({modal})
-        })
-      
-      setTimeout(function(){
-			  document.getElementById('modal').classList.add('appear');
-			  document.getElementById('modal').classList.add('confirm')
-      }, modalAnimation)
-      
-      document.body.appendChild(modal)
+		 var list = obj.list
+
+		 itemsFuzzy = new Fuse(list, {
+			 	threshold: 0.4
+		 })
+
+		 var inputboxes = obj.input.map((conf, i) => {
+		 		return el(`input#input${i}.modal-input-box`, {
+		 				name: conf[0],
+		 				type: conf[1],
+		 				placeholder: conf[2]
+		 		})
+		 })
+
+		 //creates optional button
+		 var button1 = el('button.btn', [obj.btnText])
+
+		 //creates the fuzzy item divs
+		 var div = document.createElement('div');
+		 div.className = 'items-container';
+		 var emailMappings = {};
+		 var i =0;
+		 list.forEach(item => {
+			 	var innerDiv = document.createElement('div');
+				innerDiv.className = 'item';
+				innerDiv.innerHTML = item;
+			 	emailMappings[i] = innerDiv;
+		 		div.appendChild(emailMappings[i]);
+				i++;
+		 })
+
+
+
+		 var modal = el('div#modal.modal', [
+		 		el('div', [
+		 				closeButton(),
+		 				el("div.modal-header-title", [obj.desc]),
+		 				//name of modal
+		 				el("div.modal-divider"),
+		 				message,
+		 				inputboxes,
+						el("div#search-divider.modal-divider"),
+						div,
+		 				el("div#bottom-divider.modal-divider"),
+		 				button1, cancelButton()
+		 		])
+		 ])
+
+		 button1.addEventListener('click', (evt) => {
+		 		//maybe apply toggleButtonState() ??
+		 		var args = inputboxes.map(input => input.value)
+		 		method.apply({modal}, args)
+		 })
+
+		 document.body.appendChild(modal)
+		 setTimeout(function() {
+		 	document.getElementById('modal').classList.add('appear');
+		 }, modalAnimation)
+
+		 $("#input0").on("input", function(evt) {
+         var searchString = $(this).val();
+         if (searchString) {
+             $(".item").hide();
+             var results = itemsFuzzy.search(searchString);
+             if (results.length) {
+                 for (var i = 0; i < results.length; ++i) {
+                     var matchingEmail = results[i];
+										 $(emailMappings[matchingEmail]).show();
+                 }
+             }
+         } else {
+             $(".item").show();
+         }
+     });
+
+
+		 // Focus on first input element
+		 if (obj.input.length > 0) {
+		 		inputboxes[0].focus()
+		 }
+
+
 	 }
 
     /**
@@ -272,6 +335,64 @@ $(document).ready(function() {
         }
     }
 
+		/* Create simple modal */
+	    modals.confirmPopUp = function(desc, method) {
+	      var confirmBtn = el('button#confirm.btn', ['confirm'])
+	      var modal = el('div#modal.modal.confirm', [
+	              	el('div', [
+	                closeButton(),
+	                el("div.modal-header-title", [desc]),
+	                //name of modal
+	                el("div#bottom-divider.modal-divider"),
+	                confirmBtn, cancelButton()
+	            ])
+	          ])
+
+	        confirmBtn.addEventListener('click', (evt) => {
+	            method.apply({modal})
+	        })
+
+	      setTimeout(function(){
+				  document.getElementById('modal').classList.add('appear');
+				  document.getElementById('modal').classList.add('confirm');
+					//document.getElementsByClassName("modal confirm appear").style.zIndex = "1051";
+
+
+				//	alert($(this).data('id'))
+	      }, modalAnimation)
+
+	      document.body.appendChild(modal)
+		 }
+
+		 /* Create simple modal with unique id */
+ 	    modals.confirmKickPopUp = function(desc, method) {
+ 	      var confirmBtn = el('button#confirm.btn', ['confirm'])
+ 	      var modal = el('div#modalConf.modal.confirm', [
+ 	              	el('div', [
+ 	                closeButton(),
+ 	                el("div.modal-header-title", [desc]),
+ 	                //name of modal
+ 	                el("div#bottom-divider.modal-divider"),
+ 	                confirmBtn, cancelButton()
+ 	            ])
+ 	          ])
+
+ 	        confirmBtn.addEventListener('click', (evt) => {
+ 	            method.apply({modal})
+ 	        })
+
+ 	      setTimeout(function(){
+ 				  document.getElementById('modalConf').classList.add('appear');
+ 				  document.getElementById('modalConf').classList.add('confirm');
+ 					//document.getElementsByClassName("modal confirm appear").style.zIndex = "1051";
+
+
+ 				//	alert($(this).data('id'))
+ 	      }, modalAnimation)
+
+ 	      document.body.appendChild(modal)
+ 		 }
+
 	modals.clearAll = function() {
 		var modal = document.querySelector('.modal')
 		if (modal)
@@ -280,7 +401,18 @@ $(document).ready(function() {
 		var confirm = document.querySelector('.confirm')
 		if (confirm)
 			confirm.parentNode.removeChild(confirm)
+
+		//	modals.clearConfirm();
 	}
+
+	modals.clearConfirm = function(){
+		var confirmModal = document.querySelector('#modalConf')
+			if(confirmModal){
+				confirmModal.parentNode.removeChild(confirmModal)
+			}
+	}
+
+
 
 	 //adds entries to a modal and returns the id of the entry that got clicked
 	 modals.listModal = function(obj, method) {
@@ -297,7 +429,7 @@ $(document).ready(function() {
 				document.body.removeChild(modal)
 				method.apply({modal}, args)
 			});
-				
+
 			return elEntry;
 		});
 
@@ -314,7 +446,7 @@ $(document).ready(function() {
 
 				el("div#bottom-divider.modal-divider"),
 				cancelButton()
-			]) 
+			])
 		])
 
 		document.body.appendChild(modal)
@@ -336,7 +468,7 @@ window.addEventListener('load', () => {
 	document.addEventListener('keydown', (evt) => {
 		if (evt.keyCode !== 27)
 			return
-		
+
 		window.modals.clearAll()
 	}, false)
 }, false)

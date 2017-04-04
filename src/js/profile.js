@@ -16,6 +16,7 @@ $(function() {
     /* Add red text after the cancel button on a modal */
     function complain(text) {
         $('.modal-complaint').remove()
+        modals.clearConfirm()
         var modal = document.querySelector(".modal") || document.querySelector(".confirm")
         var errors = modal.querySelectorAll('button')
         var error = errors[errors.length - 1]
@@ -105,6 +106,50 @@ $(function() {
                 })
     }
 
+    function kick(evt) {
+        var parent = this.parentNode.parentNode.parentNode
+        var id = parent.dataset.collectionId
+        var name = parent.querySelector('.collection-title').textContent
+
+        var myemail = document.getElementsByClassName('user-email')[0].innerHTML
+        var indx = myemail.indexOf(' ')
+        myemail=myemail.substring(0,indx);
+        api.v1.collection.members(id,"all").done(data =>  {
+          var emails=[];
+          for(i = 0; i<data.length;i++){
+            if(data[i].email != myemail){
+              emails[i]=data[i].email;
+            }
+          }
+
+
+        var kickUserModal = {
+            desc: "Kick User from " + name,
+            message: "",
+            list: emails,
+            input: [['input0','email','user email']],
+            btnText: "Kick"
+        }
+
+        //fix alternatives so only people in the collection shows up
+        window.modals.fuzzyModal(kickUserModal,function (email) {
+            window.modals.confirmKickPopUp(`Are you sure you want to Kick ${email}?`, () => {
+                api.v1.collection.kick(email, id)
+                    .done(ok => cleanup(this.modal))
+                    .fail(xhr => complain(xhr.responseText))
+            })
+
+        })
+
+
+          new Awesomplete('#input0', {
+                          list: emails,
+                          filter: ausomplete.autocompleteFilter,
+                          replace: ausomplete.autocompleteUpdate
+                  })
+        })
+    }
+
     function submit(evt) {
         var id = this.parentNode.parentNode.parentNode.dataset.collectionId
         window.location = window.location.origin + "/submit.html?c=" + id
@@ -140,15 +185,16 @@ $(function() {
     }
 
     function appendCollection(self, coll, isOwner) {
-      var owner;
-      if(isOwner)
-        owner =" (owner)"
+        var ownerActions = el('div.collection-row', [
+             collectionOption('add user', invite),
+             collectionOption('kick user', kick)
+        ])
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
                     el('span', [coll.name]),
                     el('span.collection-id', [" #" + coll.id]),
-                    el('span.collection-owner',[owner])
+                    el('span.collection-owner',[isOwner ? " (owner)" : ""])
                 ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
@@ -156,12 +202,12 @@ $(function() {
                 el('div.collection-row', [
                     collectionOption('search', search),
                     collectionOption('explore', explore),
-                    collectionOption('manage', manage)
                 ]),
                 el('div.collection-row', [
-                    collectionOption('add user', invite),
-                    collectionOption('add entry', submit)
-                ])
+                    collectionOption('manage', manage),
+                    collectionOption('add entry', submit),
+                ]),
+                isOwner ? ownerActions : undefined
             ])
 		])
 

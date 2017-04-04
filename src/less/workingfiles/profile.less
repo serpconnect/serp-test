@@ -88,9 +88,10 @@
 }
 
 .collection-option {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
     cursor: pointer;
-    display: inline-block;
-    margin-left: 15px;
+
   -webkit-transition: color 0.2s ease;
     -moz-transition: color 0.2s ease;
     -o-transition: color 0.2s ease;
@@ -105,6 +106,11 @@
         transition: color 0.2s ease;
         color: (@light-gray - #333);
     }
+}
+.collection-row {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-around;
 }
 
 .collection-option-li {
