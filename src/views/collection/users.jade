@@ -3,6 +3,7 @@ block view-specific-scripts
     script(src="/js/util/el.js")
     script(src="/js/modal.js")
     script(src="/js/collection/users.js")
+    script(src="/js/vendor/fuse.min.js")
     script(src="/js/util/awesomplete.js")
 block content
     div.profile-area-wrapper
@@ -13,4 +14,5 @@ block content
             div.profile-content
                 div.user-options
                     button#invite.btn invite user
+                    button#kick.btn kick user
                 div#members
