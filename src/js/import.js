@@ -238,7 +238,6 @@
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
-        console.log(validEntries); //remove
 
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
@@ -417,10 +416,11 @@
           map((i, e) => e.value).toArray();
       var currentHeader = serp.find(value => value.display === labels[j]);
       var isTaxonomyLeaf = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
-
       var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf);
-      var root = isTaxonomyLeaf ? serpClassification : jsonObj;
-      root[currentHeader.value] = currentValue;
+      if(isValueValid(currentValue, selectedFirst[j].className, onlySelectedInputs.length)){
+        var root = isTaxonomyLeaf ? serpClassification : jsonObj;
+        root[currentHeader.value] = currentValue;
+      }
     }
     jsonObj.serpClassification = serpClassification;
     jsonObj.entryType = entryType;
@@ -433,16 +433,18 @@
       currentValue = isTaxonomyLeaf ? ["unspecified"] : "unspecified";
     } else {
       currentValue = isTaxonomyLeaf ? [] : "";
+      var firstValueHasBeenAdded = false;
       for(var k=0;k<onlySelectedInputs.length;k++){
-          var currentCell = currentLine[CSVHeaders.indexOf(onlySelectedInputs[k])];
-          if(currentCell){
-            if(isTaxonomyLeaf){
-              currentValue.push(currentCell);
-            } else {
-              var separator = k === 0 ? "" : ", ";
-              currentValue = currentValue + separator + currentCell;
-            }
+        var currentCell = currentLine[CSVHeaders.indexOf(onlySelectedInputs[k])];
+        if(currentCell){
+          if(isTaxonomyLeaf){
+            currentValue.push(currentCell);
+          } else {
+            var separator = firstValueHasBeenAdded ? ", " : "";
+            currentValue = currentValue + separator + currentCell;
+            firstValueHasBeenAdded = true;
           }
+        }
       }
       if(!currentValue){
         currentValue = "unspecified";
@@ -451,6 +453,22 @@
       }
     }
     return currentValue;
+  }
+
+  function isValueValid(currentValue, checkboxClassName, specifiedInputsLength){
+    if (currentValue === "unspecified" || currentValue[0] === "unspecified"){
+      if (specifiedInputsLength !== 0){
+        if (checkboxClassName === "import-checkbox first researchMustHave" ||
+            checkboxClassName === "import-checkbox first challengeMustHave"){
+              return true;
+        }
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+    return false;
   }
 
   // Function is taken from stackoverflow,
