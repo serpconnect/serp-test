@@ -127,11 +127,11 @@ $(function () {
 	}
 
 	v1.collection.addEntry = function(cid, eid){
-		return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), { 
-			entryId: eid 
+		return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), {
+			entryId: eid
 		})
 	}
-	
+
 	v1.collection.stats = function(id){
 		return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
 	}
@@ -142,6 +142,10 @@ $(function () {
 
 	v1.collection.url = function(cID){
 		return endpoint("/v1/collection/" + cID + "/addEntry")
+	}
+
+	v1.collection.isOwner = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
 	}
 
 	// Admin API
@@ -166,7 +170,7 @@ $(function () {
         return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
     }
 
-	// Root API 
+	// Root API
 	v1.getEntry = function (id){
 		return ajax("GET", endpoint("/v1/entry/") + id)
 	}
@@ -174,5 +178,5 @@ $(function () {
 	v1.getTaxonomyEntry = function (id){
 		return ajax("GET", endpoint("/v1/entry/" + id + "/taxonomy"))
 	}
-	
+
 })
