@@ -81,7 +81,7 @@ $(document).ready(function() {
 
 
     function buildModalView($dropdown, userEmail, oldLevel, newLevel) {
-        var $modal = el("div").addClass("modal");
+        var $modal = el("div").addClass("modal appear");
         var $close = el("div").addClass("close-btn");
         $close.on("click", function(evt) {
             // remove the modal view
