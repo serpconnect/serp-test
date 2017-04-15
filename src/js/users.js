@@ -2,13 +2,25 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+
+    /* Add red text after the cancel button on a modal */
+    function complain(text) {
+        $('.modal-complaint').remove()
+        modals.clearConfirm()
+        var modal = document.querySelector(".modal") || document.querySelector(".confirm")
+        var errors = modal.querySelectorAll('button')
+        var error = errors[errors.length - 1]
+        var complaint = el('div.modal-complaint', [text])
+        error.parentNode.insertBefore(complaint, error.nextSibling)
+    }
+
     user.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {
         if(invites.length > 0 ){
-            var invitationsContainer = el('div').addClass('invitationContainer')
-            var new_Invitations = el('a').addClass('newInvitation').attr('href', "/invitations.html").text(invites.length + " " )
-            invitationsContainer.append(new_Invitations)
+            var invitationsContainer = el('div',{className : 'invitationContainer'})
+            var new_Invitations = el('a',{className:'newInvitation', href:"/invitations.html", text: invites.length + " " })
+            invitationsContainer.appendChild(new_Invitations)
             $("[href='/invitations.html']").append(invitationsContainer)
          }
     }
@@ -19,6 +31,7 @@ $(document).ready(function() {
     var emailsFuzzy = undefined;
     var previousValue = undefined;
 
+
     window.api.ajax("GET", window.api.host + "/v1/admin/users").done(users => {
         var parent = $('.users-content')
 
@@ -27,19 +40,66 @@ $(document).ready(function() {
         })
 
         users.forEach(user => {
-            var div = el('div').addClass('users-container')
-            div.append(el('div').addClass('users-email').text(user.email))
+            var div = el('div',{className : 'users-container'})
+            div.appendChild(el('div',{className: 'users-email',text:user.email}))
 
-            var select = el('select').addClass('users-select')
-            select.data("email", user.email)
-            select.append(el('option').attr('value', 'registered').text('registered'))
-            select.append(el('option').attr('value', 'user').text('user'))
-            select.append(el('option').attr('value', 'verified').text('verified'))
-            select.append(el('option').attr('value', 'admin').text('admin'))
-            select.val(user.trust.toLowerCase())
-            div.append(select)
+            var select = el('select',{className : 'users-select'})
+            select.dataset.email = user.email
+            select.appendChild(el('option',{value:'registered',text:'registered'}))
+            select.appendChild(el('option',{value:'user',text:'user'}))
+            select.appendChild(el('option',{value:'verified',text:'verified'}))
+            select.appendChild(el('option',{value:'admin',text:'admin'}))
+            select.value = user.trust.toLowerCase();
+            div.appendChild(select)
 
-            div.append(el('label').addClass('collection-dropdown-label'))
+            var deleteUser = el("button",{className: 'normal-btn',value:'delete',text:'delete'})
+
+            var deleteAccountModal = {
+                desc: "Delete Account",
+                message: "This will delete " + user.email + ", but the users collections and entries will remain. Are you sure?",
+                input: [],
+                btnText: "Delete"
+            };
+            deleteUser.addEventListener("click", evt =>{
+              window.modals.optionsModal(deleteAccountModal, function () {
+                  //A secondary box pops up to imply importance of the decision
+                //  var message = "Delete " + user.email + "'s Account - Are You Sure"
+
+                /*  window.modals.confirmKickPopUp(`Are you sure you want to Kick ${email}?`, () => {
+                      api.v1.collection.kick(email, id)
+                          .done(ok => cleanup(this.modal))
+                          .fail(xhr => complain(xhr.responseText))
+                  })*/
+
+
+                      api.v1.admin.collectionsOwnedBy(user.email).done(colls => {
+                          if(colls.length!=0){
+                            msg = "Warning the user is owner of the following collections:\n"
+                            var deleteOwnerModal = {
+                                desc: "Delete Collection Owner",
+                                message: "Warning the user is owner of the following collections:",
+                                bottomMessage : "Deleting the user will nuke those collections, proceed?",
+                                list: colls
+                            }
+
+                            window.modals.confirmDeleteOwnerPopUp(deleteOwnerModal, ()=> {
+                                alert("deleted the user!")
+                                api.v1.admin.delete(user.email)
+                                  .done(ok => modals.clearAll())
+                                  .fail(xhr => complain(xhr.responseText))
+
+                            })
+                        }else{
+                            api.v1.admin.delete(user.email)
+                              .done(ok => modals.clearAll())
+                              .fail(xhr => complain(xhr.responseText))
+                        }
+                    })
+              })
+            })
+
+            div.appendChild(el('label',{className:'collection-dropdown-label'}))
+            div.appendChild(deleteUser);
             parent.append(div)
 
             emails.push(user.email)
@@ -81,63 +141,27 @@ $(document).ready(function() {
 
 
     function buildModalView($dropdown, userEmail, oldLevel, newLevel) {
-        var $modal = el("div").addClass("modal appear");
-        var $close = el("div").addClass("close-btn");
-        $close.on("click", function(evt) {
-            // remove the modal view
-            $(".modal").remove();
-        });
+      var changeAccountModal = {
+          desc: "Changing user level",
+          message: "This will change " + userEmail + " from " + oldLevel + " to " + newLevel,
+          input: [],
+          btnText: "Change"
+      };
 
-        // remove if the user clicks outside the inspection view
-        $("body").on("click", function(evt) {
-           if (evt.target.className === "modal") {
-                $(".modal").remove();
-            }
-        });
+      $dropdown.val(oldLevel.toLowerCase())
+      window.modals.optionsModal(changeAccountModal, ok => {
 
-        // remove modal view if escape key is pressed
-        $(document).keydown(function(e) {
-            if (e.keyCode === 27) {
-                $(".modal").remove();
-            }
-        });
-
-        var $content = el("div");
-        // add close btn
-        $content.append($close);
-
-        var changeText = "from " + oldLevel + " to " + newLevel;
-
-        $content.append(el("div").addClass("modal-entry-type").text("changing user level"));
-        $content.append(el("div").addClass("modal-entry-title").text(userEmail));
-        $content.append(el("div").addClass("modal-entry-title").text(changeText));
-        $content.append(el("div").addClass("modal-divider"));
-
-        var $cancelBtn = el("button").addClass("edit-btn").text("cancel");
-        $cancelBtn.on("click", function(evt) {
-            $(".modal").remove();
-            $dropdown.val(oldLevel);
-        });
-        $content.append($cancelBtn);
-
-        var $acceptBtn = el("button").addClass("edit-btn").text("accept");
-        $acceptBtn.on("click", function(evt) {
             window.api.ajax("PUT", window.api.host + "/v1/admin/set-trust", {
                 email: userEmail,
                 trust: newLevel.charAt(0).toUpperCase() + newLevel.substring(1)
             }).done(ok => {
-                $(".modal").remove();
-            }).fail(reason => window.alert(reason))
-        });
-        $content.append($acceptBtn);
 
-        $modal.append($content);
-        $("body").append($modal);
+            //    $(".modal").remove();
+            }).fail(reason => window.alert(reason))
+            .done(ok =>{
+                $dropdown.val(newLevel.toLowerCase())
+                modals.clearAll()
+            }).fail(xhr => complain(xhr.responseText))
+      })
     }
 });
-
-// more efficient way of creating elements than purely using jquery;
-// basically an alias for document.createElement - returns a jquery element
-function el(elementType) {
-    return $(document.createElement(elementType));
-}

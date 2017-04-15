@@ -185,7 +185,7 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	 //creates a modal with fuzzy search
+
 	 modals.fuzzyModal = function(obj,method) {
 		 var message = [el("div.modal-sub-item", [obj.message])]
 
@@ -334,6 +334,64 @@ $(document).ready(function() {
             inputboxes[0].focus()
         }
     }
+
+
+			 /**
+				* Create configurable modal.
+				*
+				* obj = {
+				*     desc   : 'description',
+				*     message: 'message',
+				*			bottomMessage: 'message appears after list',
+				*     list  : [inputConf, ..., inputConf]
+				* }
+				*
+				* inputConf = [input-name, input-type, input-placeholder]
+				*
+				* Method is called when ok button is clicked. It is called
+				* with modal as context and input values are arguments.
+				*
+				**/
+	 	    modals.confirmDeleteOwnerPopUp = function(obj, method) {
+					var message = [el("div.modal-sub-item", [obj.message])]
+					var bottomMessage = [el("div.modal-sub-item", [obj.bottomMessage])]
+
+					var list = obj.list;
+					var div = document.createElement('div');
+			 	 	div.className = 'items-container';
+			 	 	list.forEach(item => {
+			 			var innerDiv = document.createElement('div');
+			 			innerDiv.className = 'item';
+			 			innerDiv.innerHTML = item;
+			 			div.appendChild(innerDiv);
+			 	 	})
+
+	 	      var confirmBtn = el('button#confirm.btn', ['confirm'])
+	 	      var modal = el('div#modal.modal.appear',[
+	 	              	el('div', [
+	 	                closeButton(),
+	 	                el("div.modal-header-title", [obj.desc]),
+	 	                //name of modal
+										el("div.modal-divider"),
+										message,
+										div,
+										bottomMessage,
+	 	                el("div#bottom-divider.modal-divider"),
+	 	                confirmBtn, cancelButton()
+	 	            ])
+	 	          ])
+
+	 	        confirmBtn.addEventListener('click', (evt) => {
+	 	            method.apply({modal})
+	 	        })
+
+	 	      	setTimeout(function(){
+	 	      }, modalAnimation)
+
+	 	      document.body.appendChild(modal)
+	 		 }
+
+
 
 		/* Create simple modal */
 	    modals.confirmPopUp = function(desc, method) {

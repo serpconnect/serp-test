@@ -156,25 +156,37 @@ $(function () {
 
 	// Admin API
 	v1.admin.acceptEntry = function (id) {
-		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
-            entry : id
-        })
+			return ajax("POST", endpoint('/v1/admin/accept-entry'), {
+          entry : id
+      })
 	}
 
-    v1.admin.rejectEntry = function (id) {
-		return ajax("POST", endpoint('/v1/admin/reject-entry'), {
-            entry : id
-        })
+  v1.admin.rejectEntry = function (id) {
+			return ajax("POST", endpoint('/v1/admin/reject-entry'), {
+          entry : id
+      })
 	}
 
-    v1.admin.pending = function () {
-        return ajax("GET", endpoint("/v1/admin/pending"))
-    }
+	v1.admin.collectionsOwnedBy = function(email){
+			return ajax("GET", endpoint('/v1/admin/collections-owned-by'),{
+					email : email
+			})
+	}
 
-    //
-    v1.entry.taxonomy = function (id) {
-        return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
-    }
+	v1.admin.delete = function(email){
+		return ajax("POST", endpoint('/v1/admin/delete-user'),{
+			email : email
+		})
+	}
+
+  v1.admin.pending = function () {
+      return ajax("GET", endpoint("/v1/admin/pending"))
+  }
+
+  //
+  v1.entry.taxonomy = function (id) {
+      return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
+  }
 
 	// Root API
 	v1.getEntry = function (id){
