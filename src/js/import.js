@@ -238,7 +238,7 @@
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
-        
+
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
         }
@@ -397,15 +397,15 @@
 
   function createjsons(lines, CSVHeaders){
     function byNodeSelection(i, el) {
-        var node = el.querySelector(".import-node-selection");
-        return node && node.value === "everything";
+      var node = el.querySelector(".import-node-selection");
+      return node && node.value === "everything";
     }
     function byImportSelection(i, el) {
-        var select = el.querySelector(".import-select");
-        return select && select.value !== "unspecified";
+      var select = el.querySelector(".import-select");
+      return select && select.value !== "unspecified";
     }
     var selectedNodes = $(".import-all-selects-wrapper").filter(function (i, el) {
-        return byNodeSelection(i, el) || byImportSelection(i, el)
+      return byNodeSelection(i, el) || byImportSelection(i, el)
     })
 
     if(entryType === "research"){
@@ -427,8 +427,8 @@
     var serpClassification = {};
     for(var j=0;j<selectedNodes.length;j++){
       var onlySelectedInputs = $(selectedNodes[j]).
-          find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
-          map((i, e) => e.value).toArray();
+        find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
+        map((i, e) => e.value).toArray();
 
       var label = $(selectedNodes[j]).find("label").text();
       var currentHeader = serp.find(value => value.display === label);
@@ -476,26 +476,14 @@
 
   function isValueValid(currentValue, currentNode, includeFor){
     if (includeFor === "everything")
-        return true;
+      return true;
 
     if (currentValue !== "unspecified" && currentValue[0] !== "unspecified")
-        return true;
+      return true;
 
     var classes = currentNode.classList;
     return  classes.contains("researchMustHave") ||
             classes.contains("challengeMustHave");
-
-    // if (currentValue === "unspecified" || currentValue[0] === "unspecified"){
-    //   if(   currentNode.className === "import-all-selects-wrapper researchMustHave"
-    //      || currentNode.className === "import-all-selects-wrapper challengeMustHave"
-    //      || includeFor === "everything") {
-    //        return true;
-    //   } else {
-    //     return false;
-    //   }
-    // } else {
-    //   return true;
-    // }
   }
 
   // Function is taken from stackoverflow,
