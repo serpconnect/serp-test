@@ -238,7 +238,7 @@
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
-
+        
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
         }
@@ -396,18 +396,24 @@
   }
 
   function createjsons(lines, CSVHeaders){
-    var selectedNodes = $(".import-node-selection").filter(function(i, el) {
-                          return el.value === "everything";
-                        }).parent().parent().add($(".import-select").filter(function(i, el) {
-                          return el.value !== "unspecified";
-                        }).parent().parent().parent());
+    function byNodeSelection(i, el) {
+        var node = el.querySelector(".import-node-selection");
+        return node && node.value === "everything";
+    }
+    function byImportSelection(i, el) {
+        var select = el.querySelector(".import-select");
+        return select && select.value !== "unspecified";
+    }
+    var selectedNodes = $(".import-all-selects-wrapper").filter(function (i, el) {
+        return byNodeSelection(i, el) || byImportSelection(i, el)
+    })
+
     if(entryType === "research"){
       selectedNodes = selectedNodes.add(".import-all-selects-wrapper.researchMustHave");
     } else if(entryType === "challenge"){
       selectedNodes = selectedNodes.add(".import-all-selects-wrapper.challengeMustHave");
     }
     var jsons = [];
-
     for(var i=1;i<lines.length;i++){
       var currentLine = lines[i];
       var jsonObj = calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes);
@@ -429,6 +435,7 @@
       var isTaxonomyLeaf = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
       var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf);
       var includeFor = $(selectedNodes[j]).find(".import-node-selection").val();
+
       if(isValueValid(currentValue, selectedNodes[j], includeFor)){
         var root = isTaxonomyLeaf ? serpClassification : jsonObj;
         root[currentHeader.value] = currentValue;
@@ -468,17 +475,27 @@
   }
 
   function isValueValid(currentValue, currentNode, includeFor){
-    if (currentValue === "unspecified" || currentValue[0] === "unspecified"){
-      if(   currentNode.className === "import-all-selects-wrapper researchMustHave"
-         || currentNode.className === "import-all-selects-wrapper challengeMustHave"
-         || includeFor === "everything") {
-           return true;
-      } else {
-        return false;
-      }
-    } else {
-      return true;
-    }
+    if (includeFor === "everything")
+        return true;
+
+    if (currentValue !== "unspecified" && currentValue[0] !== "unspecified")
+        return true;
+
+    var classes = currentNode.classList;
+    return  classes.contains("researchMustHave") ||
+            classes.contains("challengeMustHave");
+
+    // if (currentValue === "unspecified" || currentValue[0] === "unspecified"){
+    //   if(   currentNode.className === "import-all-selects-wrapper researchMustHave"
+    //      || currentNode.className === "import-all-selects-wrapper challengeMustHave"
+    //      || includeFor === "everything") {
+    //        return true;
+    //   } else {
+    //     return false;
+    //   }
+    // } else {
+    //   return true;
+    // }
   }
 
   // Function is taken from stackoverflow,
