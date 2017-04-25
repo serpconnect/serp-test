@@ -49,5 +49,10 @@ $(function () {
 		window.modals.confirmPopUp(`Leave ${title}?`, () => {
 			window.api.v1.collection.leave(cID).always(toProfilePage)
 		})
-    }, false)
+  }, false)
+
+	document.getElementById('export').addEventListener('click', (evt) => {
+		window.export.toFile(cID);
+	}, false)
+
 })

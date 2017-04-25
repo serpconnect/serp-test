@@ -219,7 +219,7 @@ $(document).ready(function() {
         } else {
             var entryTitle = entry["reference"];
         }
-        
+
         var entryNumber = position ? position : queuedEntries.length - 1;
         var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
         scrollDiv.addClass("table-cell-div")
@@ -431,7 +431,7 @@ $(document).ready(function() {
 
     /* All interactive/clickable elements */
     function getUIElements() {
-        return ["#submit-queue-btn", "#submit-btn", "#queue-btn", 
+        return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
                 "#load-btn", "#import-json-btn", "#collection",
                 "#submit-create-collection"
         ]
@@ -443,7 +443,7 @@ $(document).ready(function() {
     }
     function enableButton(btn) {
         btn.disabled = false
-        btn.classList.remove('submit-disabled')    
+        btn.classList.remove('submit-disabled')
     }
     function updateUI(enableDisable) {
         getUIElements().forEach(selector => {
