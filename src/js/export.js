@@ -6,6 +6,7 @@
   }
 
   var cID;
+  var cName;
   var filename;
   var CSVDelimiter;
   var leafDelimiter;
@@ -21,17 +22,15 @@
       {value: ' ' , display: 'Space'}
   ];
 
-  function exportCollectionToFile(collID){
+  function exportCollectionToFile(collID, colName){
     cID = collID;
+    cName = colName;
     var modal = createExportModal();
-    // var selectedCSV = selectCSVDelimiter.options[selectCSVDelimiter.selectedIndex];
-    // $("#selectCSVDelimiter").data("prevValue", selectedCSV.value);
-    // $("#selectCSVDelimiter").data("prevText", selectedCSV.text);
-    // var selectedLeaf = selectLeafDelimiter.options[selectLeafDelimiter.selectedIndex];
-    // $("#selectLeafDelimiter").data("prevValue", selectedLeaf.value);
-    // $("#selectLeafDelimiter").data("prevText", selectedLeaf.text);
-    selectCSVDelimiterChange();
-    selectLeafDelimiterChange();
+
+    // Comma should probably not be the default delimiter
+    // since a lot of the entries contain commas. 
+    selectDelimiterCSV.selectedIndex = 1;
+    selectDelimiterLeaf.selectedIndex = 3;
 
     closeBtn.addEventListener('click', function() {
       document.body.removeChild(modal);
@@ -41,92 +40,23 @@
       document.body.removeChild(modal);
     }, false);
 
-    selectCSVDelimiter.addEventListener("change", function() {
-      selectCSVDelimiterChange();
-    });
-    function selectCSVDelimiterChange(){
-      // var option = $('#selectCSVDelimiter').value;
-
-      // console.log($("#selectCSVDelimiter").data("prevValue"));
-      // console.log($("#selectCSVDelimiter").data("prevText"));
-      var opt = document.createElement('option');
-      opt.value = $("#selectCSVDelimiter").data("prevValue");
-      opt.text = $("#selectCSVDelimiter").data("prevText");
-      console.log(opt.value);
-      if(opt.value !== undefined){
-        console.log("uep");
-        $("#selectLeafDelimiter").append(opt);
-      }
-      // Something weird with undefined here.
-      // FIX SO THAT DELIMITERS ARE REMOVED/ADDED AS THEY SHOULD. OTHERWISE DONE.
-
-
-      var selected = selectCSVDelimiter.options[selectCSVDelimiter.selectedIndex];
-      $("#selectLeafDelimiter option[value='" + selectCSVDelimiter.value + "']").remove();
-      $("#selectCSVDelimiter").data("prevValue", selected.value);
-      $("#selectCSVDelimiter").data("prevText", selected.text);
-
-
-      // $('#selectCSVDelimiter').empty();
-      // $("#selectLeafDelimiter option[value='" + selectCSVDelimiter.value + "']").remove();
-      // delimiters.forEach(function (delimiter) {
-      //   if(delimiter.value !== selectLeafDelimiter.value){
-      //     var opt = document.createElement('option');
-      //     opt.value = delimiter.value;
-      //     opt.text = delimiter.display;
-      //     $('#selectCSVDelimiter').append(opt);
-      //   }
-      // });
-    }
-
-    selectLeafDelimiter.addEventListener("change", function() {
-      selectLeafDelimiterChange();
-    });
-    function selectLeafDelimiterChange(){
-
-      var opt = document.createElement('option');
-      opt.value = $("#selectLeafDelimiter").data("prevValue");
-      opt.text = $("#selectLeafDelimiter").data("prevText");
-      $("#selectCSVDelimiter").append(opt);
-      if(opt.value !== undefined){
-        $("#selectCSVDelimiter").append(opt);
-      }
-
-      var selected = selectLeafDelimiter.options[selectLeafDelimiter.selectedIndex];
-      $("#selectCSVDelimiter option[value='" + selectLeafDelimiter.value + "']").remove();
-      $("#selectLeafDelimiter").data("prevValue", selected.value);
-      $("#selectLeafDelimiter").data("prevText", selected.text);
-
-      // $('#selectLeafDelimiter').empty();
-      // $("#selectCSVDelimiter option[value='" + selectLeafDelimiter.value + "']").remove();
-      // delimiters.forEach(function (delimiter) {
-      //   if(delimiter.value !== selectCSVDelimiter.value){
-      //     var opt = document.createElement('option');
-      //     opt.value = delimiter.value;
-      //     opt.text = delimiter.display;
-      //     $('#selectLeafDelimiter').append(opt);
-      //   }
-      // });
-    }
-
     exportBtn.addEventListener('click', (evt) => {
       clearComplaintsExport();
       filename = document.getElementById("exportFilename").value;
       var filenameValid = isFilenameValid();
-      if(!filenameValid){
+      var delimitersValid = areDelimitersValid();
+      if(!filenameValid || !delimitersValid){
         $(exportBtn).parent().append(
-          el("div.complaint.export", {text:"Information missing"})
+          el("div.complaint.export", {text:"Incorrect input"})
         );
         return;
       }
-      CSVDelimiter = selectCSVDelimiter.value;
-      leafDelimiter = selectLeafDelimiter.value;
+
       getTaxonomyAndExport();
     }, false);
 
   }
 
-  //Maybe there exists a better way to do this? Best I could come up with with current API.
   function getTaxonomyAndExport(taxonomy){
     window.api.ajax("GET", window.api.host + "/v1/collection/" + cID + "/graph").done(graph => {
       var taxonomy = getTaxonomy(graph);
@@ -244,28 +174,18 @@
     el('div.modal', [
         el('div', [
             el('div.close-btn#closeBtn', ['']),
-            el("h2", ["Export Collection #" + cID]),
+            el("h2", ["Export Collection " + cName + " (#" + cID + ")"]),
             el("div#exportFilenameWrapper", [
                 el("input.modal-input-box#exportFilename", {type:"text", placeholder:"Filename"}),
                 el("label", [" .csv"])
             ]),
+
             el("div.modal-divider"),
-            el("div." + "delimiter", [
-                el("label", ["Select CSV delimiter "]),
-                el("select#selectCSVDelimiter", [
-                    delimiters.map(delimiter =>
-                    el('option', { value: delimiter.value }, [ delimiter.display ])),
-                ])
-            ]),
+            delimiterDiv("CSV", "Select CSV delimiter "),
             el("div.modal-divider"),
-            el("div." + "delimiter", [
-                el("label", ["Select taxonomy leaf delimiter "]),
-                el("select#selectLeafDelimiter", [
-                    delimiters.map(delimiter =>
-                    el('option', { value: delimiter.value }, [ delimiter.display ])),
-                ])
-            ]),
+            delimiterDiv("Leaf", "Select taxonomy leaf delimiter "),
             el("div.modal-divider"),
+
             el("div", [
                 el('button#exportBtn.btn', ["Export"]),
                 el('button#cancelBtn.btn', ["Cancel"]),
@@ -277,10 +197,32 @@
     return modal;
   }
 
+  function delimiterDiv(name, text){
+    return  el("div#delimiter" + name, [
+                el("label", [text]),
+                el("select#selectDelimiter" + name, [
+                    delimiters.map(delimiter =>
+                    el('option', { value: delimiter.value }, [ delimiter.display ])),
+                ])
+            ])
+  }
+
   function isFilenameValid(){
     if(filename === ""){
       document.getElementById("exportFilenameWrapper").appendChild(
           el("div.complaint.export", {text:"Please supply information"})
+      );
+      return false;
+    }
+    return true;
+  }
+
+  function areDelimitersValid(){
+    CSVDelimiter = selectDelimiterCSV.value;
+    leafDelimiter = selectDelimiterLeaf.value;
+    if(CSVDelimiter === leafDelimiter){
+      document.getElementById("delimiterCSV").appendChild(
+          el("div.complaint.export", {text:"The delimiters have to be different"})
       );
       return false;
     }

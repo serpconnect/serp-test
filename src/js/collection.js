@@ -52,7 +52,8 @@ $(function () {
   }, false)
 
 	document.getElementById('export').addEventListener('click', (evt) => {
-		window.export.toFile(cID);
+		var cName = document.getElementById("name").innerText;
+		window.export.toFile(cID, cName);
 	}, false)
 
 })
