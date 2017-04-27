@@ -2,6 +2,7 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+    // Load descriptions from the html page (easy editing)
     var descriptions = Array.from(document.querySelectorAll('.description-field'))
         .map(el => {
             var lvl =  el.querySelector('.level').textContent
@@ -10,8 +11,8 @@ $(document).ready(function() {
         })
     var levelDescriptions = Object.assign({}, ...descriptions)
 
+    // Check if invites exist and display number above invitations tab on profile page
     user.invites().done(showInvites)
-    //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {
         if(invites.length > 0 ){
             var invitationsContainer = el('div.invitationContainer')
@@ -23,10 +24,8 @@ $(document).ready(function() {
 
     var emails = [];
     var emailMappings = {};
-
     var emailsFuzzy = undefined;
     var previousValue = undefined;
-
 
     function recordPreviousValue(evt) {
         previousValue = this.value
@@ -85,11 +84,11 @@ $(document).ready(function() {
         if (searchString) {
             $(".users-container").hide();
             var results = emailsFuzzy.search(searchString);
-            if (results.length) {
-                for (var i = 0; i < results.length; ++i) {
-                    var matchingEmail = results[i];
-                    $(emailMappings[matchingEmail]).show();
-                }
+            if (!results.length) return
+
+            for (var i = 0; i < results.length; ++i) {
+                var matchingEmail = results[i];
+                $(emailMappings[matchingEmail]).show();
             }
         } else {
             $(".users-container").show();
