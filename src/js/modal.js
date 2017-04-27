@@ -185,93 +185,85 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	 //creates a modal with fuzzy search
-	 modals.fuzzyModal = function(obj,method) {
-		 var message = [el("div.modal-sub-item", [obj.message])]
-
-		 var list = obj.list
+	/* Creates a modal with fuzzy search */
+	modals.fuzzyModal = function(obj,method) {
+		var message = [el("div.modal-sub-item", [obj.message])]
+		var list = obj.list
 
 		 itemsFuzzy = new Fuse(list, {
-			 	threshold: 0.4
+			threshold: 0.4
 		 })
 
 		 var inputboxes = obj.input.map((conf, i) => {
-		 		return el(`input#input${i}.modal-input-box`, {
-		 				name: conf[0],
-		 				type: conf[1],
-		 				placeholder: conf[2]
-		 		})
+			return el(`input#input${i}.modal-input-box`, {
+				name: conf[0],
+				type: conf[1],
+				placeholder: conf[2]
+			})
 		 })
 
 		 //creates optional button
 		 var button1 = el('button.btn', [obj.btnText])
 
-		 //creates the fuzzy item divs
-		 var div = document.createElement('div');
-		 div.className = 'items-container';
-		 var emailMappings = {};
-		 var i =0;
-		 list.forEach(item => {
-			 	var innerDiv = document.createElement('div');
-				innerDiv.className = 'item';
-				innerDiv.innerHTML = item;
-			 	emailMappings[i] = innerDiv;
-		 		div.appendChild(emailMappings[i]);
-				i++;
-		 })
+		 // Creates the fuzzy item divs
+		var div = el('div.items-container');
+		var emailMappings = {};
+		var i = 0;
+		list.forEach(item => {
+			var innerDiv = document.createElement('div');
+			innerDiv.className = 'item';
+			innerDiv.innerHTML = item;
+			emailMappings[i] = innerDiv;
+			div.appendChild(emailMappings[i]);
+			i++;
+		})
 
-
-
-		 var modal = el('div#modal.modal', [
-		 		el('div', [
-		 				closeButton(),
-		 				el("div.modal-header-title", [obj.desc]),
-		 				//name of modal
-		 				el("div.modal-divider"),
-		 				message,
-		 				inputboxes,
-						el("div#search-divider.modal-divider"),
-						div,
-		 				el("div#bottom-divider.modal-divider"),
-		 				button1, cancelButton()
-		 		])
+		var modal = el('div#modal.modal', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [obj.desc]),
+				//name of modal
+				el("div.modal-divider"),
+				message,
+				inputboxes,
+				el("div#search-divider.modal-divider"),
+				div,
+				el("div#bottom-divider.modal-divider"),
+				button1, cancelButton()
+			])
 		 ])
 
-		 button1.addEventListener('click', (evt) => {
-		 		//maybe apply toggleButtonState() ??
-		 		var args = inputboxes.map(input => input.value)
-		 		method.apply({modal}, args)
-		 })
+		button1.addEventListener('click', (evt) => {
+			//maybe apply toggleButtonState() ??
+			var args = inputboxes.map(input => input.value)
+			method.apply({modal}, args)
+		})
 
-		 document.body.appendChild(modal)
-		 setTimeout(function() {
-		 	document.getElementById('modal').classList.add('appear');
-		 }, modalAnimation)
+		document.body.appendChild(modal)
+		// Focus on first input element
+		if (obj.input.length > 0) {
+				inputboxes[0].focus()
+		}
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
 
-		 $("#input0").on("input", function(evt) {
-         var searchString = $(this).val();
-         if (searchString) {
-             $(".item").hide();
-             var results = itemsFuzzy.search(searchString);
-             if (results.length) {
-                 for (var i = 0; i < results.length; ++i) {
-                     var matchingEmail = results[i];
-										 $(emailMappings[matchingEmail]).show();
-                 }
-             }
-         } else {
-             $(".item").show();
-         }
-     });
-
-
-		 // Focus on first input element
-		 if (obj.input.length > 0) {
-		 		inputboxes[0].focus()
-		 }
-
-
-	 }
+		$("#input0").on("input", function(evt) {
+			var searchString = $(this).val();
+			if (searchString) {
+				$(".item").hide();
+				var results = itemsFuzzy.search(searchString);
+				if (results.length) {
+					for (var i = 0; i < results.length; ++i) {
+						var matchingEmail = results[i];
+						$(emailMappings[matchingEmail]).show();
+					}
+				}
+			} else {
+				$(".item").show();
+			}
+		});
+	}
 
     /**
      * Create configurable modal.
@@ -289,7 +281,7 @@ $(document).ready(function() {
      * with modal as context and input values are arguments.
      *
      **/
-    modals.optionsModal = function(obj, method) {
+    modals.optionsModal = function(obj, onConfirm, onCancel) {
         var message = [el("div.modal-sub-item", [obj.message])]
 
         var inputboxes = obj.input.map((conf, i) => {
@@ -302,6 +294,7 @@ $(document).ready(function() {
 
         //creates optional button
         var button1 = el('button.btn', [obj.btnText])
+		var cancelBtn = cancelButton()
 
         var modal = el('div#modal.modal', [
             el('div', [
@@ -314,20 +307,25 @@ $(document).ready(function() {
                 inputboxes,
 
                 el("div#bottom-divider.modal-divider"),
-                button1, cancelButton()
+                button1, cancelBtn
             ])
         ])
 
         button1.addEventListener('click', (evt) => {
             //maybe apply toggleButtonState() ??
             var args = inputboxes.map(input => input.value)
-            method.apply({modal}, args)
+            onConfirm.apply(modal, args)
         })
 
+		cancelBtn.addEventListener('click', (evt) => {
+			if (onCancel)
+				onCancel.apply(modal)
+		})
+
         document.body.appendChild(modal)
-		    setTimeout(function() {
-			    document.getElementById('modal').classList.add('appear');
-		    }, modalAnimation)
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
 
         // Focus on first input element
         if (obj.input.length > 0) {
@@ -335,34 +333,18 @@ $(document).ready(function() {
         }
     }
 
-		/* Create simple modal */
-	    modals.confirmPopUp = function(desc, method) {
-	      var confirmBtn = el('button#confirm.btn', ['confirm'])
-	      var modal = el('div#modal.modal.confirm', [
-	              	el('div', [
-	                closeButton(),
-	                el("div.modal-header-title", [desc]),
-	                //name of modal
-	                el("div#bottom-divider.modal-divider"),
-	                confirmBtn, cancelButton()
-	            ])
-	          ])
-
-	        confirmBtn.addEventListener('click', (evt) => {
-	            method.apply({modal})
-	        })
-
-	      setTimeout(function(){
-				  document.getElementById('modal').classList.add('appear');
-				  document.getElementById('modal').classList.add('confirm');
-					//document.getElementsByClassName("modal confirm appear").style.zIndex = "1051";
-
-
-				//	alert($(this).data('id'))
-	      }, modalAnimation)
-
-	      document.body.appendChild(modal)
-		 }
+	/* Create simple modal */
+	modals.confirmPopUp = function(desc, onConfirm) {
+		modals.optionsModal({
+			desc: desc,
+			message: "",
+			input: [],
+			btnText: 'confirm'
+		}, onConfirm)
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('confirm');
+		}, modalAnimation)
+	}
 
 		 /* Create simple modal with unique id */
  	    modals.confirmKickPopUp = function(desc, method) {

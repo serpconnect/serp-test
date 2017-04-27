@@ -1,5 +1,8 @@
 extends base
 block view-specific-scripts
+    script(src="js/util/el.js")
+    script(src="js/central.js")
+    script(src="js/modal.js")
     script(src="js/vendor/fuse.min.js")
     script(src="js/users.js")
 block content
@@ -10,8 +13,41 @@ block content
         a(href="/entries.html").view-area-tab.unactive-tab pending entries
         div.users-view-container
             div.users-content
-                input(placeholder="type to search for a particular user")#users-search
+                input(placeholder="type to search for a particular user")#users-search.large-input
 
-                div.users-header
-                    div.users-title email
-                    div.users-title account level
+                div.flex-content
+                    div.area.users-area
+                        div.users-header
+                            div.users-title email address
+                            div.users-title account level
+                    div.area.description-area
+                        div.users-header
+                            div.users-title level privileges
+                        div.description-field
+                            h3 registered 
+                            span 
+                                | A registered user is an account that has clicked signup
+                                | but hasn't clicked the confirmation link in the email.
+                                | Such an account cannot be trusted since they could have
+                                | entered anyone's email address. They _cannot_ submit new
+                                | entries, only create new collections.
+                        div.description-field
+                            h3 user
+                            span 
+                                | A user is simply an account that has confirmed
+                                | the signup email, proving that they have ownership
+                                | of it. Submitted entries must be approved by an
+                                | admin before they appear in the system.
+                        div.description-field
+                            h3 verified
+                            span 
+                                | A verified user may submit entries to the system
+                                | without going through the approval process.
+                        div.description-field
+                            h3 admin
+                            span 
+                                | An admin can freely promote/demote all accounts,
+                                | accept/reject pending entries, remove/edit
+                                | existing entries and remove users from the system.
+                                | Make sure this account is trusted before proceeding.
+                    

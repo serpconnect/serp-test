@@ -1,5 +1,3 @@
-
-#users-search,
 .large-input {
     .submit-input-box();
     width: 450px;
@@ -15,21 +13,42 @@
     padding-bottom: 45px;
 }
 
-.users-header {
-    font-size: 15pt;
-    margin-top: 25px;
-    width: 650px;
-    margin-bottom: 10px;
-}
+.flex-content { 
+    display: flex; 
+    justify-content: space-between;
 
-.users-title {
-    display: inline-block;
-    margin-right: 210px;
-}
+    &>*:not(:first-child) {
+        margin-left: 2em;
+    }
+    &>*:not(:last-child) {
+        margin-right: 2em;
+    }
 
-.users-email {
-    display: inline-block;
-    width: 260px;
+    > .area {
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+
+        > .users-header {
+            font-size: 15pt;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+    }
+}
+.description-area { 
+    max-width: 400px;
+    .description-field {
+        margin-bottom: 1em;
+        h3 { margin-bottom: 0.1em; margin-top: 0; }
+    }
+}
+.users-container {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 3px;
 }
 
 .users-select {
@@ -52,14 +71,4 @@
         transition: background-color 0.2s ease;
         background-color: (@bg-color);
     }
-
-}
-.users-container {
-    margin-bottom: 3px;
-}
-
-.users-stats {
-    font-size: 13pt;
-    color: @font-color;
-    margin-bottom: 10px;
 }
