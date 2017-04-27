@@ -347,7 +347,7 @@
   }
 
   function delimiterDiv(name, text){
-    return  el("div.import-wrapper-delimiter." + name, {id: "delimiter" + name}, [
+    return  el("div", {id: "delimiter" + name}, [
                 el("div.div-import-delimiter." + name, [
                     el("label", [text]),
                     el("select.select-delimiter", {id: "selectDelimiter" + name}, [
