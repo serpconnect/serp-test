@@ -13,18 +13,18 @@ block content
         a(href="/entries.html").view-area-tab.unactive-tab pending entries
         div.users-view-container
             div.users-content
-                input(placeholder="type to search for a particular user")#users-search
+                input(placeholder="type to search for a particular user")#users-search.large-input
 
-                div.users-supermax
-                    div.users-area
+                div.flex-content
+                    div.area.users-area
                         div.users-header
                             div.users-title email address
                             div.users-title account level
-                    div.description-area
+                    div.area.description-area
                         div.users-header
                             div.users-title level privileges
                         div.description-field
-                            h3 registered
+                            h3 registered 
                             span 
                                 | A registered user is an account that has clicked signup
                                 | but hasn't clicked the confirmation link in the email.
@@ -35,7 +35,7 @@ block content
                             h3 user
                             span 
                                 | A user is simply an account that has confirmed
-                                | the signup email, proving that they have ownershi
+                                | the signup email, proving that they have ownership
                                 | of it. Submitted entries must be approved by an
                                 | admin before they appear in the system.
                         div.description-field
@@ -46,8 +46,8 @@ block content
                         div.description-field
                             h3 admin
                             span 
-                                | An admin can freely promote/demote all account,
-                                | accept/reject pending entries, remove and edit
-                                | existing entries. Make sure this
-                                | account is trusted before proceeding.
+                                | An admin can freely promote/demote all accounts,
+                                | accept/reject pending entries, remove/edit
+                                | existing entries and remove users from the system.
+                                | Make sure this account is trusted before proceeding.
                     
