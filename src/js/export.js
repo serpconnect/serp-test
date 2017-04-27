@@ -28,7 +28,7 @@
     var modal = createExportModal();
 
     // Comma should probably not be the default delimiter
-    // since a lot of the entries contain commas. 
+    // since a lot of the entries contain commas.
     selectDelimiterCSV.selectedIndex = 1;
     selectDelimiterLeaf.selectedIndex = 3;
 
@@ -182,7 +182,7 @@
 
             el("div.modal-divider"),
             delimiterDiv("CSV", "Select CSV delimiter "),
-            el("div.modal-divider"),
+            el("div.modal-spacing"),
             delimiterDiv("Leaf", "Select taxonomy leaf delimiter "),
             el("div.modal-divider"),
 
@@ -198,11 +198,13 @@
   }
 
   function delimiterDiv(name, text){
-    return  el("div#delimiter" + name, [
-                el("label", [text]),
-                el("select#selectDelimiter" + name, [
-                    delimiters.map(delimiter =>
-                    el('option', { value: delimiter.value }, [ delimiter.display ])),
+    return  el("div", {id: "delimiter" + name}, [
+                el("div.export-div-delimiter." + name, [
+                    el("label", [text]),
+                    el("select.export-select-delimiter", {id: "selectDelimiter" + name}, [
+                        delimiters.map(delimiter =>
+                        el('option', { value: delimiter.value }, [ delimiter.display ])),
+                    ])
                 ])
             ])
   }
