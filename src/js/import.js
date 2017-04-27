@@ -173,12 +173,12 @@
       destroy(modal);
     }, false);
 
-    selectDelimiter.addEventListener("change", function() {
-      selectDelimiterChange();
+    selectDelimiterCSV.addEventListener("change", function() {
+      selectDelimiterCSVChange();
     });
-    function selectDelimiterChange(){
-      var delimiter = selectDelimiter.value;
-      lines = CSVToArray(csv, delimiter);
+    function selectDelimiterCSVChange(){
+      var delimiterCSV = selectDelimiterCSV.value;
+      lines = CSVToArray(csv, delimiterCSV);
       CSVHeaders = lines[0];
       $(".import-option").remove();
       addOptions(CSVHeaders, ".import-select");
@@ -220,10 +220,12 @@
       }
     }
 
-    //Default entrytype is research and default delimiter is comma.
+    // Default entrytype is research and default delimiter is comma.
     document.getElementById("checkResearch").checked = true;
+    // Comma should probably not be the default value.
+    selectDelimiterLeaf.selectedIndex = 3;
     checkResearchChange();
-    selectDelimiterChange();
+    selectDelimiterCSVChange();
     $(".import-checkbox").each(function(i, el) {
       addClickableButtonEventListener($(el), CSVHeaders);
     });
@@ -238,6 +240,7 @@
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
+console.log(validEntries);
 
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
@@ -286,17 +289,11 @@
             el('div.close-btn#closeBtn', ['']),
             el("h2", ["Mapping CVS columns to taxonomy"]),
             el("div", ["Filename: " + fileName]),
-            el("div.modal-spacing"),
 
-            el("div.import-all-selects-wrapper." + "delimiter", [
-                el("div.import-select-first-box-wrapper." + "delimiter", [
-                    el("label", ["Select delimiter"]),
-                    el("select#selectDelimiter", [
-                        delimiters.map(delimiter =>
-                        el('option', { value: delimiter.value }, [ delimiter.display ])),
-                    ])
-                ])
-            ]),
+            el("div.modal-spacing"),
+            delimiterDiv("CSV", "Select CSV delimiter"),
+            el("div.modal-spacing"),
+            delimiterDiv("Leaf", "Select taxonomy leaf delimiter"),
 
             el("div.modal-divider"),
             el("div#importCollectionWrapper", [
@@ -347,6 +344,18 @@
     setTimeout(() => modal.classList.add("appear"), 100)
     document.body.appendChild(modal);
     return modal;
+  }
+
+  function delimiterDiv(name, text){
+    return  el("div.import-all-selects-wrapper." + "delimiter" + name, [
+                el("div.import-select-first-box-wrapper." + "delimiter" + name, [
+                    el("label", [text]),
+                    el("select#selectDelimiter" + name, [
+                        delimiters.map(delimiter =>
+                        el('option', { value: delimiter.value }, [ delimiter.display ])),
+                    ])
+                ])
+            ])
   }
 
   function mapToHeaders(serp, serpArray){
@@ -413,16 +422,18 @@
     } else if(entryType === "challenge"){
       selectedNodes = selectedNodes.add(".import-all-selects-wrapper.challengeMustHave");
     }
+
+    var leafDelimiter = selectDelimiterLeaf.value;
     var jsons = [];
     for(var i=1;i<lines.length;i++){
       var currentLine = lines[i];
-      var jsonObj = calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes);
+      var jsonObj = calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes, leafDelimiter);
       jsons.push(jsonObj);
     }
     return jsons;
   }
 
-  function calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes){
+  function calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes, leafDelimiter){
     var jsonObj = {};
     var serpClassification = {};
     for(var j=0;j<selectedNodes.length;j++){
@@ -433,7 +444,7 @@
       var label = $(selectedNodes[j]).find("label").text();
       var currentHeader = serp.find(value => value.display === label);
       var isTaxonomyLeaf = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
-      var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf);
+      var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf, leafDelimiter);
       var includeFor = $(selectedNodes[j]).find(".import-node-selection").val();
 
       if(isValueValid(currentValue, selectedNodes[j], includeFor)){
@@ -446,7 +457,7 @@
     return jsonObj;
   }
 
-  function calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf){
+  function calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf, leafDelimiter){
     var currentValue;
     if(onlySelectedInputs.length === 0){
       currentValue = isTaxonomyLeaf ? ["unspecified"] : "unspecified";
@@ -457,7 +468,10 @@
         var currentCell = currentLine[CSVHeaders.indexOf(onlySelectedInputs[k])];
         if(currentCell){
           if(isTaxonomyLeaf){
-            currentValue.push(currentCell);
+            var splitted = currentCell.split(leafDelimiter);
+            splitted.forEach(function(e) {
+              currentValue.push(e);
+            });
           } else {
             var separator = firstValueHasBeenAdded ? ", " : "";
             currentValue = currentValue + separator + currentCell;
