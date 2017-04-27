@@ -67,7 +67,7 @@ $(document).ready(function() {
             select.addEventListener('change', changeUserLevel, false)
             
             var div = el('div.users-container', [
-                el('div.users-email', [user.email]),
+                el('span', [user.email]),
                 select
             ])
 
