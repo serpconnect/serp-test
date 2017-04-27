@@ -235,8 +235,9 @@
       var newCollectionName = document.getElementById("importCollectionName").value;
       var collectionNameValid = isCollectionNameValid(newCollectionName);
       var entryTypeValid = isEntryTypeDataValid();
+      var delimitersValid = areDelimitersValid();
 
-      if(collectionNameValid && entryTypeValid){
+      if(collectionNameValid && entryTypeValid && delimitersValid){
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
@@ -246,7 +247,7 @@
         }
       } else {
         $(uploadBtn).parent().append(
-          el("div.complaint.import", {text:"Information missing"})
+          el("div.complaint.import", {text:"Incorrect input"})
         );
       }
     });
@@ -346,10 +347,10 @@
   }
 
   function delimiterDiv(name, text){
-    return  el("div.import-all-selects-wrapper." + "delimiter" + name, [
-                el("div.import-select-first-box-wrapper." + "delimiter" + name, [
+    return  el("div.import-wrapper-delimiter." + name, {id: "delimiter" + name}, [
+                el("div.div-import-delimiter." + name, [
                     el("label", [text]),
-                    el("select#selectDelimiter" + name, [
+                    el("select.select-delimiter", {id: "selectDelimiter" + name}, [
                         delimiters.map(delimiter =>
                         el('option', { value: delimiter.value }, [ delimiter.display ])),
                     ])
@@ -401,6 +402,16 @@
       );
     }
     return validEntryTypeData;
+  }
+
+  function areDelimitersValid(){
+    if(selectDelimiterCSV.value === selectDelimiterLeaf.value){
+      document.getElementById("delimiterCSV").appendChild(
+          el("div.complaint.import", {text:"The delimiters have to be different"})
+      );
+      return false;
+    }
+    return true;
   }
 
   function createjsons(lines, CSVHeaders){
