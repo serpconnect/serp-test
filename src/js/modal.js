@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
 	function toggleButtonState() {
         var btns = document.querySelectorAll('.btn')
@@ -14,18 +13,6 @@ $(document).ready(function() {
 	var modals = window.modals = {}
 	var modalAnimation = 121
 
-// Modal Template
-	// var modalObject = {
- //            desc: "create new collection",
- //            message: "",
- //            //single string message that goes above input boxes
- //            input: [['input0','text','e.g new password'],['input0','text','e.g old password']],
- //            //[textbox names, types, placeholder] //else put '[]'
- //            //automatically takes input[0] as first parameter for method passed in.. etc
- //            btnText: "Create"
- //            //text on button
- //        };
- //        // Create a new collection
     function findModal(node) {
         if (node.classList.contains('modal') ||
             node.classList.contains('confirm'))
