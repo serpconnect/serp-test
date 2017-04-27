@@ -78,7 +78,6 @@ $(document).ready(function() {
                 window.modals.optionsModal(deleteAccountModal, function () {
                     api.v1.admin.collectionsOwnedBy(user.email).done(colls => {
                         if (colls.length != 0) {
-                            msg = "Warning the user is owner of the following collections:\n"
                             var deleteOwnerModal = {
                                 desc: "Delete Collection Owner",
                                 message: "Warning the user is owner of the following collections:",
@@ -91,15 +90,16 @@ $(document).ready(function() {
                                     .done(ok => {
                                         modals.clearAll()
                                         location.reload(true)
-                                    }).fail(xhr => complain(xhr.responseText))
-
+                                    })
+                                    .fail(xhr => complain(xhr.responseText))
                             })
                         } else {
                             api.v1.admin.delete(user.email)
                                 .done(ok => {
                                     modals.clearAll()
                                     location.reload(true)
-                                }).fail(xhr => complain(xhr.responseText))
+                                })
+                                .fail(xhr => complain(xhr.responseText))
                         }
                     })
                 })

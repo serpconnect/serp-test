@@ -323,29 +323,19 @@ $(document).ready(function() {
 
 			 
 	modals.confirmDeleteOwnerPopUp = function (obj, method) {
-		var message = [el("div.modal-sub-item", [obj.message])]
-		var bottomMessage = [el("div.modal-sub-item", [obj.bottomMessage])]
-
-		var list = obj.list;
-		var div = document.createElement('div');
-		div.className = 'items-container';
-		list.forEach(item => {
-			var innerDiv = document.createElement('div');
-			innerDiv.className = 'item';
-			innerDiv.innerHTML = item;
-			div.appendChild(innerDiv);
-		})
+		var list = obj.list || [];
 
 		var confirmBtn = el('button#confirm.btn', ['confirm'])
 		var modal = el('div#modal.modal.appear', [
 			el('div', [
 				closeButton(),
 				el("div.modal-header-title", [obj.desc]),
-				//name of modal
 				el("div.modal-divider"),
-				message,
-				div,
-				bottomMessage,
+				el("div", [obj.message]),
+				el('p.modal-sub-item', [
+					list.map(item => el('div', ['· ' + item]))		
+				]),
+				el("div", [obj.bottomMessage]),
 				el("div#bottom-divider.modal-divider"),
 				confirmBtn, cancelButton()
 			])
@@ -354,9 +344,6 @@ $(document).ready(function() {
 		confirmBtn.addEventListener('click', (evt) => {
 			method.apply({ modal })
 		})
-
-		setTimeout(function () {
-		}, modalAnimation)
 
 		document.body.appendChild(modal)
 	}
