@@ -453,14 +453,22 @@ $(document).ready(function() {
 
 	modals.clearAll = function() {
 		var modal = document.querySelector('.modal')
-		if (modal)
+		while (modal){
 			modal.parentNode.removeChild(modal)
-
+			modal = document.querySelector('.modal');
+		}
 		var confirm = document.querySelector('.confirm')
 		if (confirm)
 			confirm.parentNode.removeChild(confirm)
 
 		//	modals.clearConfirm();
+	}
+
+	modals.clearTop = function(){
+		var modal = document.querySelector('.modal')
+		if (modal)
+			modal.parentNode.removeChild(modal)
+
 	}
 
 	modals.clearConfirm = function(){

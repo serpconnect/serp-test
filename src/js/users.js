@@ -6,7 +6,7 @@ $(document).ready(function() {
     /* Add red text after the cancel button on a modal */
     function complain(text) {
         $('.modal-complaint').remove()
-        modals.clearConfirm()
+        modals.clearTop()
         var modal = document.querySelector(".modal") || document.querySelector(".confirm")
         var errors = modal.querySelectorAll('button')
         var error = errors[errors.length - 1]
@@ -62,16 +62,6 @@ $(document).ready(function() {
             };
             deleteUser.addEventListener("click", evt =>{
               window.modals.optionsModal(deleteAccountModal, function () {
-                  //A secondary box pops up to imply importance of the decision
-                //  var message = "Delete " + user.email + "'s Account - Are You Sure"
-
-                /*  window.modals.confirmKickPopUp(`Are you sure you want to Kick ${email}?`, () => {
-                      api.v1.collection.kick(email, id)
-                          .done(ok => cleanup(this.modal))
-                          .fail(xhr => complain(xhr.responseText))
-                  })*/
-
-
                       api.v1.admin.collectionsOwnedBy(user.email).done(colls => {
                           if(colls.length!=0){
                             msg = "Warning the user is owner of the following collections:\n"
@@ -83,16 +73,19 @@ $(document).ready(function() {
                             }
 
                             window.modals.confirmDeleteOwnerPopUp(deleteOwnerModal, ()=> {
-                                alert("deleted the user!")
                                 api.v1.admin.delete(user.email)
-                                  .done(ok => modals.clearAll())
-                                  .fail(xhr => complain(xhr.responseText))
+                                  .done(ok =>{
+                                    modals.clearAll()
+                                    location.reload(true)
+                                  }).fail(xhr => complain(xhr.responseText))
 
                             })
                         }else{
                             api.v1.admin.delete(user.email)
-                              .done(ok => modals.clearAll())
-                              .fail(xhr => complain(xhr.responseText))
+                              .done(ok =>{
+                                modals.clearAll()
+                                location.reload(true)
+                              }).fail(xhr => complain(xhr.responseText))
                         }
                     })
               })
@@ -131,7 +124,7 @@ $(document).ready(function() {
             if (results.length) {
                 for (var i = 0; i < results.length; ++i) {
                     var matchingEmail = results[i];
-                    emailMappings[matchingEmail].show();
+                    $(emailMappings[matchingEmail]).show();
                 }
             }
         } else {
