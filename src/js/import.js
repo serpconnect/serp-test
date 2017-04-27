@@ -348,9 +348,9 @@
 
   function delimiterDiv(name, text){
     return  el("div", {id: "delimiter" + name}, [
-                el("div.div-import-delimiter." + name, [
+                el("div.import-div-delimiter." + name, [
                     el("label", [text]),
-                    el("select.select-delimiter", {id: "selectDelimiter" + name}, [
+                    el("select.import-select-delimiter", {id: "selectDelimiter" + name}, [
                         delimiters.map(delimiter =>
                         el('option', { value: delimiter.value }, [ delimiter.display ])),
                     ])
