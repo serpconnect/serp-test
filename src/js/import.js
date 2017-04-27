@@ -240,7 +240,6 @@
         var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
-console.log(validEntries);
 
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
