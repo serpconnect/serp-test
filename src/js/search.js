@@ -9,6 +9,7 @@ $(document).ready(function() {
     var dataset = [];
     var selectedEntries = []
     var loggedIn = false
+    var admin = false;
 
     var currentClassification = {
         adapting: false,
@@ -54,7 +55,7 @@ $(document).ready(function() {
                         unique.push(entity[j])
                 }
             }
-            
+
             window.modals.infoModal(facet,unique),function () {
             }
         }
@@ -191,8 +192,9 @@ $(document).ready(function() {
         $('.table-view-area')
             .append(Element('button').addClass('edit-btn').text('export').click(exportEntries))
             .append(Element('button').addClass('edit-btn').text('select all').click(selectAllEntries))
-      
+
         loggedIn = true
+        admin = self.trust === "Admin";
     })
 
     window.user.collections().done(collz => {
@@ -386,14 +388,36 @@ $(document).ready(function() {
         // insert into the DOM
         $(".overview-area").append($overviewEntry);
 
+
+
+
         $(".entry-title").unbind("click").on("click", function(evt) {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
 
+            function removeFromCollection() {
+                toggleButtonState()
+                window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
+                  entryId: id
+                })
+                .done(() => {
+                  window.modals.clearAll();
+                  location.reload(true)
+                //  refresh()
+                })
+                .fail(xhr => alert(xhr.responseText))
+
+            }
+
+            var removeBtn = el("button.btn", ["remove from collection"])
+            removeBtn.addEventListener('click', removeFromCollection, false)
+            var button = admin ? [removeBtn] : [];
+
             window.user.getEntry(id).done(entry => {
                 window.user.getTaxonomyEntry(id).done(taxonomy => {
-                    window.modals.entryModal(entry, taxonomy),function () {
-                        }
+                      window.modals.entryModal(entry, taxonomy, {
+                                  button
+                      })
                 })
                 .fail(reason => window.alert(reason))
             }).fail(reason => window.alert(reason))
@@ -464,16 +488,25 @@ $(document).ready(function() {
             $("#table-body").append($row);
         }
 
+
+
         // refresh on-click listeners for all entries in first column;
         // (a click initiates an entry inspection)
         $("td:first-child").unbind("click").on("click", function(evt) {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
 
+
+
+                var removeBtn = el("button.btn", ["remove from collection"])
+                removeBtn.addEventListener('click', removeFromCollection(id), false)
+            //    var test = admin ? {button: [removeBtn]} : [];
+
             window.user.getEntry(id).done(entry => {
                 window.user.getTaxonomyEntry(id).done(taxonomy => {
-                    window.modals.entryModal(entry, taxonomy),function () {
-                        }
+                  window.modals.entryModal(entry, taxonomy, {
+                              button: [removeBtn]
+                  })
                 })
                 .fail(reason => window.alert(reason))
             }).fail(reason => window.alert(reason))
@@ -487,6 +520,8 @@ $(document).ready(function() {
         }
     }
 
+
+
     // convenience function for capitalizing sentences
     // TODO: rip performance (don't extend prototype, use function instead)
     String.prototype.capitalize = function() {
@@ -494,6 +529,21 @@ $(document).ready(function() {
     }
 
 });
+
+
+
+// Switch all buttons between disabled and enabled state
+  function toggleButtonState() {
+      var btns = document.querySelectorAll('.btn')
+      for (var i = 0; i < btns.length; i++) {
+          btns[i].classList.toggle('submit-disabled')
+          if (btns[i].getAttribute('disabled'))
+              btns[i].removeAttribute('disabled')
+          else
+              btns[i].setAttribute('disabled', true)
+
+      }
+  }
 
 function newestComparator(a, b) {
     return b.date - a.date;
