@@ -403,7 +403,6 @@ $(document).ready(function() {
                 .done(() => {
                   window.modals.clearAll();
                   location.reload(true)
-                //  refresh()
                 })
                 .fail(xhr => alert(xhr.responseText))
 
@@ -496,11 +495,22 @@ $(document).ready(function() {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
 
+            function removeFromCollection() {
+                toggleButtonState()
+                window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
+                  entryId: id
+                })
+                .done(() => {
+                  window.modals.clearAll();
+                  location.reload(true)
+                })
+                .fail(xhr => alert(xhr.responseText))
 
+            }
 
-                var removeBtn = el("button.btn", ["remove from collection"])
-                removeBtn.addEventListener('click', removeFromCollection(id), false)
-            //    var test = admin ? {button: [removeBtn]} : [];
+            var removeBtn = el("button.btn", ["remove from collection"])
+            removeBtn.addEventListener('click', removeFromCollection, false)
+            var test = admin ? {button: [removeBtn]} : [];
 
             window.user.getEntry(id).done(entry => {
                 window.user.getTaxonomyEntry(id).done(taxonomy => {
