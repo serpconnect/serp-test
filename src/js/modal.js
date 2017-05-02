@@ -316,7 +316,7 @@ $(document).ready(function() {
 		}, modalAnimation)
 
         // Focus on first input element
-        if (obj.input.length > 0) {
+        if (obj.input && obj.input.length) {
             inputboxes[0].focus()
         }
     }

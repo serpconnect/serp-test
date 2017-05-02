@@ -12,26 +12,18 @@ $(document).ready(function() {
         var complaint = el('div.modal-complaint', [text])
         error.parentNode.insertBefore(complaint, error.nextSibling)
     }
-    var levelDescriptions = {
-        'registered': "A registered user is an account that has clicked signup " +
-                    "but hasn't clicked the confirmation link in the email. " +
-                    "Such an account cannot be trusted since they could have " +
-                    "entered anyone's email address. They _cannot_ submit new " +
-                    "entries, only create new collections.",
-        'user': "A user is simply an account that has confirmed " +
-                "the signup email, proving that they have ownership" +
-                " of it. Submitted entries must be approved by an " +
-                "admin before they appear in the system.",
-        'verified': "A verified user may submit entries to the system " +
-                    "without going through the approval process.",
-        'admin': "An admin can freely promote/demote all accounts" +
-                ", accept/reject pending entries, remove and edit " +
-                "existing entries. Make sure this" +
-                " account is trusted before proceeding."
-    }
 
+    // Load descriptions from the html page (easy editing)
+    var descriptions = Array.from(document.querySelectorAll('.description-field'))
+        .map(el => {
+            var lvl =  el.querySelector('.level').textContent
+            var dsc = el.querySelector('.description').textContent
+            return { [lvl]: dsc }
+        })
+    var levelDescriptions = Object.assign({}, ...descriptions)
+
+    // Check if invites exist and display number above invitations tab on profile page
     user.invites().done(showInvites)
-    //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {
         if(invites.length > 0 ){
             var invitationsContainer = el('div.invitationContainer')
@@ -43,82 +35,86 @@ $(document).ready(function() {
 
     var emails = [];
     var emailMappings = {};
-
     var emailsFuzzy = undefined;
     var previousValue = undefined;
-
-
-    function createLevelOption(level) {
-        return el('option', {
-            'value': level,
-            'title': levelDescriptions[level]
-        }, [level])
-    }
 
     function recordPreviousValue(evt) {
         previousValue = this.value
     }
     function changeUserLevel(evt) {
         if (previousValue === this.value) return
-        buildModalView($(this), this.dataset.email, previousValue, this.value);
+        buildModalView($(this), this.parentNode.dataset.email, previousValue, this.value);
+    }
+    function createLevelOption(level) {
+        return el('option', {
+            'value': level,
+            'title': levelDescriptions[level]
+        }, [level])
+    }
+    function createLevelSelect(user) {
+        var select = el('select.users-select',
+            Object.keys(levelDescriptions).map(createLevelOption)
+        )
+        select.value = user.trust.toLowerCase()
+
+        select.addEventListener('focus', recordPreviousValue, false)
+        select.addEventListener('change', changeUserLevel, false)
+        return select
     }
 
-    window.api.ajax("GET", window.api.host + "/v1/admin/users").done(users => {
+    function deleteUser(user) {
+        return api.v1.admin.deleteUser(user.email)
+            .done(ok => {
+                modals.clearAll()
+                location.reload(true)
+            })
+            .fail(xhr => complain(xhr.responseText))
+    }
+
+    function showDeleteAccountModal(user) {
+        window.modals.optionsModal({
+            desc: "Delete Account",
+            message: `This will delete ${user.email}, but the users collections and entries will remain. Are you sure?`,
+            btnText: "delete"
+        }, () => {
+            api.v1.admin.collectionsOwnedBy(user.email)
+                .done(collz => {
+                    if (collz.length === 0) {
+                        deleteUser(user)
+                        return
+                    }
+
+                    window.modals.confirmDeleteOwnerPopUp({
+                        desc: "Delete Collection Owner",
+                        message: "Warning the user is owner of the following collections:",
+                        bottomMessage: "Deleting the user will nuke those collections, proceed?",
+                        list: collz
+                    }, () => {
+                        deleteUser(user)
+                    })
+                })
+        })
+    }
+    function createDeleteButton(user) {
+        var btn = el("button.dangerous", ['✖'])
+        
+        btn.addEventListener("click", evt => {
+            showDeleteAccountModal(user)
+        }, false)
+        
+        return btn
+    }
+
+    api.v1.admin.users().done(users => {
         var parent = document.querySelector('.users-area')
 
         users.forEach(user => {
-            var deleteUser = el("button.dangerous", ['✖'])
-
-            var deleteAccountModal = {
-                desc: "Delete Account",
-                message: "This will delete " + user.email + ", but the users collections and entries will remain. Are you sure?",
-                btnText: "delete"
-            };
-            deleteUser.addEventListener("click", evt =>{
-                window.modals.optionsModal(deleteAccountModal, function () {
-                    api.v1.admin.collectionsOwnedBy(user.email).done(colls => {
-                        if (colls.length != 0) {
-                            var deleteOwnerModal = {
-                                desc: "Delete Collection Owner",
-                                message: "Warning the user is owner of the following collections:",
-                                bottomMessage: "Deleting the user will nuke those collections, proceed?",
-                                list: colls
-                            }
-
-                            window.modals.confirmDeleteOwnerPopUp(deleteOwnerModal, () => {
-                                api.v1.admin.delete(user.email)
-                                    .done(ok => {
-                                        modals.clearAll()
-                                        location.reload(true)
-                                    })
-                                    .fail(xhr => complain(xhr.responseText))
-                            })
-                        } else {
-                            api.v1.admin.delete(user.email)
-                                .done(ok => {
-                                    modals.clearAll()
-                                    location.reload(true)
-                                })
-                                .fail(xhr => complain(xhr.responseText))
-                        }
-                    })
-                })
-            })
-
-            var select = el('select.users-select', {
+            var div = el('div.users-container', {
                     'data-email': user.email,
-                },
-                Object.keys(levelDescriptions).map(createLevelOption)
-            )
-            select.value = user.trust.toLowerCase()
-
-            select.addEventListener('focus', recordPreviousValue, false)
-            select.addEventListener('change', changeUserLevel, false)
-            
-            var div = el('div.users-container', [
+                }, [
                 el('span', [user.email]),
-                select,
-                deleteUser
+                createLevelSelect(user),
+                createDeleteButton(user)
             ])
 
             parent.appendChild(div)
@@ -137,17 +133,16 @@ $(document).ready(function() {
             window.location = "login.html"
     })
 
-
     $("#users-search").on("input", function(evt) {
         var searchString = this.value;
         if (searchString) {
             $(".users-container").hide();
             var results = emailsFuzzy.search(searchString);
-            if (results.length) {
-                for (var i = 0; i < results.length; ++i) {
-                    var matchingEmail = results[i];
-                    $(emailMappings[matchingEmail]).show();
-                }
+            if (!results.length) return
+
+            for (var i = 0; i < results.length; ++i) {
+                var matchingEmail = results[i];
+                $(emailMappings[matchingEmail]).show();
             }
         } else {
             $(".users-container").show();

@@ -173,10 +173,14 @@ $(function () {
         })
     }
 
-    v1.admin.delete = function (email) {
+    v1.admin.deleteUser = function (email) {
         return ajax("POST", endpoint('/v1/admin/delete-user'), {
             email: email
         })
+    }
+
+    v1.admin.users = function () {
+        return ajax("GET", endpoint('/v1/admin/users'))
     }
 
     v1.admin.pending = function () {
