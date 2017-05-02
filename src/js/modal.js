@@ -1,4 +1,3 @@
-
 $(document).ready(function() {
 	function toggleButtonState() {
         var btns = document.querySelectorAll('.btn')
@@ -14,18 +13,6 @@ $(document).ready(function() {
 	var modals = window.modals = {}
 	var modalAnimation = 121
 
-// Modal Template
-	// var modalObject = {
- //            desc: "create new collection",
- //            message: "",
- //            //single string message that goes above input boxes
- //            input: [['input0','text','e.g new password'],['input0','text','e.g old password']],
- //            //[textbox names, types, placeholder] //else put '[]'
- //            //automatically takes input[0] as first parameter for method passed in.. etc
- //            btnText: "Create"
- //            //text on button
- //        };
- //        // Create a new collection
     function findModal(node) {
         if (node.classList.contains('modal') ||
             node.classList.contains('confirm'))
@@ -185,6 +172,7 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
+
 	/* Creates a modal with fuzzy search */
 	modals.fuzzyModal = function(obj,method) {
 		var message = [el("div.modal-sub-item", [obj.message])]
@@ -284,7 +272,7 @@ $(document).ready(function() {
     modals.optionsModal = function(obj, onConfirm, onCancel) {
         var message = [el("div.modal-sub-item", [obj.message])]
 
-        var inputboxes = obj.input.map((conf, i) => {
+        var inputboxes = (obj.input || []).map((conf, i) => {
             return el(`input#input${i}.modal-input-box`, {
                 name: conf[0],
                 type: conf[1],
@@ -328,10 +316,37 @@ $(document).ready(function() {
 		}, modalAnimation)
 
         // Focus on first input element
-        if (obj.input.length > 0) {
+        if (obj.input && obj.input.length) {
             inputboxes[0].focus()
         }
     }
+
+			 
+	modals.confirmDeleteOwnerPopUp = function (obj, method) {
+		var list = obj.list || [];
+
+		var confirmBtn = el('button#confirm.btn', ['confirm'])
+		var modal = el('div#modal.modal.appear', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [obj.desc]),
+				el("div.modal-divider"),
+				el("div", [obj.message]),
+				el('p.modal-sub-item', [
+					list.map(item => el('div', ['· ' + item]))		
+				]),
+				el("div", [obj.bottomMessage]),
+				el("div#bottom-divider.modal-divider"),
+				confirmBtn, cancelButton()
+			])
+		])
+
+		confirmBtn.addEventListener('click', (evt) => {
+			method.apply({ modal })
+		})
+
+		document.body.appendChild(modal)
+	}
 
 	/* Create simple modal */
 	modals.confirmPopUp = function(desc, onConfirm) {
@@ -377,21 +392,27 @@ $(document).ready(function() {
 
 	modals.clearAll = function() {
 		var modal = document.querySelector('.modal')
-		if (modal)
+		while (modal){
 			modal.parentNode.removeChild(modal)
+			modal = document.querySelector('.modal');
+		}
 
 		var confirm = document.querySelector('.confirm')
 		if (confirm)
 			confirm.parentNode.removeChild(confirm)
+	}
 
-		//	modals.clearConfirm();
+	modals.clearTop = function(){
+		var modal = document.querySelector('.modal')
+		if (modal)
+			modal.parentNode.removeChild(modal)
+
 	}
 
 	modals.clearConfirm = function(){
 		var confirmModal = document.querySelector('#modalConf')
-			if(confirmModal){
-				confirmModal.parentNode.removeChild(confirmModal)
-			}
+		if (confirmModal)
+			confirmModal.parentNode.removeChild(confirmModal)
 	}
 
 

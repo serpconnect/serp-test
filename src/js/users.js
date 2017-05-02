@@ -2,6 +2,17 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+    /* Add red text after the cancel button on a modal */
+    function complain(text) {
+        $('.modal-complaint').remove()
+        modals.clearTop()
+        var modal = document.querySelector(".modal") || document.querySelector(".confirm")
+        var errors = modal.querySelectorAll('button')
+        var error = errors[errors.length - 1]
+        var complaint = el('div.modal-complaint', [text])
+        error.parentNode.insertBefore(complaint, error.nextSibling)
+    }
+
     // Load descriptions from the html page (easy editing)
     var descriptions = Array.from(document.querySelectorAll('.description-field'))
         .map(el => {
@@ -32,7 +43,7 @@ $(document).ready(function() {
     }
     function changeUserLevel(evt) {
         if (previousValue === this.value) return
-        buildModalView($(this), this.dataset.email, previousValue, this.value);
+        buildModalView($(this), this.parentNode.dataset.email, previousValue, this.value);
     }
     function createLevelOption(level) {
         return el('option', {
@@ -41,9 +52,7 @@ $(document).ready(function() {
         }, [level])
     }
     function createLevelSelect(user) {
-        var select = el('select.users-select', {
-                'data-email': user.email,
-            },
+        var select = el('select.users-select',
             Object.keys(levelDescriptions).map(createLevelOption)
         )
         select.value = user.trust.toLowerCase()
@@ -53,13 +62,59 @@ $(document).ready(function() {
         return select
     }
 
-    window.api.ajax("GET", window.api.host + "/v1/admin/users").done(users => {
+    function deleteUser(user) {
+        return api.v1.admin.deleteUser(user.email)
+            .done(ok => {
+                modals.clearAll()
+                location.reload(true)
+            })
+            .fail(xhr => complain(xhr.responseText))
+    }
+
+    function showDeleteAccountModal(user) {
+        window.modals.optionsModal({
+            desc: "Delete Account",
+            message: `This will delete ${user.email}, but the users collections and entries will remain. Are you sure?`,
+            btnText: "delete"
+        }, () => {
+            api.v1.admin.collectionsOwnedBy(user.email)
+                .done(collz => {
+                    if (collz.length === 0) {
+                        deleteUser(user)
+                        return
+                    }
+
+                    window.modals.confirmDeleteOwnerPopUp({
+                        desc: "Delete Collection Owner",
+                        message: "Warning the user is owner of the following collections:",
+                        bottomMessage: "Deleting the user will nuke those collections, proceed?",
+                        list: collz
+                    }, () => {
+                        deleteUser(user)
+                    })
+                })
+        })
+    }
+    function createDeleteButton(user) {
+        var btn = el("button.dangerous", ['✖'])
+        
+        btn.addEventListener("click", evt => {
+            showDeleteAccountModal(user)
+        }, false)
+        
+        return btn
+    }
+
+    api.v1.admin.users().done(users => {
         var parent = document.querySelector('.users-area')
 
         users.forEach(user => {
-            var div = el('div.users-container', [
-                el('span', [user.email]), 
-                createLevelSelect(user)
+            var div = el('div.users-container', {
+                    'data-email': user.email,
+                }, [
+                el('span', [user.email]),
+                createLevelSelect(user),
+                createDeleteButton(user)
             ])
 
             parent.appendChild(div)
@@ -77,7 +132,6 @@ $(document).ready(function() {
         else
             window.location = "login.html"
     })
-
 
     $("#users-search").on("input", function(evt) {
         var searchString = this.value;
@@ -106,8 +160,7 @@ $(document).ready(function() {
         var modal = modals.optionsModal({
             desc: userEmail + " from " + oldLevel + " to " + newLevel,
             message: levelDescriptions[newLevel],
-            input: [],
-            btnText: 'accept'
+            btnText: 'change'
         }, function accept() {
             window.api.ajax("PUT", window.api.host + "/v1/admin/set-trust", {
                 email: userEmail,
