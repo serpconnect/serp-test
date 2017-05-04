@@ -1,7 +1,7 @@
 $(function() {
     //stores friends emails of the logged in user
     var friends = [];
-    
+
     user.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {
@@ -170,6 +170,19 @@ $(function() {
         window.location = window.location.origin + "/collection.html#" + id
     }
 
+    function deleteColl(evt){
+      var id = this.parentNode.parentNode.parentNode.dataset.collectionId
+      var coll = "#" + id;
+      window.modals.confirmKickPopUp(`Are you sure you want to delete ${coll}?`, () => {
+        window.api.ajax("POST", window.api.host + "/v1/admin/delete-collection",{id:id})
+          .done(ok => {
+            cleanup(this.modal)
+            location.reload(true)
+          })
+          .fail(xhr => complain(xhr.responseText))
+        })
+    }
+
     function collectionOption(name, callback) {
         var option = el('div.collection-option', [name])
         option.addEventListener('click', callback, false)
@@ -184,11 +197,20 @@ $(function() {
         return `${members} ${mems}, ${entries} ${entr}`
     }
 
-    function appendCollection(self, coll, isOwner) {
+    function appendCollection(self, coll, isOwner, admin,mine) {
         var ownerActions = el('div.collection-row', [
              collectionOption('add user', invite),
              collectionOption('kick user', kick)
         ])
+        var myActions = el('div.collection-row', [
+            collectionOption('manage', manage),
+            collectionOption('add entry', submit),
+        ])
+
+        var adminActions = el('div.collection-row', [
+          collectionOption('delete', deleteColl),
+        ])
+
     	var obj = el('div.collection-wrapper', [
 			el('div.collection-info', [
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
@@ -203,21 +225,25 @@ $(function() {
                     collectionOption('search', search),
                     collectionOption('explore', explore),
                 ]),
-                el('div.collection-row', [
-                    collectionOption('manage', manage),
-                    collectionOption('add entry', submit),
-                ]),
-                isOwner ? ownerActions : undefined
+                mine ? myActions : undefined,
+                isOwner ? ownerActions : undefined,
+                admin ? adminActions : undefined
             ])
 		])
 
-		obj.dataset.collectionId = coll.id
-    	document.querySelector(".profile-content").appendChild(obj)
+		  obj.dataset.collectionId = coll.id
+      if(mine){
+          document.querySelector("div.my-collections-container").appendChild(obj)
+      }else{
+        document.querySelector("div.all-collections-container").appendChild(obj)
+      }
+
     }
 
-    function update(self) {
+    function update(self,admin) {
         $(".user-email").text(`${self.email} (${self.trust})`)
         $("div.collection-wrapper").remove()
+        document.querySelector(".profile-content").appendChild(el('div.my-collections-container'))
         self.collections.forEach(coll => {
             api.v1.collection.stats(coll.id).then(data => {
                 coll.members = data.members
@@ -225,7 +251,7 @@ $(function() {
             }).then(function(){
                 return api.v1.collection.isOwner(coll.id)
             }).then(owner => {
-                appendCollection(self, coll, owner)
+                appendCollection(self, coll, owner,admin,true)
             })
         })
 
@@ -233,14 +259,33 @@ $(function() {
     }
 
     function setup(self) {
-        update(self)
+
 
         if (self.trust === "Admin") {
+            update(self,true)
             var a = el('a.view-area-tab.unactive-tab', {href : "/users.html"}, ['users'])
             var b = el('a.view-area-tab.unactive-tab', {href : "/entries.html"}, ['pending entries'])
             var div = document.querySelector('.profile-area-wrapper')
+            var divall = document.querySelector('.profile-content')
+            divall.appendChild(el('div.collections-main-title',['All other collections']))
+            divall.appendChild(el('div.all-collections-container'))
             div.insertBefore(a, div.lastChild)
             div.insertBefore(b, div.lastChild)
+            window.api.ajax("GET", window.api.host + "/v1/admin/collections").done(collections =>{
+              collections.forEach(coll => {
+                  api.v1.collection.stats(coll.id).then(data => {
+                      coll.members = data.members
+                      coll.entries = data.entries
+                  }).then(function(){
+                      return api.v1.admin.isOwner(coll.id)
+                  }).then(owner => {
+                      appendCollection(self, coll, owner,true,false)
+                  })
+              })
+            })
+        }
+        else{
+            update(self,false)
         }
     }
 
