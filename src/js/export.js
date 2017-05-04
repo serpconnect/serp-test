@@ -5,6 +5,7 @@
     toFile:exportCollectionToFile
   }
 
+  var modal;
   var cID;
   var cName;
   var filename;
@@ -25,22 +26,22 @@
   function exportCollectionToFile(collID, colName){
     cID = collID;
     cName = colName;
-    var modal = createExportModal();
+    createExportModal();
 
     // Comma should probably not be the default delimiter
     // since a lot of the entries contain commas.
-    selectDelimiterCSV.selectedIndex = 1;
-    selectDelimiterLeaf.selectedIndex = 3;
+    document.getElementById("selectDelimiterCSV").selectedIndex = 1;
+    document.getElementById("selectDelimiterLeaf").selectedIndex = 3;
 
-    closeBtn.addEventListener('click', function() {
-      document.body.removeChild(modal);
+    document.getElementById("exportCloseBtn").addEventListener('click', (evt) => {
+      destroy(modal);
     }, false);
 
-    cancelBtn.addEventListener('click', function() {
-      document.body.removeChild(modal);
+    document.getElementById("exportCancelBtn").addEventListener('click', (evt) => {
+      destroy(modal);
     }, false);
 
-    exportBtn.addEventListener('click', (evt) => {
+    document.getElementById("exportBtn").addEventListener('click', (evt) => {
       clearComplaintsExport();
       filename = document.getElementById("exportFilename").value;
       var filenameValid = isFilenameValid();
@@ -57,19 +58,34 @@
 
   }
 
+  function destroy(modal) {
+    document.body.removeChild(modal);
+  }
+
   function getTaxonomyAndExport(taxonomy){
-    window.api.ajax("GET", window.api.host + "/v1/collection/" + cID + "/graph").done(graph => {
+    api.v1.collection.graph(cID).done(graph => {
       var taxonomy = getTaxonomy(graph);
 
-      window.api.ajax("GET", window.api.host + "/v1/collection/" + cID + "/entries").done(entries => {
+      api.v1.collection.entries(cID).done(entries => {
         var numberOfEntries = entries.length;
-        var generalInformation = new Set();
+        var generalInformation = [];
         var rows = [];
         var firstRow = setHeaders(entries, generalInformation, taxonomy);
         rows.push(firstRow);
 
-        entries.forEach(function(entry) {
-          addEntry(rows, entry, generalInformation, taxonomy, numberOfEntries);
+        function toCSV(entry) {
+            return api.v1.entry.taxonomy(entry.id).then(entryTaxonomy => {
+                return calculateCSVRow(entry, entryTaxonomy, taxonomy)
+            })
+        }
+        var entryRows = entries.map(entry => {
+            return toCSV(entry).then(csvRow => rows.push(csvRow));
+        })
+
+        Promise.all(entryRows).then(() => {
+            var csvContent = rows.join('');
+            exportToCSV(`${filename}.csv`, csvContent);
+            destroy(modal);
         })
 
       })
@@ -83,71 +99,30 @@
       var type = edge.type;
       taxonomy.add(type);
     });
-    return taxonomy;
+    return Array.from(taxonomy);
   }
 
-  function setHeaders(entries, generalInformation, taxonomy){
-    var firstRow = "";
-    Object.keys(entries[0]).forEach(function(key,index) {
-      generalInformation.add(key);
-      if(index > 0)
-        firstRow += CSVDelimiter;
-      firstRow += key;
-    });
-
-    taxonomy.forEach(leaf => {
-      firstRow += CSVDelimiter + leaf;
-    });
-    firstRow += "\n";
-    return firstRow;
+  function setHeaders(entries, generalInformation, taxonomy) {
+    var keys = Object.keys(entries[0]);
+    generalInformation.push(...keys);
+    return keys.concat(...taxonomy).join(CSVDelimiter) + "\n";
   }
 
-  function addEntry(rows, entry, generalInformation, taxonomy, numberOfEntries){
-    window.api.ajax("GET", window.api.host + "/v1/entry/" + entry.id + "/taxonomy").done(entryTaxonomy => {
-      var curRow = calculateCurRow(entry, entryTaxonomy, generalInformation, taxonomy);
-      rows.push(curRow);
+  function calculateCSVRow(entry, entryTaxonomy, taxonomy){
+    var csvRow = Object.values(entry)
+      .map(value => {return String(value)})
+      .join(CSVDelimiter);
 
-      // Check if all entries have been added ( > because the first row in rows contains the headers).
-      if(rows.length > numberOfEntries){
-        var csvContent = "";
-        rows.forEach(row => {
-          csvContent += row;
-        });
-        exportToCSV(filename + ".csv", csvContent);
-      }
-    })
-  }
+    csvRow += CSVDelimiter;
 
-  function calculateCurRow(entry, entryTaxonomy, generalInformation, taxonomy){
-    var curRow = "";
-    var firstKey = true;
-    generalInformation.forEach(function(key) {
-      if(!firstKey)
-        curRow += CSVDelimiter;
-      if(entry[key] !== undefined) {
-        curRow += entry[key];
-      } else {
-        curRow += "";
-      }
-      firstKey = false;
-    });
+    csvRow += taxonomy
+      .map(key => entryTaxonomy[key])
+      .map(val => val ? val.join(leafDelimiter) : "")
+      .join(CSVDelimiter);
 
-    taxonomy.forEach(function(key) {
-      curRow += CSVDelimiter;
-      if(entryTaxonomy[key] !== undefined) {
-        var firstLeaf = true;
-        entryTaxonomy[key].forEach(leaf => {
-          if(!firstLeaf)
-            curRow += leafDelimiter;
-          curRow += leaf;
-          firstLeaf = false;
-        });
-      } else {
-        curRow += "";
-      }
-    });
-    curRow += "\n";
-    return curRow;
+    csvRow += "\n";
+
+    return csvRow;
   }
 
   function exportToCSV(filename, csvContent) {
@@ -170,11 +145,11 @@
   }
 
   function createExportModal(){
-    var modal =
+    modal =
     el('div.modal', [
         el('div', [
-            el('div.close-btn#closeBtn', ['']),
-            el("h2", ["Export Collection " + cName + " (#" + cID + ")"]),
+            el('div.close-btn#exportCloseBtn', ['']),
+            el("h2", [`Export collection ${cName} (#${cID})` ]),
             el("div#exportFilenameWrapper", [
                 el("input.modal-input-box#exportFilename", {type:"text", placeholder:"Filename"}),
                 el("label", [" .csv"])
@@ -188,13 +163,12 @@
 
             el("div", [
                 el('button#exportBtn.btn', ["Export"]),
-                el('button#cancelBtn.btn', ["Cancel"]),
+                el('button#exportCancelBtn.btn', ["Cancel"]),
             ])
         ])
     ]);
     setTimeout(() => modal.classList.add("appear"), 100)
     document.body.appendChild(modal);
-    return modal;
   }
 
   function delimiterDiv(name, text){

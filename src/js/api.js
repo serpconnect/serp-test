@@ -154,6 +154,14 @@ $(function () {
 		return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
 	}
 
+	v1.collection.entries = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/entries"))
+	}
+
+	v1.collection.graph = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
+	}
+
 	// Admin API
 	v1.admin.acceptEntry = function (id) {
 		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
