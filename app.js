@@ -102,6 +102,9 @@ app.get("/collection/entries", function(req, res) {
 app.get("/collection/users", function(req, res) {
     res.render("collection/users");
 });
+app.get("/collections",function(req,res){
+  res.render("collections");
+});
 
 app.get("/resetpassword", function(req, res) {
     res.render("resetpassword");

@@ -10,9 +10,11 @@ $(document).ready(function() {
     window.api.ajax("GET", window.api.host + "/v1/admin").done(ok => {
         var a = el('a.view-area-tab.unactive-tab', {href : "/users.html"}, ['users'])
         var b = el('a.view-area-tab.unactive-tab', {href : "/entries.html"}, ['pending entries'])
+        var c = el('a.view-area-tab.unactive-tab', {href : "/collections.html"}, ['all collections'])
         var div = document.querySelector('.profile-area-wrapper')
         div.insertBefore(a, div.lastChild)
         div.insertBefore(b, div.lastChild)
+        div.insertBefore(c, div.lastChild)
     })
 
     //check if invites exist and display number above invitations tab on profile page
@@ -29,7 +31,7 @@ $(document).ready(function() {
         var container = invitations.querySelector('.invitationContainer')
         var invitation = container.querySelector('.newInvitation')
         var invites = parseInt(invitation.textContent, 10) - 1
-        
+
         if (invites === 0)
             invitations.removeChild(container)
         else
