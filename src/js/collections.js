@@ -255,7 +255,7 @@ $(function() {
               }).then(function(){
                   return api.v1.admin.isOwner(coll.id)
               }).then(owner => {
-                  appendCollection(self, coll, owner,true,false)
+                  appendCollection(self, coll, owner,false)
               })
           })
         })
