@@ -3,6 +3,8 @@ block view-specific-scripts
     script(src="js/util/el.js")
     script(src="js/collection.js")
     script(src="js/modal.js")
+    script(src="js/export.js")
+    
 block content
     div.profile-area-wrapper
         a(href="/profile.html")#profile.view-area-tab.unactive-tab profile
@@ -16,6 +18,7 @@ block content
                 span#id.user-email id
                 div.user-options
                     button#leave.btn leave collection
-
+                    button#export.btn export collection
+                    
                 div.collections-main-title statistics
                     p.collection-stats 0 entries, 0 members

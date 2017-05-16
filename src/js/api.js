@@ -119,45 +119,53 @@ $(function () {
     v1.collection.invite = function (email, id) {
         return ajax("POST", endpoint("/v1/collection/" + id + "/invite"), {
             email: email
-        });
-    }
+		});
+	}
 
-    v1.collection.kick = function (email, id) {
-        return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
-            email: email
-        });
-    }
+	v1.collection.kick = function(email, id){
+			return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
+						email: email
+			});
+	}
 
-    v1.collection.leave = function (cID) {
-        return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
-    }
+	v1.collection.leave = function(cID) {
+		return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
+	}
 
-    v1.collection.addEntry = function (cid, eid) {
-        return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), {
-            entryId: eid
-        })
-    }
+	v1.collection.addEntry = function(cid, eid){
+		return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), {
+			entryId: eid
+		})
+	}
 
-    v1.collection.stats = function (id) {
-        return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
-    }
+	v1.collection.stats = function(id){
+		return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
+	}
 
-    v1.collection.members = function (id, q) {
-        return ajax("GET", endpoint("/v1/collection/" + id + "/members"), { q: q })
-    }
+	v1.collection.members = function (id, q) {
+		return ajax("GET", endpoint("/v1/collection/" + id + "/members"), {q:q})
+	}
 
-    v1.collection.url = function (cID) {
-        return endpoint("/v1/collection/" + cID + "/addEntry")
-    }
+	v1.collection.url = function(cID){
+		return endpoint("/v1/collection/" + cID + "/addEntry")
+	}
 
-    v1.collection.isOwner = function (cID) {
-        return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
-    }
+	v1.collection.isOwner = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
+	}
 
-    // Admin API
-    v1.admin.acceptEntry = function (id) {
-        return ajax("POST", endpoint('/v1/admin/accept-entry'), {
-            entry: id
+	v1.collection.entries = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/entries"))
+	}
+
+	v1.collection.graph = function(cID){
+		return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
+	}
+
+	// Admin API
+	v1.admin.acceptEntry = function (id) {
+		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
+            entry : id
         })
     }
 
