@@ -8,6 +8,9 @@
   var cID;
   var cName;
   var modal;
+  var CSVDelimiter;
+  var leafDelimiter;
+  var filenameInput;
 
   var delimiters = [
       {value: ',' , display: 'Comma (,)'},
@@ -30,9 +33,23 @@
     document.getElementById("selectDelimiterCSV").selectedIndex = 1;
     document.getElementById("selectDelimiterLeaf").selectedIndex = 3;
 
+    CSVDelimiter = document.getElementById("selectDelimiterCSV").value;
+    leafDelimiter = document.getElementById("selectDelimiterLeaf").value;
+
+    document.getElementById("selectDelimiterCSV").addEventListener('change', (evt) => {
+      CSVDelimiter = evt.srcElement.value;
+      checkDelimitersValidAndComplain();
+    }, false);
+
+    document.getElementById("selectDelimiterLeaf").addEventListener('change', (evt) => {
+      leafDelimiter = evt.srcElement.value;
+      checkDelimitersValidAndComplain();
+    }, false);
+
     document.getElementById("exportCloseBtn").addEventListener('click', destroy, false);
     document.getElementById("exportCancelBtn").addEventListener('click', destroy, false);
     document.getElementById("exportBtn").addEventListener('click', (evt) => {
+      filenameInput = document.getElementById("exportFilename").value;
       if(isInfoCorrect()){
         getTaxonomyAndExport();
       }
@@ -66,7 +83,7 @@
 
         Promise.all(entryRows).then(() => {
             var csvContent = rows.join('');
-            exportToCSV(`${document.getElementById("exportFilename").value}.csv`, csvContent);
+            exportToCSV(csvContent);
             destroy();
         })
 
@@ -85,12 +102,10 @@
   function setHeaders(entries, generalInformation, taxonomy) {
     var keys = Object.keys(entries[0]);
     generalInformation.push(...keys);
-    return keys.concat(...taxonomy).join(document.getElementById("selectDelimiterCSV").value) + "\n";
+    return keys.concat(...taxonomy).join(CSVDelimiter) + "\n";
   }
 
   function calculateCSVRow(entry, entryTaxonomy, taxonomy){
-    var CSVDelimiter = document.getElementById("selectDelimiterCSV").value;
-    var leafDelimiter = document.getElementById("selectDelimiterLeaf").value;
     var csvRow = Object.values(entry)
       .map(value => String(value))
       .join(CSVDelimiter);
@@ -107,7 +122,8 @@
     return csvRow;
   }
 
-  function exportToCSV(filename, csvContent) {
+  function exportToCSV(csvContent) {
+      var filename = `${filenameInput}.csv`;
       var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       if (navigator.msSaveBlob) { // IE 10+
           navigator.msSaveBlob(blob, filename);
@@ -177,7 +193,7 @@
   }
 
   function checkFileNameValidAndComplain(){
-    if(document.getElementById("exportFilename").value){
+    if(filenameInput){
       return true;
     }
     complain(document.getElementById("exportFilenameWrapper"), "Please supply information");
@@ -185,16 +201,27 @@
   }
 
   function checkDelimitersValidAndComplain(){
-    if(document.getElementById("selectDelimiterCSV").value !== document.getElementById("selectDelimiterLeaf").value) {
+    if(CSVDelimiter !== leafDelimiter) {
+      clearComplaintsDelimiters();
       return true;
     }
-    complain(document.getElementById("delimiterCSV"), "The delimiters have to be different");
+    complainDelimiters(document.getElementById("delimiterCSV"), "The delimiters have to be different");
     return false;
+  }
+
+  function complainDelimiters(node, text){
+    node.appendChild(
+        el("div.complaint.delimiters", {text:text})
+    );
+  }
+
+  function clearComplaintsDelimiters(){
+    $(".complaint.delimiters").remove();
   }
 
   function complain(node, text){
     node.appendChild(
-        el("div.complaint.export", {text:"The delimiters have to be different"})
+        el("div.complaint.export", {text:text})
     );
   }
 
