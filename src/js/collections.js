@@ -156,7 +156,7 @@ $(function() {
         return `${members} ${mems}, ${entries} ${entr}`
     }
 
-    function appendCollection(self, coll, isOwner,mine) {
+    function appendCollection(self, coll, isCollectionOwner,mine) {
         var ownerActions = el('div.collection-row', [
              collectionOption('add user', invite),
              collectionOption('kick user', kick)
@@ -175,7 +175,7 @@ $(function() {
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
                     el('span', [coll.name]),
                     el('span.collection-id', [" #" + coll.id]),
-                    el('span.collection-owner',[isOwner ? " (owner)" : ""])
+                    el('span.collection-owner',[isCollectionOwner ? " (owner)" : ""])
                 ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
@@ -185,7 +185,7 @@ $(function() {
                     collectionOption('explore', explore),
                 ]),
                 mine ? myActions : undefined,
-                isOwner ? ownerActions : undefined,
+                isCollectionOwner ? ownerActions : undefined,
                 adminActions
             ])
 		])
@@ -253,7 +253,7 @@ $(function() {
                   coll.members = data.members
                   coll.entries = data.entries
               }).then(function(){
-                  return api.v1.admin.isOwner(coll.id)
+                  return api.v1.admin.isCollectionOwner(coll.id)
               }).then(owner => {
                   appendCollection(self, coll, owner,false)
               })
