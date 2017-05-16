@@ -402,7 +402,8 @@ $(document).ready(function() {
                 })
                 .done(() => {
                   window.modals.clearAll();
-                  location.reload(true)
+                  dataset.splice(entryNumber,1);
+                  updateViews();
                 })
                 .fail(xhr => alert(xhr.responseText))
 
@@ -412,15 +413,18 @@ $(document).ready(function() {
             removeBtn.addEventListener('click', removeFromCollection, false)
             var button = admin ? [removeBtn] : [];
 
-            window.user.getEntry(id).done(entry => {
-                window.user.getTaxonomyEntry(id).done(taxonomy => {
-                      window.modals.entryModal(entry, taxonomy, {
-                                  button
-                      })
-                })
-                .fail(reason => window.alert(reason))
-            }).fail(reason => window.alert(reason))
-        })
+            function insertid(id){return 0}
+
+
+            Promise.all([
+                 window.user.getEntry(id),
+                 window.user.getTaxonomyEntry(id)
+               ]).then(promise=>{
+                 window.modals.entryModal(promise[0],promise[1],{
+                    button
+              })
+            })
+      })
     }
 
     // creates a table row with the data contained in entry
@@ -502,7 +506,8 @@ $(document).ready(function() {
                 })
                 .done(() => {
                   window.modals.clearAll();
-                  location.reload(true)
+                  dataset.splice(entryNumber,1);
+                  updateViews();
                 })
                 .fail(xhr => alert(xhr.responseText))
 
@@ -512,14 +517,14 @@ $(document).ready(function() {
             removeBtn.addEventListener('click', removeFromCollection, false)
             var test = admin ? {button: [removeBtn]} : [];
 
-            window.user.getEntry(id).done(entry => {
-                window.user.getTaxonomyEntry(id).done(taxonomy => {
-                  window.modals.entryModal(entry, taxonomy, {
-                              button: [removeBtn]
-                  })
-                })
-                .fail(reason => window.alert(reason))
-            }).fail(reason => window.alert(reason))
+            Promise.all([
+                 window.user.getEntry(id),
+                 window.user.getTaxonomyEntry(id)
+               ]).then(promise=>{
+                 window.modals.entryModal(promise[0],promise[1],{
+                    button
+              })
+            })
         })
 
         function createCell(subfacet, alternating) {
