@@ -9,6 +9,13 @@ $(document).ready(function() {
       }
     });
 
+    var loggedIn = false;
+    window.api.ajax("GET", window.api.host + "/v1/account/login").done(user => {
+      loggedIn = true;
+    }).fail(xhr => {
+      loggedIn = false;
+    });
+
     var querystring = {}
     // find a more permanent fix for this
     // without setTimeout the additional-data elements don't appear in firefox,
@@ -219,7 +226,7 @@ $(document).ready(function() {
         } else {
             var entryTitle = entry["reference"];
         }
-        
+
         var entryNumber = position ? position : queuedEntries.length - 1;
         var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
         scrollDiv.addClass("table-cell-div")
@@ -431,7 +438,7 @@ $(document).ready(function() {
 
     /* All interactive/clickable elements */
     function getUIElements() {
-        return ["#submit-queue-btn", "#submit-btn", "#queue-btn", 
+        return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
                 "#load-btn", "#import-json-btn", "#collection",
                 "#submit-create-collection"
         ]
@@ -443,7 +450,7 @@ $(document).ready(function() {
     }
     function enableButton(btn) {
         btn.disabled = false
-        btn.classList.remove('submit-disabled')    
+        btn.classList.remove('submit-disabled')
     }
     function updateUI(enableDisable) {
         getUIElements().forEach(selector => {
@@ -549,22 +556,28 @@ $(document).ready(function() {
     });
 
     $("#load-btn").on("click", function(evt) {
-        window.user.self().done(user => {
-            var conf = {
-                desc: "Load an entry",
-                input: user.entries
-            };
-            window.modals.listModal(conf, function (entryId) {
-                api.v1.getEntry(entryId).done(entry => {
-                      $("#" + entry.type + "-button").trigger("click");
-                      api.v1.getTaxonomyEntry(entryId).done(taxonomy =>{
-                        entry["serpClassification"] = taxonomy;
-                        fillAccordingToEntry(entry, true);
-                      })
+        if(loggedIn){
+          window.user.self().done(user => {
+              var conf = {
+                  desc: "Load an entry",
+                  input: user.entries
+              };
+              window.modals.listModal(conf, function (entryId) {
+                  api.v1.getEntry(entryId).done(entry => {
+                        $("#" + entry.type + "-button").trigger("click");
+                        api.v1.getTaxonomyEntry(entryId).done(taxonomy =>{
+                          entry["serpClassification"] = taxonomy;
+                          fillAccordingToEntry(entry, true);
+                        })
 
-                }) // Only error if race condition?
-            })
-        })
+                  }) // Only error if race condition?
+              })
+          }).fail(xhr => {
+            flashErrorMessage(xhr.responseText);
+          })
+        } else {
+          flashErrorMessage("Must be logged in");
+        }
     });
 
     $("#queue-btn").on("click", function(evt) {
@@ -593,7 +606,11 @@ $(document).ready(function() {
     }
 
     $("#import-json-btn").on("click", function(evt) {
+      if(loggedIn){
         window.import.fromFile(pushEntry);
+      } else {
+        flashErrorMessage("Must be logged in");
+      }
     });
 
     $("#remove-btn").on("click", function(evt) {
