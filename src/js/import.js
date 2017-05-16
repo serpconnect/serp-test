@@ -405,13 +405,13 @@
   }
 
   function areDelimitersValid(){
-    if(selectDelimiterCSV.value === selectDelimiterLeaf.value){
-      document.getElementById("delimiterCSV").appendChild(
-          el("div.complaint.import", {text:"The delimiters have to be different"})
-      );
-      return false;
+    if(selectDelimiterCSV.value !== selectDelimiterLeaf.value){
+      return true;
     }
-    return true;
+    document.getElementById("delimiterCSV").appendChild(
+        el("div.complaint.import", {text:"The delimiters have to be different"})
+    );
+    return false;
   }
 
   function createjsons(lines, CSVHeaders){
