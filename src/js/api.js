@@ -195,6 +195,9 @@ $(function () {
         return ajax("GET", endpoint("/v1/admin/pending"))
     }
 
+		v1.admin.isCollectionOwner = function (cID){
+			return ajax("GET", endpoint("/v1/admin/" + cID + "/is-collection-owner"))
+		}
     //
     v1.entry.taxonomy = function (id) {
         return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))

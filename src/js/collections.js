@@ -1,6 +1,10 @@
 $(function() {
     //stores friends emails of the logged in user
     var friends = [];
+    var collections = [];
+    var collectionsMappings = {};
+
+    var collectionsFuzzy = undefined;
 
     user.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
@@ -28,58 +32,6 @@ $(function() {
         modals.clearAll()
         api.v1.account.self().done(update)
     }
-
-    var deleteAccountModal = {
-        desc: "Delete Account",
-        message: "This will delete your account, but your collections and entries will remain. Are you sure?",
-        input: [],
-        btnText: "Delete"
-    };
-
-    // Let user confirm account deletion before commencing orbital strike
-    $("#delete").click(evt => {
-        window.modals.optionsModal(deleteAccountModal, function () {
-            //A secondary box pops up to imply importance of the decision
-            var message = "Delete Account - Are You Sure"
-            window.modals.confirmPopUp(message, function ok() {
-                window.user.delete()
-                    .done(ok => window.location = "/")
-                    .fail(xhr => complain(xhr.responseText))
-            })
-        })
-    })
-
-    var newCollectionModal = {
-        desc: "create new collection",
-        message: "",
-        input: [['input0','text','collection name']],
-        btnText: "Create"
-    };
-
-    // Create a new collection
-    $("#create").click(evt => {
-        window.modals.optionsModal(newCollectionModal, function (name) {
-            api.v1.collection.create(name)
-                .done(ok => cleanup(this.modal))
-                .fail(xhr => complain(xhr.responseText))
-        })
-    })
-
-    // Change password dialog, must submit current and new passwords to api
-    var newPasswordModal = {
-        desc: "Change your password",
-        message: "",
-        input: [['input0','password','old password'], ['input1','password','new password']],
-        btnText: "Save"
-    };
-
-    $("#change").click(evt => {
-        window.modals.optionsModal(newPasswordModal,function (oldpw, newpw) {
-            api.v1.account.changePassword(oldpw, newpw)
-                .done(ok => cleanup(this.modal))
-                .fail(xhr => complain(xhr.responseText))
-        })
-    })
 
     function invite(evt) {
         var parent = this.parentNode.parentNode.parentNode
@@ -140,6 +92,7 @@ $(function() {
             })
 
         })
+
 
           new Awesomplete('#input0', {
                           list: emails,
@@ -203,7 +156,7 @@ $(function() {
         return `${members} ${mems}, ${entries} ${entr}`
     }
 
-    function appendCollection(self, coll, isOwner) {
+    function appendCollection(self, coll, isCollectionOwner,mine) {
         var ownerActions = el('div.collection-row', [
              collectionOption('add user', invite),
              collectionOption('kick user', kick)
@@ -222,7 +175,7 @@ $(function() {
     			el('a.collection-title', {href: "/collection.html#" + coll.id}, [
                     el('span', [coll.name]),
                     el('span.collection-id', [" #" + coll.id]),
-                    el('span.collection-owner',[isOwner ? " (owner)" : ""])
+                    el('span.collection-owner',[isCollectionOwner ? " (owner)" : ""])
                 ]),
     			el('div.collection-stats', [formatStats(coll.members, coll.entries)])
     		]),
@@ -231,20 +184,27 @@ $(function() {
                     collectionOption('search', search),
                     collectionOption('explore', explore),
                 ]),
-                myActions,
-                isOwner ? ownerActions : undefined
+                mine ? myActions : undefined,
+                isCollectionOwner ? ownerActions : undefined,
+                adminActions
             ])
 		])
-		  obj.dataset.collectionId = coll.id
-      document.querySelector("div.my-collections-container").appendChild(obj)
 
+		  obj.dataset.collectionId = coll.id
+      if(mine){
+          document.querySelector("div.my-collections-container").appendChild(obj)
+      }else{
+        document.querySelector("div.all-collections-container").appendChild(obj)
+      }
+      collections.push(coll.name + " #" + coll.id)
+      collectionsMappings[collections.length - 1] = obj
 
     }
 
     function update(self) {
         $(".user-email").text(`${self.email} (${self.trust})`)
         $("div.collection-wrapper").remove()
-        document.querySelector(".profile-content").appendChild(el('div.my-collections-container'))
+        document.querySelector(".collections-container").appendChild(el('div.my-collections-container'))
         self.collections.forEach(coll => {
             api.v1.collection.stats(coll.id).then(data => {
                 coll.members = data.members
@@ -252,23 +212,59 @@ $(function() {
             }).then(function(){
                 return api.v1.collection.isOwner(coll.id)
             }).then(owner => {
-                appendCollection(self, coll, owner)
+                appendCollection(self, coll, owner,true)
             })
         })
+
         api.v1.account.friends(self.email).done(data => friends = data)
     }
 
-    function setup(self) {
-        if (self.trust === "Admin") {
-            var a = el('a.view-area-tab.unactive-tab', {href : "/users.html"}, ['users'])
-            var b = el('a.view-area-tab.unactive-tab', {href : "/entries.html"}, ['pending entries'])
-            var c = el('a.view-area-tab.unactive-tab', {href : "/collections.html"}, ['all collections'])
-            var div = document.querySelector('.profile-area-wrapper')
-            div.insertBefore(a, div.lastChild)
-            div.insertBefore(b, div.lastChild)
-            div.insertBefore(c, div.lastChild)
+    $("#collections-search").on("input", function(evt) {
+        var searchString = this.value;
+
+        if (searchString) {
+            //console.log($(".collection-wrapper"));
+            $(".collection-wrapper").hide();
+            var results = collectionsFuzzy.search(searchString);
+            if (results.length) {
+                for (var i = 0; i < results.length; ++i) {
+                    var matchingCollection = results[i];
+                    $(collectionsMappings[matchingCollection]).show();
+                }
+            }
+        } else {
+            $(".collection-wrapper").show();
         }
+    });
+
+    function setup(self) {
+        if(self.trust != "Admin"){
+          window.location = "/profile.html"
+        }
+
+
         update(self)
+        var div = document.querySelector('.profile-area-wrapper')
+        var divall = document.querySelector('.collections-container')
+        divall.appendChild(el('div.all-collections-container'))
+        window.api.ajax("GET", window.api.host + "/v1/admin/collections").done(collections =>{
+          collections.forEach(coll => {
+              api.v1.collection.stats(coll.id).then(data => {
+                  coll.members = data.members
+                  coll.entries = data.entries
+              }).then(function(){
+                  return api.v1.admin.isCollectionOwner(coll.id)
+              }).then(owner => {
+                  appendCollection(self, coll, owner,false)
+              })
+          })
+        })
+
+        collectionsFuzzy = new Fuse(collections, {
+            threshold: 0.5
+        });
+
+
     }
 
     // Load logged in user and proceed to setup otherwise redirect to login
