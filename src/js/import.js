@@ -225,7 +225,7 @@
     checkResearchChange();
     selectDelimiterChange();
     $(".import-checkbox").each(function(i, el) {
-      addClickableButtonEventListener($(el), CSVHeaders, true);
+      addClickableButtonEventListener($(el), CSVHeaders);
     });
 
     uploadBtn.addEventListener('click', (evt) => {
@@ -250,21 +250,19 @@
     });
   }
 
-  function addClickableButtonEventListener(button, CSVHeaders, isFirst){
+  function addClickableButtonEventListener(button, CSVHeaders){
     button.click(function() {
       if(button.is(":checked")){
         var className = button.attr('class').split(" ");
         var serpType = className[className.length-1];
-        var extraSelectsContainer = isFirst ? button.parent().next()
-                                            : button.parent().parent();
+        var extraSelectsContainer = button.parent().parent();
         extraSelectsContainer.append(elCheckboxAndSelect(serpType));
         var newSelect = button.parent().next().find(".import-select");
         addOptions(CSVHeaders, newSelect);
         var newCheckbox = button.parent().next().find(".import-checkbox");
-        addClickableButtonEventListener(newCheckbox, CSVHeaders, false);
+        addClickableButtonEventListener(newCheckbox, CSVHeaders);
       } else {
-        var extraSelectsToTheRight = isFirst ? button.parent().next().children()
-                                             : button.parent().nextAll();
+        var extraSelectsToTheRight = button.parent().nextAll();
         extraSelectsToTheRight.remove();
       }
     });
@@ -325,13 +323,18 @@
             el("div.modal-divider"),
 
             el("h3", ["Taxonomy"]),
+            el("label", ["Node selected..."]),
             el("div.import-taxonomy-heading", intervention),
+            el("div.modal-spacing"),
             mapToHeaders("intervention", interventionLeaves),
             el("div.import-taxonomy-heading", effect),
+            el("div.modal-spacing"),
             mapToHeaders("effect", effectLeaves),
             el("div.import-taxonomy-heading", scope),
+            el("div.modal-spacing"),
             mapToHeaders("scope", scopeLeaves),
             el("div.import-taxonomy-heading", context),
+            el("div.modal-spacing"),
             mapToHeaders("context", contextLeaves),
             el("div.modal-divider"),
 
@@ -350,10 +353,14 @@
     return serpArray.map(serpItem => {
       return el("div.import-all-selects-wrapper." + serp, [
                  el("div.import-select-first-box-wrapper." + serp, [
+                     el("select.import-node-selection." + serp, [
+                         el("option", {value:"default"}, ["only if related free-text examples are extracted"]),
+                         el("option", {value:"everything"}, ["for all entries"]),
+                     ]),
                      el("label", [serpItem.display]),
-                     el("input.import-checkbox.first." + serp, {type:"checkbox"}),
+                     el("div"), [],
                  ]),
-                 el("div.import-extra-headings." + serp, [])
+                 el("div.import-extra-headings." + serp, [elCheckboxAndSelect(serp)]),
              ])
     })
   }
@@ -361,7 +368,7 @@
   function elCheckboxAndSelect(serp){
     return el("div.import-checkbox-and-select." + serp, [
                el("select.import-select." + serp, [
-                   el("option", {value:"unspecified"}, ["ignore"]),
+                   el("option", {value:"unspecified"}, ["No mapping"]),
                ]),
                el("input.import-checkbox.extra." + serp, {type:"checkbox"}),
            ])
@@ -389,35 +396,47 @@
   }
 
   function createjsons(lines, CSVHeaders){
-    var selectedFirst;
-    if(entryType === "research"){
-      selectedFirst = $(".import-checkbox.first").filter(":checked")
-                      .add($(".import-checkbox.first.researchMustHave"));
-    } else if(entryType === "challenge"){
-      selectedFirst = $(".import-checkbox.first").filter(":checked")
-                      .add($(".import-checkbox.first.challengeMustHave"));
+    function byNodeSelection(i, el) {
+      var node = el.querySelector(".import-node-selection");
+      return node && node.value === "everything";
     }
-    var labels = selectedFirst.parent().parent().find("label").map((i, e) => e.textContent).toArray();
+    function byImportSelection(i, el) {
+      var select = el.querySelector(".import-select");
+      return select && select.value !== "unspecified";
+    }
+    var selectedNodes = $(".import-all-selects-wrapper").filter(function (i, el) {
+      return byNodeSelection(i, el) || byImportSelection(i, el)
+    })
+
+    if(entryType === "research"){
+      selectedNodes = selectedNodes.add(".import-all-selects-wrapper.researchMustHave");
+    } else if(entryType === "challenge"){
+      selectedNodes = selectedNodes.add(".import-all-selects-wrapper.challengeMustHave");
+    }
     var jsons = [];
     for(var i=1;i<lines.length;i++){
       var currentLine = lines[i];
-      var jsonObj = calculateCurrentObject(CSVHeaders, currentLine, selectedFirst, labels);
+      var jsonObj = calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes);
       jsons.push(jsonObj);
     }
     return jsons;
   }
 
-  function calculateCurrentObject(CSVHeaders, currentLine, selectedFirst, labels){
+  function calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes){
     var jsonObj = {};
     var serpClassification = {};
-    for(var j=0;j<selectedFirst.length;j++){
-      var onlySelectedInputs = $(selectedFirst[j]).parent().parent().
-          find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
-          map((i, e) => e.value).toArray();
-      var currentHeader = serp.find(value => value.display === labels[j]);
+    for(var j=0;j<selectedNodes.length;j++){
+      var onlySelectedInputs = $(selectedNodes[j]).
+        find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
+        map((i, e) => e.value).toArray();
+
+      var label = $(selectedNodes[j]).find("label").text();
+      var currentHeader = serp.find(value => value.display === label);
       var isTaxonomyLeaf = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
       var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf);
-      if(isValueValid(currentValue, selectedFirst[j].className, onlySelectedInputs.length)){
+      var includeFor = $(selectedNodes[j]).find(".import-node-selection").val();
+
+      if(isValueValid(currentValue, selectedNodes[j], includeFor)){
         var root = isTaxonomyLeaf ? serpClassification : jsonObj;
         root[currentHeader.value] = currentValue;
       }
@@ -455,20 +474,16 @@
     return currentValue;
   }
 
-  function isValueValid(currentValue, checkboxClassName, specifiedInputsLength){
-    if (currentValue === "unspecified" || currentValue[0] === "unspecified"){
-      if (specifiedInputsLength !== 0){
-        if (checkboxClassName === "import-checkbox first researchMustHave" ||
-            checkboxClassName === "import-checkbox first challengeMustHave"){
-              return true;
-        }
-      } else {
-        return true;
-      }
-    } else {
+  function isValueValid(currentValue, currentNode, includeFor){
+    if (includeFor === "everything")
       return true;
-    }
-    return false;
+
+    if (currentValue !== "unspecified" && currentValue[0] !== "unspecified")
+      return true;
+
+    var classes = currentNode.classList;
+    return  classes.contains("researchMustHave") ||
+            classes.contains("challengeMustHave");
   }
 
   // Function is taken from stackoverflow,

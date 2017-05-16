@@ -506,7 +506,7 @@ $(document).ready(function() {
         modals.optionsModal(newCollectionModal, function (name) {
             api.v1.collection.create(name)
                 .done(ok => {
-                    document.body.removeChild(this.modal)
+                    modals.clearAll()
                     querystring.c = ok.id
                     updateCollectionList()
                 })
