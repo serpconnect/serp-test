@@ -395,7 +395,7 @@ $(document).ready(function() {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
 
-            function removeFromCollection() {
+            function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
                   entryId: id
@@ -409,9 +409,8 @@ $(document).ready(function() {
 
             }
 
-            var removeBtn = el("button.btn", ["remove from collection"])
-            removeBtn.addEventListener('click', removeFromCollection, false)
-            var button = admin ? [removeBtn] : [];
+            var removeBtn = el("button.btn", ["delete entry"])
+            removeBtn.addEventListener('click', deleteEntry, false)
 
             function insertid(id){return 0}
 
@@ -420,9 +419,9 @@ $(document).ready(function() {
                  window.user.getEntry(id),
                  window.user.getTaxonomyEntry(id)
                ]).then(promise=>{
-                 window.modals.entryModal(promise[0],promise[1],{
-                    button
-              })
+                 window.modals.entryModal(promise[0],promise[1],
+                    admin ? { button: removeBtn } : {}
+              )
             })
       })
     }
@@ -499,7 +498,7 @@ $(document).ready(function() {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
 
-            function removeFromCollection() {
+            function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
                   entryId: id
@@ -513,17 +512,16 @@ $(document).ready(function() {
 
             }
 
-            var removeBtn = el("button.btn", ["remove from collection"])
-            removeBtn.addEventListener('click', removeFromCollection, false)
-            var test = admin ? {button: [removeBtn]} : [];
+            var removeBtn = el("button.btn", ["delete entry"])
+            removeBtn.addEventListener('click', deleteEntry, false)
 
             Promise.all([
                  window.user.getEntry(id),
                  window.user.getTaxonomyEntry(id)
                ]).then(promise=>{
-                 window.modals.entryModal(promise[0],promise[1],{
-                    button
-              })
+                 window.modals.entryModal(promise[0],promise[1],
+                    admin ? { button: removeBtn } : {}
+              )
             })
         })
 
