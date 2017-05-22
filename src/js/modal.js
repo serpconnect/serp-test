@@ -134,6 +134,112 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
+	 /* Inspect facets modal with taxonomy extension for collection */
+	modals.dynamicInfoModal = function(facet, unique) {
+		var facets = unique.map(uniq => el("li.modal-li", [uniq]))
+		var addButton = el('div.add-facet', [])
+		var subLevel = 
+				el('div.header',[
+					addButton,
+					el('div.add-facet-text',["add sub facet For " + facet])
+				] )
+		var modal = el('div#modal.modal', [
+			el('div', [
+				el('div.modal-entry-type', ['inspecting entities']),
+				closeButton(),
+				el('div.modal-header-title', [facet]),
+				el("div.modal-divider"),
+				subLevel,
+				el('ul.modal-ul'),
+				facets,
+				el('ul.modal-ul')
+			])
+		])
+
+		addButton.addEventListener('click', (evt) => {
+		    console.log('yeah yeah eyah')
+	    })
+
+        document.body.appendChild(modal)
+        setTimeout(function(){
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
+	 }
+
+/** 
+	 * Create a modal that displays allows extension of a taxonomy for a given collection
+     * div.classification
+     *     div.node
+     *         span "Effect"
+     *         div.leaf
+     *             div.header
+     *                 label "Solve new problem"
+     *                 input "[x]"
+     *             div.additional-data "click to add description +"
+     *             div.entity-sample
+     *                 input
+     *                 div.remove "x"
+	 * */
+	modals.taxonomyModal = function(cID, name) {
+       	var saveBtn = el('button#saveBtn.btn', ['save'])
+   	    var taxonomy = new Taxonomy([])
+   	    // var name = el('span', [name])
+	    var cxx = el('div.classification#classification', taxonomy.tree().map(
+	        function build(node, i) {
+	            if (node.isTreeLeaf()) {
+	                return el("div.leaf", [
+	                    el("div.header", [
+	                        el("label", [node.name()]),
+	                      	 window.taxFunc.generate_button()
+	                    ])
+	                ])
+	            } else {
+	                return el("div.node", [
+	                    el("span", [node.name()]),
+	                    node.map(build).sort(window.taxFunc.byNbrOfChildren)
+	                ])
+	            }
+	        }).sort(window.taxFunc.byNbrOfChildren)
+	    )
+	     var divider = el("div", [
+	     	el("div.divider-wrapper", [
+		        el("div.queued-divider", [""]),
+		        el("div.divider-title", ["Extend Taxonomy for Collection " + name]),
+		        el("div.queued-divider", [""])
+		    ])
+    	])
+		var modal = el('div#modal.modal', [
+
+			el('div',[
+				divider,
+				el('div.modal-entry-type'),
+				el("div.modal-divider"),
+				cxx,
+				closeButton(),
+				el('div.modal-header-title'),// [`collection #${cID}`]),
+				el("div.modal-divider"),
+				saveBtn,
+				el("div"),
+				cancelButton()
+			])
+		])
+
+		saveBtn.addEventListener("click", function(evt) {
+			taxFunc.save_taxonomy(cID)
+        });
+
+	    document.body.appendChild(modal)
+        setTimeout(function(){
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
+
+		// function generate_checkbox() {
+  //  			var box = el("input", {type:"checkbox"})
+  // 			box.addEventListener('change', classification_checkbox_click, false)
+  // 		 	return box
+		// }
+	 }
+
 	/** 
 	 * Create a modal that displays contents of an entry & an edit button.
 	 * 
@@ -147,7 +253,7 @@ $(document).ready(function() {
 	modals.entryModal = function(entry, taxonomy, options) {
        	var editBtn = el('button#editBtn.edit-btn', ['edit'])
 		var extraButtons = (options && options.button) || []
-
+		console.log(taxonomy)
 		var modal = el('div#modal.modal', [
 			el('div',[
 				el('div.modal-entry-type', [entry.type]),

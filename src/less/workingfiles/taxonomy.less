@@ -1,0 +1,105 @@
+// inspect classification
+#taxonomy {
+    font-size: 1.5em;
+}
+.root > .sublevel { margin-left: 0em; }
+.sublevel {
+    font-size: 0.85em;
+    margin-left: 1.5em;
+}
+.options{
+    border: 5px;
+    padding: 5px;
+    position: relative;
+}
+.entity {
+    font-size: 0.80em;
+    margin-left: 1.5em;
+}
+.center { text-align: center;}
+
+// generate submit page selectors
+
+.classification {
+    font-size: 14pt;
+
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+
+    text-align: right;
+
+    .leaf { 
+        font-size: 0.9em; 
+
+        > .header {
+            display: flex;
+            justify-content: flex-end;
+            
+            > label { font-size: 0.9em; }
+        }
+    }
+
+    .node { font-size: 0.9em; }
+    > .node, >.leaf { margin: 0.5em; }
+}
+
+.add-facet {
+    position: relative;
+    margin-left: 5px;
+    margin-right: -1px;
+    margin-bottom: -3.5px;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    cursor: pointer;
+    background: url("/img/add-additional-data.png");
+    &:hover {
+        opacity:0.82;
+        filter:alpha(opacity=82);
+    }
+}
+.remove-facet {
+    margin-top: .6rem;
+    position: absolute;
+    margin-left: 5px;
+    margin-right: -1px;
+    margin-bottom: -3.5px;
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    cursor: pointer;
+    background: url("/img/remove-additional-data.png");
+    &:hover {
+        opacity:0.82;
+        filter:alpha(opacity=82);
+    }
+}
+
+.entity-sample {
+    display: flex;
+
+    /* make sure that input and remove are aligned vertically */
+    align-items: center;
+
+    /* items are aligned with right border */
+    justify-content: flex-end;
+
+    &:not(:last-child) {
+        margin-bottom: 0.1em;
+    }
+
+    input {
+        /* style input here */
+    }
+
+    .remove {
+        font-size: 1rem;
+        margin-left: 5px;
+        margin-right: -1rem;
+        &:hover {
+            cursor: pointer;
+            color: indianred;
+        }
+    }
+}

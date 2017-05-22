@@ -31,6 +31,10 @@ $(function () {
 		$('#id').text(collection.id)
 	}
 
+	function getCollectionName(){
+		return $('#name').text()
+	}
+
 	/* X member(s), Y entr(y|ies) */
     function formatStats(members, entries) {
         var mems = members === 1 ? "member" : "members"
@@ -42,6 +46,13 @@ $(function () {
 	function setupStats(stats) {
 		$('.collection-stats').text(formatStats(stats.members, stats.entries))
 	}
+
+	$("#taxonomy").click(evt => { 
+        window.modals.taxonomyModal(cID, getCollectionName(), function () {
+
+            
+        })
+    })
 
 	function leave() {
         var confirm = el('button.btn', ['leave'])

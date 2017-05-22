@@ -35,7 +35,7 @@ $(document).ready(function() {
     $('th').click(evt => {
         if (!evt.target.classList.contains('clickable'))
             return
-
+        //anchor
         var facet = evt.target.dataset.facet
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
         var done = function () {
@@ -55,8 +55,20 @@ $(document).ready(function() {
                 }
             }
             
-            window.modals.infoModal(facet,unique),function () {
+            if(uniqueCollection()){
+                console.log('uo')
+                window.modals.dynamicInfoModal(facet,unique),function () {
+                }
             }
+            else{
+                console.log('here')
+                window.modals.infoModal(facet,unique),function () {
+                }
+            }
+        }
+
+        function uniqueCollection(){
+            return !isNaN( document.getElementById('collection-dropdown').value )
         }
 
         var update = function (entry) {
@@ -236,9 +248,12 @@ $(document).ready(function() {
         selectDataset(selector.value)
     })
 
+
+
     $("#collection-dropdown").change(function (evt) {
         selectDataset(this.value)
         window.location.hash = this.value
+        console.log(uniqueCollection())
     })
 
     // classification took place
