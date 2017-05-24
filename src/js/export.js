@@ -109,7 +109,7 @@
   }
 
   function calculateCSVRow(entry, entryTaxonomy, taxonomy){
-    var csvRow = Object.values(entry)
+    var csvRow = Object.keys(entry).map(k => entry[k])
       .map(value => String(value))
       .join(CSVDelimiter());
 
