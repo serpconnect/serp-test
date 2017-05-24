@@ -1,5 +1,5 @@
 $(function () {
-
+  var isOwner;
 	var toProfilePage = () => window.location = "/profile.html"
 
 	// Only allow user to inspect specific collection
@@ -16,11 +16,19 @@ $(function () {
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
 
 	window.api.v1.account.collections()
-		.done(collections => collections.forEach(collection => {
-			if (collection.id === Number(cID))
-				setupName(collection)
-		}))
-		.fail(toProfilePage)
+		.then(collections =>{
+      return collections.filter(collection => {
+        return collection.id === Number(cID)
+      }).pop()
+    }).then(collection=> {
+      setupName(collection)
+      return api.v1.collection.isOwner(collection.id)
+    }).then(owner =>{
+      isOwner=owner;
+      $('#owner').text(owner ? " (owner)" : "")
+      $('#leave').text(owner ? "delete collection" : "leave collection")
+    })
+		.fail()//toProfilePage)
 
 	window.api.v1.collection.stats(cID)
 		.done(setupStats)
@@ -46,7 +54,8 @@ $(function () {
     // Create leave collection modal
 	document.getElementById('leave').addEventListener('click', (evt) => {
 		var title = `${$('#name').text()} (#${cID})`
-		window.modals.confirmPopUp(`Leave ${title}?`, () => {
+    var message = isOwner? `Delete ${title}?`  : `Leave ${title}?`
+		window.modals.confirmPopUp(message, () => {
 			window.api.v1.collection.leave(cID).always(toProfilePage)
 		})
   }, false)
