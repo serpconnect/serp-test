@@ -312,13 +312,15 @@ $(document).ready(function() {
 
         document.body.appendChild(modal)
 		setTimeout(function() {
-			document.getElementById('modal').classList.add('appear');
+			modal.classList.add('appear');
 		}, modalAnimation)
 
         // Focus on first input element
         if (obj.input && obj.input.length) {
             inputboxes[0].focus()
         }
+
+        return modal
     }
 
 			 
@@ -350,15 +352,13 @@ $(document).ready(function() {
 
 	/* Create simple modal */
 	modals.confirmPopUp = function(desc, onConfirm) {
-		modals.optionsModal({
+		var modal = modals.optionsModal({
 			desc: desc,
 			message: "",
 			input: [],
 			btnText: 'confirm'
 		}, onConfirm)
-		setTimeout(function() {
-			document.getElementById('modal').classList.add('confirm');
-		}, modalAnimation)
+        modal.classList.add('confirm')
 	}
 
 		 /* Create simple modal with unique id */
