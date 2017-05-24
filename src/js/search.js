@@ -165,7 +165,7 @@ $(document).ready(function() {
 
     function selectAllEntries(){
     //  var length = $('.table-view-area tr').length-1;
-      for (i = 0; i < dataset.length; i++) {
+      for (var i = 0; i < dataset.length; i++) {
           var entry = dataset[i];
           if (selectedEntries.indexOf(entry.id) === -1){
                 selectedEntries.push(entry.id);
