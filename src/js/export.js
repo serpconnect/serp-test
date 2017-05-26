@@ -51,10 +51,6 @@
       checkDelimitersValidAndComplain();
     }, false);
 
-    // document.getElementById("exportBtn").addEventListener('mouseover', (evt) => {
-    //   console.log("hej");
-    // }, false);
-
     document.getElementById("exportCloseBtn").addEventListener('click', destroy, false);
     document.getElementById("exportCancelBtn").addEventListener('click', destroy, false);
     document.getElementById("exportBtn").addEventListener('click', (evt) => {
@@ -129,10 +125,6 @@
 
     return csvRow;
   }
-
-
-// window.downloadFile.isChrome = navigator.userAgent.toLowerCase().indexOf('chrome') & gt; -1;
-// window.downloadFile.isSafari = navigator.userAgent.toLowerCase().indexOf('safari') & gt; -1;
 
   function exportToCSV(csvContent) {
     console.log("hej");
