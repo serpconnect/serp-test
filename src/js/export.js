@@ -36,7 +36,6 @@
     cID = collID;
     cName = colName;
     createExportModal();
-    console.log("in");
 
     // Comma should probably not be the default delimiter
     // since a lot of the entries contain commas.
@@ -127,32 +126,31 @@
   }
 
   function exportToCSV(csvContent) {
-    console.log("hej");
-      var filename = `${filenameInput()}.csv`;
-      var blob = new Blob([csvContent], { type: 'application/csv' });
-      if (navigator.msSaveBlob) { // IE 10+
-          navigator.msSaveBlob(blob, filename);
-      } else {
-          var link = document.createElement("a");
-          if (link.download !== undefined) { // feature detection
-            // Browsers that support HTML5 download attribute
-            var url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-          } else { // Safari 9.x and earlier
-            var data = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(csvContent);
-            var tab = window.open(data, "_blank");
-            if(tab){
-              tab.focus();
-            } else {
-              window.open(data, "_self");
-            }
+    var filename = `${filenameInput()}.csv`;
+    var blob = new Blob([csvContent], { type: 'application/csv' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+          // Browsers that support HTML5 download attribute
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", filename);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else { // Safari 9.x and earlier
+          var data = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(csvContent);
+          var tab = window.open(data, "_blank");
+          if(tab){
+            tab.focus();
+          } else {
+            window.open(data, "_self");
           }
-      }
+        }
+    }
   }
 
   function createExportModal(){
