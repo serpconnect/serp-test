@@ -9,6 +9,13 @@ $(document).ready(function() {
       }
     });
 
+    var loggedIn = false;
+    window.api.ajax("GET", window.api.host + "/v1/account/login").done(user => {
+      loggedIn = true;
+    }).fail(xhr => {
+      loggedIn = false;
+    });
+
     var querystring = {}
     // find a more permanent fix for this
     // without setTimeout the additional-data elements don't appear in firefox,
@@ -211,7 +218,6 @@ $(document).ready(function() {
 
         // let's build the table row for this entry
         var $row = jqEl("tr");
-        var maxLength = 35;
 
         // choose as the row descriptor either the description (for challenges)
         if (entry.entryType === "challenge") {
@@ -220,11 +226,15 @@ $(document).ready(function() {
         } else {
             var entryTitle = entry["reference"];
         }
-        entryTitle = entryTitle.length > maxLength ?
-            entryTitle.substring(0, maxLength - 3) + "..." :
-            entryTitle.substring(0, maxLength);
+
         var entryNumber = position ? position : queuedEntries.length - 1;
-        var titleCell = jqEl("td").text(entryTitle || entry["description"] || entry["reference"]);
+        var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
+        scrollDiv.addClass("table-cell-div")
+        var wrapper = jqEl("div")
+        wrapper.addClass("scroll-wrapper")
+        wrapper.append(scrollDiv)
+        var titleCell = jqEl("td")
+        titleCell.append(wrapper)
         titleCell.data("entry-number", entryNumber);
 
         $row.append(titleCell);
@@ -426,12 +436,27 @@ $(document).ready(function() {
         $newCollection.val("");
     }
 
-    /* Wrapper for toggling buttons */
-    function disableButton(el) {
-        el.prop("disabled", true).addClass("submit-disabled")
+    /* All interactive/clickable elements */
+    function getUIElements() {
+        return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
+                "#load-btn", "#import-json-btn", "#collection",
+                "#submit-create-collection"
+        ]
     }
-    function enableButton(el) {
-        el.prop("disabled", false).removeClass("submit-disabled")
+    /* Wrapper for toggling buttons */
+    function disableButton(btn) {
+        btn.disabled = true
+        btn.classList.add('submit-disabled')
+    }
+    function enableButton(btn) {
+        btn.disabled = false
+        btn.classList.remove('submit-disabled')
+    }
+    function updateUI(enableDisable) {
+        getUIElements().forEach(selector => {
+            var btn = document.querySelector(selector)
+            enableDisable(btn)
+        })
     }
 
     /* Placeholder for something more legit */
@@ -444,36 +469,40 @@ $(document).ready(function() {
      * the button while submitting to prevent multiple submissions. Will stop
      * when any entry didn't succeed, or when all entries were posted.
      */
-    $("#submit-queue-btn").on("click", function(evt) {
-        var $this = $(this)
-        disableButton($this)
+    function submitQueue() {
+        return new Promise(function startSubmit(resolve, reject) {
+            var submitNext = function () {
+                if (queuedEntries.length === 0) {
+                    resolve()
+                    return
+                }
 
-        var submit = () => {
-            if (queuedEntries.length === 0) {
-                enableButton($this)
-                return
+                // Post entries in the same order as the table
+                var entry = queuedEntries[0]
+
+                submitEntry(entry).fail(reject)
+                .done(() => {
+                    // Only remove entries if they are successfully added - improves workflow
+                    removeEntry(0)
+                    setTimeout(submitNext, 0)
+                })
             }
 
-            // Post entries in the same order as the table
-            var entry = queuedEntries[0]
-            removeEntry(0)
+            submitNext()
+        })
+    }
 
-            submitEntry(entry)
-            .fail(xhr => {
-                // Stop queue submission on failure and re-add the failed entry
-                // to allow quick-fixes and prevent ppl from losing work.
-                queuedEntries.unshift(entry)
-                insertIntoTable(entry, 0)
-                flashErrorMessage(xhr.responseText)
-                enableButton($this)
-            })
-            .done(() => setTimeout(submit, 0))
-        }
+    $("#submit-queue-btn").on("click", function(evt) {
+        updateUI(disableButton)
 
-        submit()
+        submitQueue().catch(xhr => {
+            flashErrorMessage(xhr.responseText)
+        }).then(() => {
+            updateUI(enableButton)
+        })
     });
 
-    var newCollectionModal = {  
+    var newCollectionModal = {
         desc: "create new collection",
         message: "",
         input: [['input0','text','collection name']],
@@ -484,7 +513,7 @@ $(document).ready(function() {
         modals.optionsModal(newCollectionModal, function (name) {
             api.v1.collection.create(name)
                 .done(ok => {
-                    document.body.removeChild(this.modal)
+                    modals.clearAll()
                     querystring.c = ok.id
                     updateCollectionList()
                 })
@@ -499,24 +528,26 @@ $(document).ready(function() {
     });
 
     $("#submit-btn").on("click", function(evt) {
-        var $thisEl = $(this);
-        if ($thisEl.text() === "submit") {
-            var entry = getEntry();
-            if (entryIsValid(entry)) {
-                submitEntry(entry)
-                    .done(ok => clearPageState())
-                    .fail((xhr, err, aa) => {
-                        window.alert(`Submit failed: ${xhr.responseText}`)
-                    })
-                    .always(() => {
-                        enableButton($thisEl)
-                    })
-            } else {
-                complain(entry);
+
+        var isSubmitBtn = this.textContent === "submit"
+        if (isSubmitBtn) {
+            var entry = getEntry()
+
+            if (!entryIsValid(entry)) {
+                complain(entry)
+                return
             }
+
+            updateUI(disableButton)
+            submitEntry(entry).done(ok => clearPageState())
+                .fail(xhr => {
+                    flashErrorMessage(xhr.responseText)
+                }).always(() => {
+                    updateUI(enableButton)
+                })
         // acts as save button
         } else {
-            var entryNumber = $thisEl.data("currentEntry");
+            var entryNumber = $(this).data("currentEntry");
             saveEntryChanges(entryNumber);
             clearPageState();
             restoreButtons();
@@ -525,18 +556,28 @@ $(document).ready(function() {
     });
 
     $("#load-btn").on("click", function(evt) {
-        window.user.self().done(user => {
-            var conf = {
-                desc: "Load an entry",
-                input: user.entries
-            };
-            window.modals.listModal(conf, function (entryId) {
-                api.v1.getEntry(entryId).done(entry => {
-                      $("#" + entry.type + "-button").trigger("click");
-                      fillAccordingToEntry(entry, true);
-                }) // Only error if race condition?
-            })
-        })
+        if(loggedIn){
+          window.user.self().done(user => {
+              var conf = {
+                  desc: "Load an entry",
+                  input: user.entries
+              };
+              window.modals.listModal(conf, function (entryId) {
+                  api.v1.getEntry(entryId).done(entry => {
+                        $("#" + entry.type + "-button").trigger("click");
+                        api.v1.getTaxonomyEntry(entryId).done(taxonomy =>{
+                          entry["serpClassification"] = taxonomy;
+                          fillAccordingToEntry(entry, true);
+                        })
+
+                  }) // Only error if race condition?
+              })
+          }).fail(xhr => {
+            flashErrorMessage(xhr.responseText);
+          })
+        } else {
+          flashErrorMessage("Must be logged in");
+        }
     });
 
     $("#queue-btn").on("click", function(evt) {
@@ -565,7 +606,11 @@ $(document).ready(function() {
     }
 
     $("#import-json-btn").on("click", function(evt) {
+      if(loggedIn){
         window.import.fromFile(pushEntry);
+      } else {
+        flashErrorMessage("Must be logged in");
+      }
     });
 
     $("#remove-btn").on("click", function(evt) {
@@ -599,6 +644,7 @@ $(document).ready(function() {
     });
 
   // event handler for classifying submissions
+
     $(".checkbox input").on("click", function(evt) {
         var thisEl = $(this);
         var name = thisEl.attr("name");
@@ -691,33 +737,43 @@ $(document).ready(function() {
         var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
         var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
         $input.addClass("facet-additional-input");
-      
+
 
         // we need an id for jquery ui's autocomplete to work
         // idName e.g. "analysis" from "analysis-box" etc
         var idName = element.children().children().attr("id").split("-")[0];
         var idAttr = idName + $(".facet-additional-input").length;
         $input.attr("id", idAttr);
-       
+
         var $removeBtn = jqEl("div");
         $removeBtn.addClass("remove-additional-data");
         $removeBtn.on("click", function(evt) {
-            $(this).parent().remove();
+            $input.remove();
         });
 
         $inputParent.append($input);
         $inputParent.append($removeBtn);
         element.append($inputParent);
 
-        $input.on("click", function(evt) { 
-            scrollDown()
-        })
-        //scrolls user to bottom of page so user
-        //can see all of the autocomplete window
+        // Scroll down if autocomplete box isn't fully visible.
+        $input.on("click", function(evt) {
+            var len = 230 // max height of autocomplete (ish)
 
-        new Awesomplete( "#"+idAttr, { 
-            list: autocompleteMap[idName], 
-            filter: ausomplete.autocompleteFilter, 
+            // Imagine a box (autocomplete) within another box (browser).
+            var winMinY = window.scrollY
+            var winMaxY = winMinY + window.innerHeight
+            var divMinY = $input.offset().top
+            var divMaxY = divMinY + len
+
+            // User must have been able to click the input field, i.e.
+            // divMinY < winMinY, otherwise it shouldn't be visible.
+             if (divMaxY > winMaxY)
+                scrollDown(winMinY + (divMaxY - winMaxY))
+        })
+
+        new Awesomplete( "#"+idAttr, {
+            list: autocompleteMap[idName],
+            filter: ausomplete.autocompleteFilter,
             replace: ausomplete.autocompleteUpdate
         })
         return $input;
@@ -729,8 +785,8 @@ $(document).ready(function() {
         return $(document.createElement(elementType));
     }
 
-    function scrollDown(){
-        $("html, body").animate({ scrollTop: $(document).height() }, 1000);
+    function scrollDown(target){
+        $("html, body").animate({ scrollTop: target }, 300);
     }
 
 });

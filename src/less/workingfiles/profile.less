@@ -54,6 +54,13 @@
     }
 }
 
+.normal-btn {
+    .btn();
+    padding-left: .2rem;
+    padding-right: .2rem;
+    margin-top: 6px
+}
+
 .collection-title {
     font-size: @facet-title-size;
     white-space: nowrap;
@@ -78,6 +85,9 @@
 .collection-info {
     display: inline-block;
 }
+.collection-id {
+    color: gray;
+}
 
 .collection-options {
     display: inline-block;
@@ -85,9 +95,10 @@
 }
 
 .collection-option {
+    padding-left: 0.2em;
+    padding-right: 0.2em;
     cursor: pointer;
-    display: inline-block;
-    margin-left: 15px;
+
   -webkit-transition: color 0.2s ease;
     -moz-transition: color 0.2s ease;
     -o-transition: color 0.2s ease;
@@ -102,6 +113,11 @@
         transition: color 0.2s ease;
         color: (@light-gray - #333);
     }
+}
+.collection-row {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: space-around;
 }
 
 .collection-option-li {
@@ -121,4 +137,30 @@
         transition: color 0.2s ease;
         color: (@light-gray - #333);
     }
+}
+//Used for invitations icon on Profile page
+.invitationContainer{
+    z-index:1;
+    position: absolute;
+    margin-left:3.1rem;
+    margin-top: -1.55rem;
+}
+.newInvitation{
+    font-size: .6rem;
+    border-radius: 50%;
+    background: #e62e05;
+    padding: 0 .2rem;
+    color: #fff;
+    text-align: center;
+    -webkit-text-stroke: .025rem #fff;
+}
+
+.export-div-delimiter {
+    display: inline-block;
+    max-width: 350px;
+    width: 100%;
+}
+
+.export-select-delimiter {
+    float: right;
 }

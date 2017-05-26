@@ -5,7 +5,8 @@
     fromFile:importFromFile
   }
 
-  var entryType = ""
+  var fileName = "";
+  var entryType = "";
   var researchMustHave = [
       {value: "reference", display: "Reference"}
   ];
@@ -15,6 +16,7 @@
   var challengeMustHave = [
       {value: "description", display: "Description"}
   ];
+  var challengeOptional = [];
   var extraHeaders = [
       {value: "contact", display: "Contact"},
       {value: "date", display: "Date"}
@@ -72,10 +74,11 @@
               var reader = new FileReader();
               reader.onload = function(){
                 var data = reader.result.substring(0,file.size);
-                if(file.name.indexOf(".json") != -1){
+                fileName = file.name;
+                if(fileName.indexOf(".json") != -1){
                   convertJsonfileToJsonAndQueue(data, pushEntry);
                 }
-                else if(file.name.indexOf(".csv") != -1){
+                else if(fileName.indexOf(".csv") != -1){
                   convertCSVfiletoJsonAndQueue(data, pushEntry);
                 } else {
                   alert("File has to be in either json or CSV format");
@@ -90,33 +93,30 @@
   }
 
   function convertJsonfileToJsonAndQueue(data, pushEntry){
-
     var newCollectionModal = createjsonModal();
 
     window.modals.optionsModal(newCollectionModal,function (newCollectionName) {
       if(newCollectionName === ""){
-        $('.complaint.import-json').remove();
+        $('.complaint.import').remove();
         var error = this.modal.querySelector('input');
         error.parentNode.insertBefore(
-          el('div.complaint.import-json', ["Please supply information"]), error.nextSibling
+            el('div.complaint.import', ["Please supply information"]), error.nextSibling
         );
       }
       else {
         var jsons = JSON.parse(data);
-
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
         if(printStatistics(allEntries, "json")){
           createCollection(validEntries, newCollectionName, pushEntry, modal);
         }
-
       }
     })
   }
 
   function createjsonModal(){
-    return newCollectionModal = {
+    var newCollectionModal = {
             desc: "Create new collection",
             message: "",
             //message above input boxes
@@ -126,6 +126,7 @@
             btnText: "Create"
             //text on button
     };
+    return newCollectionModal;
   }
 
   function createCollection(validEntries, newCollectionName, pushEntry, modal){
@@ -172,174 +173,220 @@
       destroy(modal);
     }, false);
 
-    selectDelimiter.addEventListener("change", function() {
-      var delimiter = this.value;
-      lines = CSVToArray(csv, delimiter);
+    selectDelimiterCSV.addEventListener("change", function() {
+      selectDelimiterCSVChange();
+    });
+    function selectDelimiterCSVChange(){
+      var delimiterCSV = selectDelimiterCSV.value;
+      lines = CSVToArray(csv, delimiterCSV);
       CSVHeaders = lines[0];
-      $(".import-option").each(function() {
-        $(this).remove();
-      });
-      for (var i = 0; i < CSVHeaders.length; i++){
-        var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
-        $(".import-select").append(option);
-      }
+      $(".import-option").remove();
+      addOptions(CSVHeaders, ".import-select");
+    }
 
+    checkResearch.addEventListener('change', (evt) => {
+      checkResearchChange();
     });
-
-    importCheckResearch.addEventListener('change', (evt) => {
-      clearComplaintsImportHeaders();
-      if (document.getElementById("importCheckResearch").checked) {
+    function checkResearchChange(){
+      if (document.getElementById("checkResearch").checked) {
         entryType = "research";
-        $(".import-serp-select-wrapper.research").show().css("color", "red");
-        $(".import-serp-select-wrapper.challenge").hide().css("color", "");
-        $(".import-serp-select-wrapper.researchOptional").show();
-        document.getElementById("importCheckChallenge").checked = false;
+        $(".import-all-selects-wrapper.researchMustHave").show();
+        $(".import-all-selects-wrapper.researchOptional").show();
+        $(".import-all-selects-wrapper.challengeMustHave").hide();
+        $(".import-all-selects-wrapper.challengeOptional").hide();
+        document.getElementById("checkChallenge").checked = false;
       } else {
         entryType = "nothing";
-        $(".import-serp-select-wrapper.research").show().css("color", "");
-        $(".import-serp-select-wrapper.challenge").show().css("color", "");
-        $(".import-serp-select-wrapper.researchOptional").show();
+        $(".import-all-selects-wrapper.challengeMustHave").show();
+        $(".import-all-selects-wrapper.challengeOptional").show();
       }
+    }
+
+    checkChallenge.addEventListener('change', (evt) => {
+      checkChallengeChange();
     });
-    importCheckChallenge.addEventListener('change', (evt) => {
-      clearComplaintsImportHeaders();
-      if (document.getElementById("importCheckChallenge").checked) {
+    function checkChallengeChange(){
+      if (document.getElementById("checkChallenge").checked) {
         entryType = "challenge";
-        $(".import-serp-select-wrapper.research").hide().css("color", "");
-        $(".import-serp-select-wrapper.challenge").show().css("color", "red");
-        $(".import-serp-select-wrapper.researchOptional").hide();
-        document.getElementById("importCheckResearch").checked = false;
+        $(".import-all-selects-wrapper.researchMustHave").hide();
+        $(".import-all-selects-wrapper.researchOptional").hide();
+        $(".import-all-selects-wrapper.challengeMustHave").show();
+        $(".import-all-selects-wrapper.challengeOptional").show();
+        document.getElementById("checkResearch").checked = false;
       } else {
         entryType = "nothing";
-        $(".import-serp-select-wrapper.research").show().css("color", "");
-        $(".import-serp-select-wrapper.challenge").show().css("color", "");
-        $(".import-serp-select-wrapper.researchOptional").show();
+        $(".import-all-selects-wrapper.researchMustHave").show();
+        $(".import-all-selects-wrapper.researchOptional").show();
       }
+    }
+
+    // Default entrytype is research and default delimiter is comma.
+    document.getElementById("checkResearch").checked = true;
+    // Comma should probably not be the default value.
+    selectDelimiterLeaf.selectedIndex = 3;
+    checkResearchChange();
+    selectDelimiterCSVChange();
+    $(".import-checkbox").each(function(i, el) {
+      addClickableButtonEventListener($(el), CSVHeaders);
     });
-    //Default entrytype is research and default delimiter is comma.
-    document.getElementById("importCheckResearch").click();
-    document.getElementById("selectDelimiter").dispatchEvent(new Event('change'));
 
     uploadBtn.addEventListener('click', (evt) => {
       clearComplaintsImport();
       var newCollectionName = document.getElementById("importCollectionName").value;
       var collectionNameValid = isCollectionNameValid(newCollectionName);
       var entryTypeValid = isEntryTypeDataValid();
+      var delimitersValid = areDelimitersValid();
 
-      if(collectionNameValid && entryTypeValid){
-        var selected = [];
-        $(".import-select").each(function() {
-          selected.push($(this).val());
-        });
-
-        var jsons = createjsons(selected, lines, CSVHeaders);
+      if(collectionNameValid && entryTypeValid && delimitersValid){
+        var jsons = createjsons(lines, CSVHeaders);
         var allEntries = jsonToEntry(jsons);
         var validEntries = allEntries.validEntries;
 
         if (printStatistics(allEntries, "CSV")){
             createCollection(validEntries, newCollectionName, pushEntry, modal);
         }
+      } else {
+        $(uploadBtn).parent().append(
+          el("div.complaint.import", {text:"Incorrect input"})
+        );
       }
     });
   }
 
-  function clearComplaintsImport(){
-    $("#collectionComplaint").remove();
-    $("#entryTypeComplaint").remove();
-    clearComplaintsImportHeaders();
+  function addClickableButtonEventListener(button, CSVHeaders){
+    button.click(function() {
+      if(button.is(":checked")){
+        var className = button.attr('class').split(" ");
+        var serpType = className[className.length-1];
+        var extraSelectsContainer = button.parent().parent();
+        extraSelectsContainer.append(elCheckboxAndSelect(serpType));
+        var newSelect = button.parent().next().find(".import-select");
+        addOptions(CSVHeaders, newSelect);
+        var newCheckbox = button.parent().next().find(".import-checkbox");
+        addClickableButtonEventListener(newCheckbox, CSVHeaders);
+      } else {
+        var extraSelectsToTheRight = button.parent().nextAll();
+        extraSelectsToTheRight.remove();
+      }
+    });
   }
 
-  function clearComplaintsImportHeaders(){
-    $(".complaint.import-CSV").remove();
+  function addOptions(CSVHeaders, divClass){
+    for (var i = 0; i < CSVHeaders.length; i++){
+      var option = el("option.import-option", {value:CSVHeaders[i]}, [CSVHeaders[i]]);
+      $(divClass).append(option);
+    }
+  }
+
+  function clearComplaintsImport(){
+    $(".complaint.import").remove();
   }
 
   function createImportModal(){
     var modal =
     el('div.modal', [
-      el('div', [
-        el('div.close-btn#closeBtn', ['']),
-        el("h2", ["Mapping CVS columns to taxonomy"]),
-        el("div.modal-divider"),
-        el("div#importCollectionWrapper", [
-          el("input.modal-input-box#importCollectionName",
-              {type:"text", placeholder:"Name of new collection"}),
-        ]),
-        el("div.modal-divider"),
+        el('div', [
+            el('div.close-btn#closeBtn', ['']),
+            el("h2", ["Mapping CVS columns to taxonomy"]),
+            el("div", ["Filename: " + fileName]),
 
-        el("div.import-serp-select-complaint-wrapper." + "delimiter", [
-          el("div.import-serp-select-wrapper." + "delimiter", [
-            el("label", ["Select delimiter"]),
-            el("select#selectDelimiter", [
-              delimiters.map(delimiter =>
-              el('option', { value: delimiter.value }, [ delimiter.display ])),
+            el("div.modal-spacing"),
+            delimiterDiv("CSV", "Select CSV delimiter"),
+            el("div.modal-spacing"),
+            delimiterDiv("Leaf", "Select taxonomy leaf delimiter"),
+
+            el("div.modal-divider"),
+            el("div#importCollectionWrapper", [
+                el("input.modal-input-box.import#importCollectionName",
+                {type:"text", placeholder:"Name of new collection"}),
+            ]),
+
+            el("h1", ["Select your mapping"]),
+            el("div#importEntryTypeWrapper", [
+                el("div.import-checkbox-heading", ["Entry type "]),
+                el("label", ["Research "]),
+                el("input#checkResearch", {type:"checkbox"}),
+                el("label", ["Challenge "]),
+                el("input#checkChallenge", {type:"checkbox"}),
+            ]),
+            el("div.modal-divider"),
+
+            el("h3", ["General information"]),
+            mapToHeaders("researchMustHave", researchMustHave),
+            mapToHeaders("researchOptional", researchOptional),
+            mapToHeaders("challengeMustHave", challengeMustHave),
+            mapToHeaders("challengeOptional", challengeOptional),
+            mapToHeaders("extraHeaders", extraHeaders),
+            el("div.modal-divider"),
+
+            el("h3", ["Taxonomy"]),
+            el("label", ["Node selected..."]),
+            el("div.import-taxonomy-heading", intervention),
+            el("div.modal-spacing"),
+            mapToHeaders("intervention", interventionLeaves),
+            el("div.import-taxonomy-heading", effect),
+            el("div.modal-spacing"),
+            mapToHeaders("effect", effectLeaves),
+            el("div.import-taxonomy-heading", scope),
+            el("div.modal-spacing"),
+            mapToHeaders("scope", scopeLeaves),
+            el("div.import-taxonomy-heading", context),
+            el("div.modal-spacing"),
+            mapToHeaders("context", contextLeaves),
+            el("div.modal-divider"),
+
+            el("div", [
+                el('button#uploadBtn.btn', ["Upload"]),
+                el('button#cancelBtn.btn', ["Cancel"]),
             ])
-          ])
-        ]),
-
-        el("h1", ["Select your mapping"]),
-        el("div#importEntryTypeWrapper", [
-          el("div.import-checkbox-heading", ["Entry type "]),
-          el("label", ["Research "]),
-          el("input#importCheckResearch", {type:"checkbox"}),
-          el("label", ["Challenge "]),
-          el("input#importCheckChallenge", {type:"checkbox"}),
-        ]),
-        el("div.modal-divider"),
-
-        el("h3", ["General information"]),
-
-        mapToHeaders("research", researchMustHave),
-
-        mapToHeaders("challenge", challengeMustHave),
-
-        mapToHeaders("researchOptional", researchOptional),
-
-        mapToHeaders("extraHeaders", extraHeaders),
-
-        el("div.modal-divider"),
-        el("h3", ["Taxonomy"]),
-
-        el("div.taxonomy-heading", intervention),
-        mapToHeaders("intervention", interventionLeaves),
-
-        el("div.taxonomy-heading", effect),
-        mapToHeaders("effect", effectLeaves),
-
-        el("div.taxonomy-heading", scope),
-        mapToHeaders("scope", scopeLeaves),
-
-        el("div.taxonomy-heading", context),
-        mapToHeaders("context", contextLeaves),
-
-        el("div.modal-divider"),
-        el('button#uploadBtn.btn', ["Upload"]),
-        el('button#cancelBtn.btn', ["Cancel"])
-      ])
+        ])
     ]);
     setTimeout(() => modal.classList.add("appear"), 100)
     document.body.appendChild(modal);
     return modal;
   }
 
+  function delimiterDiv(name, text){
+    return  el("div", {id: "delimiter" + name}, [
+                el("div.import-div-delimiter." + name, [
+                    el("label", [text]),
+                    el("select.import-select-delimiter", {id: "selectDelimiter" + name}, [
+                        delimiters.map(delimiter =>
+                        el('option', { value: delimiter.value }, [ delimiter.display ])),
+                    ])
+                ])
+            ])
+  }
+
   function mapToHeaders(serp, serpArray){
     return serpArray.map(serpItem => {
-      var serps =
-      el("div.import-serp-select-complaint-wrapper." + serp, [
-        el("div.import-serp-select-wrapper." + serp, [
-          el("label", [serpItem.display]),
-          el("select.import-select." + serp, [
-            el("option", {value:"nothing"}, ["ignore"]),
-          ])
-        ])
-      ])
-      return serps;
-  })
-}
+      return el("div.import-all-selects-wrapper." + serp, [
+                 el("div.import-select-first-box-wrapper." + serp, [
+                     el("select.import-node-selection." + serp, [
+                         el("option", {value:"default"}, ["only if related free-text examples are extracted"]),
+                         el("option", {value:"everything"}, ["for all entries"]),
+                     ]),
+                     el("label", [serpItem.display]),
+                     el("div"), [],
+                 ]),
+                 el("div.import-extra-headings." + serp, [elCheckboxAndSelect(serp)]),
+             ])
+    })
+  }
+
+  function elCheckboxAndSelect(serp){
+    return el("div.import-checkbox-and-select." + serp, [
+               el("select.import-select." + serp, [
+                   el("option", {value:"unspecified"}, ["No mapping"]),
+               ]),
+               el("input.import-checkbox.extra." + serp, {type:"checkbox"}),
+           ])
+  }
 
   function isCollectionNameValid(newCollectionName){
     if(newCollectionName === ""){
       document.getElementById("importCollectionWrapper").appendChild(
-        el("div.complaint#collectionComplaint", {text:"Please supply information"})
+          el("div.complaint.import", {text:"Please supply information"})
       );
       return false;
     }
@@ -351,54 +398,116 @@
     if(entryType === "nothing"){
       validEntryTypeData = false;
       document.getElementById("importEntryTypeWrapper").appendChild(
-        el("div.complaint#entryTypeComplaint", {text:"Please supply information"})
+          el("div.complaint.import", {text:"Please supply information"})
       );
-    }
-    else if(entryType === "research" ){
-      var nothing = $(".import-select.research").filter((i,e) => e.value === "nothing");
-      nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validEntryTypeData = !nothing.length
-    }
-    else if (entryType === "challenge" ){
-      var nothing = $(".import-select.challenge").filter((i,e) => e.value === "nothing");
-      nothing.parent().parent().append(el("div.complaint.import-CSV", {text:"Please supply information"}));
-      validEntryTypeData = !nothing.length
     }
     return validEntryTypeData;
   }
 
-  function createjsons(selected, lines, CSVHeaders){
+  function areDelimitersValid(){
+    if(selectDelimiterCSV.value !== selectDelimiterLeaf.value){
+      return true;
+    }
+    document.getElementById("delimiterCSV").appendChild(
+        el("div.complaint.import", {text:"The delimiters have to be different"})
+    );
+    return false;
+  }
+
+  function createjsons(lines, CSVHeaders){
+    function byNodeSelection(i, el) {
+      var node = el.querySelector(".import-node-selection");
+      return node && node.value === "everything";
+    }
+    function byImportSelection(i, el) {
+      var select = el.querySelector(".import-select");
+      return select && select.value !== "unspecified";
+    }
+    var selectedNodes = $(".import-all-selects-wrapper").filter(function (i, el) {
+      return byNodeSelection(i, el) || byImportSelection(i, el)
+    })
+
+    if(entryType === "research"){
+      selectedNodes = selectedNodes.add(".import-all-selects-wrapper.researchMustHave");
+    } else if(entryType === "challenge"){
+      selectedNodes = selectedNodes.add(".import-all-selects-wrapper.challengeMustHave");
+    }
+
+    var leafDelimiter = selectDelimiterLeaf.value;
     var jsons = [];
     for(var i=1;i<lines.length;i++){
-      var obj = {};
-      var currentline = lines[i];
-      var serpClassification = {};
-      for(var j=0;j<serp.length;j++){
-        var currentCell = currentline[CSVHeaders.indexOf(selected[j])];
-        //Check that the cell is not empty.
-        if(currentCell) {
-          if(selected[j] != "nothing"){
-            var currentHeader = serp[j];
-            //Check if currentHeader is a taxonomy leave.
-            if(serpTaxonomyLeaves.indexOf(currentHeader) !== -1){
-              var serpArray = [];
-              //The taxonomy leave can be a vector of strings. Split on comma.
-              var taxonomyLeaveStrings = currentCell.split(",");
-              for(var k = 0; k < taxonomyLeaveStrings.length; k++){
-                serpArray.push(taxonomyLeaveStrings[k]);
-              }
-              serpClassification[currentHeader.value] = serpArray;
-            } else {
-              obj[currentHeader.value] = currentCell;
-            }
+      var currentLine = lines[i];
+      var jsonObj = calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes, leafDelimiter);
+      jsons.push(jsonObj);
+    }
+    return jsons;
+  }
+
+  function calculateCurrentEntry(CSVHeaders, currentLine, selectedNodes, leafDelimiter){
+    var jsonObj = {};
+    var serpClassification = {};
+    for(var j=0;j<selectedNodes.length;j++){
+      var onlySelectedInputs = $(selectedNodes[j]).
+        find(".import-select").filter(function(i, el) {return el.value !== "unspecified";}).
+        map((i, e) => e.value).toArray();
+
+      var label = $(selectedNodes[j]).find("label").text();
+      var currentHeader = serp.find(value => value.display === label);
+      var isTaxonomyLeaf = serpTaxonomyLeaves.indexOf(currentHeader) !== -1;
+      var currentValue = calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf, leafDelimiter);
+      var includeFor = $(selectedNodes[j]).find(".import-node-selection").val();
+
+      if(isValueValid(currentValue, selectedNodes[j], includeFor)){
+        var root = isTaxonomyLeaf ? serpClassification : jsonObj;
+        root[currentHeader.value] = currentValue;
+      }
+    }
+    jsonObj.serpClassification = serpClassification;
+    jsonObj.entryType = entryType;
+    return jsonObj;
+  }
+
+  function calculateCurrentValue(CSVHeaders, currentLine, onlySelectedInputs, isTaxonomyLeaf, leafDelimiter){
+    var currentValue;
+    if(onlySelectedInputs.length === 0){
+      currentValue = isTaxonomyLeaf ? ["unspecified"] : "unspecified";
+    } else {
+      currentValue = isTaxonomyLeaf ? [] : "";
+      var firstValueHasBeenAdded = false;
+      for(var k=0;k<onlySelectedInputs.length;k++){
+        var currentCell = currentLine[CSVHeaders.indexOf(onlySelectedInputs[k])];
+        if(currentCell){
+          if(isTaxonomyLeaf){
+            var splitted = currentCell.split(leafDelimiter);
+            splitted.forEach(function(e) {
+              currentValue.push(e);
+            });
+          } else {
+            var separator = firstValueHasBeenAdded ? ", " : "";
+            currentValue = currentValue + separator + currentCell;
+            firstValueHasBeenAdded = true;
           }
         }
       }
-      obj.serpClassification = serpClassification;
-      obj.entryType = entryType;
-      jsons.push(obj);
+      if(!currentValue){
+        currentValue = "unspecified";
+      } else if(currentValue instanceof Array && currentValue.length === 0){
+        currentValue = ["unspecified"];
+      }
     }
-    return jsons;
+    return currentValue;
+  }
+
+  function isValueValid(currentValue, currentNode, includeFor){
+    if (includeFor === "everything")
+      return true;
+
+    if (currentValue !== "unspecified" && currentValue[0] !== "unspecified")
+      return true;
+
+    var classes = currentNode.classList;
+    return  classes.contains("researchMustHave") ||
+            classes.contains("challengeMustHave");
   }
 
   // Function is taken from stackoverflow,
@@ -494,23 +603,33 @@
         invalidEntries.push(i+1);
         continue;
       }
+      else if (curEntryType === "research"){
+        for(var j = 0; j < researchMustHave.length; j++){
+          if(!curjson[researchMustHave[j].value]){
+            invalidEntries.push(i+1);
+            break;
+          }
+        }
+        researchOptional.forEach(function(el) {
+          curjson[el.value] = curjson[el.value] === undefined ? "" : curjson[el.value];
+        });
+        challengeMustHave.forEach(function(el) {curjson[el.value] = ""});
+        challengeOptional.forEach(function(el) {curjson[el.value] = ""});
+      }
       else if(curEntryType === "challenge"){
-        curjson.reference = "";
-        curjson.doi = "";
-        if(!curjson.description){
-          invalidEntries.push(i+1);
-          continue;
+        for(var j = 0; j < challengeMustHave.length; j++){
+          if(!curjson[challengeMustHave[j].value]){
+            invalidEntries.push(i+1);
+            break;
+          }
         }
-      } else if (curEntryType === "research"){
-        if(curjson.doi === undefined){
-          curjson.doi = "";
-        }
-        curjson.description = "";
-        if(!curjson.reference){
-          invalidEntries.push(i+1);
-          continue;
-        }
-      } else {
+        challengeOptional.forEach(function(el) {
+          curjson[el.value] = curjson[el.value] === undefined ? "" : curjson[el.value];
+        });
+        researchMustHave.forEach(function(el) {curjson[el.value] = ""});
+        researchOptional.forEach(function(el) {curjson[el.value] = ""});
+      }
+      else {
         invalidEntries.push(i+1);
         continue;
       }

@@ -2,6 +2,17 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+    user.invites().done(showInvites)
+    //check if invites exist and display number above invitations tab on profile page
+    function showInvites(invites) {
+        if(invites.length > 0 ){
+            var invitationsContainer = el('div.invitationContainer')
+            var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
+            invitationsContainer.appendChild(new_Invitations)
+            document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
+         }
+    }
+
     // stores all the queued entries
     var entries = [];
     api.v1.admin.pending().done(pending => {

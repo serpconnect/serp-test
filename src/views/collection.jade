@@ -5,8 +5,11 @@ block view-specific-scripts
     script(src="js/modal.js")
     script(src="js/taxonomy.js")
     script(src="js/taxonomy-functionality.js")
+    script(src="js/export.js")
+    
 block content
     div.profile-area-wrapper
+        a(href="/profile.html")#profile.view-area-tab.unactive-tab profile
         a(href="/collection.html")#general.view-area-tab.active-tab general
         a(href="/collection/users.html")#users.view-area-tab.unactive-tab users
         a(href="/collection/entries.html")#entries.view-area-tab.unactive-tab entries
@@ -18,7 +21,7 @@ block content
                 div.user-options
                     button#taxonomy.btn edit taxonomy
                     div
-                    button#leave.btn leave
-
+                    button#leave.btn leave collection
+                    button#export.btn export collection
                 div.collections-main-title statistics
                     p.collection-stats 0 entries, 0 members

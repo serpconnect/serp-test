@@ -2,34 +2,122 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
+    /* Add red text after the cancel button on a modal */
+    function complain(text) {
+        $('.modal-complaint').remove()
+        modals.clearTop()
+        var modal = document.querySelector(".modal") || document.querySelector(".confirm")
+        var errors = modal.querySelectorAll('button')
+        var error = errors[errors.length - 1]
+        var complaint = el('div.modal-complaint', [text])
+        error.parentNode.insertBefore(complaint, error.nextSibling)
+    }
+
+    // Load descriptions from the html page (easy editing)
+    var descriptions = Array.from(document.querySelectorAll('.description-field'))
+        .map(el => {
+            var lvl =  el.querySelector('.level').textContent
+            var dsc = el.querySelector('.description').textContent
+            return { [lvl]: dsc }
+        })
+    var levelDescriptions = Object.assign({}, ...descriptions)
+
+    // Check if invites exist and display number above invitations tab on profile page
+    user.invites().done(showInvites)
+    function showInvites(invites) {
+        if(invites.length > 0 ){
+            var invitationsContainer = el('div.invitationContainer')
+            var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
+            invitationsContainer.appendChild(new_Invitations)
+            document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
+         }
+    }
+
     var emails = [];
     var emailMappings = {};
-
     var emailsFuzzy = undefined;
     var previousValue = undefined;
 
-    window.api.ajax("GET", window.api.host + "/v1/admin/users").done(users => {
-        var parent = $('.users-content')
+    function recordPreviousValue(evt) {
+        previousValue = this.value
+    }
+    function changeUserLevel(evt) {
+        if (previousValue === this.value) return
+        buildModalView($(this), this.parentNode.dataset.email, previousValue, this.value);
+    }
+    function createLevelOption(level) {
+        return el('option', {
+            'value': level,
+            'title': levelDescriptions[level]
+        }, [level])
+    }
+    function createLevelSelect(user) {
+        var select = el('select.users-select',
+            Object.keys(levelDescriptions).map(createLevelOption)
+        )
+        select.value = user.trust.toLowerCase()
 
-        emailsFuzzy = new Fuse(users.map(user => user.email), {
+        select.addEventListener('focus', recordPreviousValue, false)
+        select.addEventListener('change', changeUserLevel, false)
+        return select
+    }
 
+    function deleteUser(user) {
+        return api.v1.admin.deleteUser(user.email)
+            .done(ok => {
+                modals.clearAll()
+                location.reload(true)
+            })
+            .fail(xhr => complain(xhr.responseText))
+    }
+
+    function showDeleteAccountModal(user) {
+        window.modals.optionsModal({
+            desc: "Delete Account",
+            message: `This will delete ${user.email}, but the users collections and entries will remain. Are you sure?`,
+            btnText: "delete"
+        }, () => {
+            api.v1.admin.collectionsOwnedBy(user.email)
+                .done(collz => {
+                    if (collz.length === 0) {
+                        deleteUser(user)
+                        return
+                    }
+
+                    window.modals.confirmDeleteOwnerPopUp({
+                        desc: "Delete Collection Owner",
+                        message: "Warning the user is owner of the following collections:",
+                        bottomMessage: "Deleting the user will nuke those collections, proceed?",
+                        list: collz
+                    }, () => {
+                        deleteUser(user)
+                    })
+                })
         })
+    }
+    function createDeleteButton(user) {
+        var btn = el("button.dangerous", ['✖'])
+        
+        btn.addEventListener("click", evt => {
+            showDeleteAccountModal(user)
+        }, false)
+        
+        return btn
+    }
+
+    api.v1.admin.users().done(users => {
+        var parent = document.querySelector('.users-area')
 
         users.forEach(user => {
-            var div = el('div').addClass('users-container')
-            div.append(el('div').addClass('users-email').text(user.email))
+            var div = el('div.users-container', {
+                    'data-email': user.email,
+                }, [
+                el('span', [user.email]),
+                createLevelSelect(user),
+                createDeleteButton(user)
+            ])
 
-            var select = el('select').addClass('users-select')
-            select.data("email", user.email)
-            select.append(el('option').attr('value', 'registered').text('registered'))
-            select.append(el('option').attr('value', 'user').text('user'))
-            select.append(el('option').attr('value', 'verified').text('verified'))
-            select.append(el('option').attr('value', 'admin').text('admin'))
-            select.val(user.trust.toLowerCase())
-            div.append(select)
-
-            div.append(el('label').addClass('collection-dropdown-label'))
-            parent.append(div)
+            parent.appendChild(div)
 
             emails.push(user.email)
             emailMappings[emails.length - 1] = div
@@ -38,12 +126,6 @@ $(document).ready(function() {
         emailsFuzzy = new Fuse(emails, {
             threshold: 0.5
         });
-
-        $(".users-select").on("focus", function() {
-            previousValue = $(this).val();
-        }).on("change", function(evt) {
-            buildModalView($(this), $(this).data("email"), previousValue, $(this).val());
-        });
     }).fail(xhr => {
         if (xhr.status === 403)
             window.location = "profile.html"
@@ -51,82 +133,44 @@ $(document).ready(function() {
             window.location = "login.html"
     })
 
-
     $("#users-search").on("input", function(evt) {
-        var searchString = $(this).val();
+        var searchString = this.value;
         if (searchString) {
-            $(".users-email").parent().hide();
+            $(".users-container").hide();
             var results = emailsFuzzy.search(searchString);
-            if (results.length) {
-                for (var i = 0; i < results.length; ++i) {
-                    var matchingEmail = results[i];
-                    emailMappings[matchingEmail].show();
-                }
+            if (!results.length) return
+
+            for (var i = 0; i < results.length; ++i) {
+                var matchingEmail = results[i];
+                $(emailMappings[matchingEmail]).show();
             }
         } else {
-            $(".users-email").parent().show();
+            $(".users-container").show();
         }
     });
 
+    function setDropdownSilent($dropdown, value) {
+        var pv = previousValue
+        previousValue = value
+        $dropdown.val(value)
+        previousValue = pv
+    }
 
     function buildModalView($dropdown, userEmail, oldLevel, newLevel) {
-        var $modal = el("div").addClass("modal");
-        var $close = el("div").addClass("close-btn");
-        $close.on("click", function(evt) {
-            // remove the modal view
-            $(".modal").remove();
-        });
-
-        // remove if the user clicks outside the inspection view
-        $("body").on("click", function(evt) {
-           if (evt.target.className === "modal") {
-                $(".modal").remove();
-            }
-        });
-
-        // remove modal view if escape key is pressed
-        $(document).keydown(function(e) {
-            if (e.keyCode === 27) {
-                $(".modal").remove();
-            }
-        });
-
-        var $content = el("div");
-        // add close btn
-        $content.append($close);
-
-        var changeText = "from " + oldLevel + " to " + newLevel;
-
-        $content.append(el("div").addClass("modal-entry-type").text("changing user level"));
-        $content.append(el("div").addClass("modal-entry-title").text(userEmail));
-        $content.append(el("div").addClass("modal-entry-title").text(changeText));
-        $content.append(el("div").addClass("modal-divider"));
-
-        var $cancelBtn = el("button").addClass("edit-btn").text("cancel");
-        $cancelBtn.on("click", function(evt) {
-            $(".modal").remove();
-            $dropdown.val(oldLevel);
-        });
-        $content.append($cancelBtn);
-
-        var $acceptBtn = el("button").addClass("edit-btn").text("accept");
-        $acceptBtn.on("click", function(evt) {
+        var modal = modals.optionsModal({
+            desc: userEmail + " from " + oldLevel + " to " + newLevel,
+            message: levelDescriptions[newLevel],
+            btnText: 'change'
+        }, function accept() {
             window.api.ajax("PUT", window.api.host + "/v1/admin/set-trust", {
                 email: userEmail,
                 trust: newLevel.charAt(0).toUpperCase() + newLevel.substring(1)
-            }).done(ok => {
-                $(".modal").remove();
-            }).fail(reason => window.alert(reason))
-        });
-        $content.append($acceptBtn);
-
-        $modal.append($content);
-        $("body").append($modal);
+            }).fail(reason => {
+                window.alert(reason)
+                setDropdownSilent($dropdown, oldLevel)
+            })
+        }, function cancel() {
+            setDropdownSilent($dropdown, oldLevel)
+        })
     }
 });
-
-// more efficient way of creating elements than purely using jquery;
-// basically an alias for document.createElement - returns a jquery element
-function el(elementType) {
-    return $(document.createElement(elementType));
-}

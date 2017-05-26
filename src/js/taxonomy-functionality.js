@@ -127,7 +127,7 @@ function flattendList(mapping){
         short = current["child"]
         long = current["child"]
         parent = current["parent"]
-        x = new Node(short,long,parent)
+        x = new taxFunc.Node(short,long,parent)
         flattendList.push(x)
     })
     var roots = ["effect","scope","context", "intervention"]
@@ -135,20 +135,20 @@ function flattendList(mapping){
         short = current
         long = current
         parent = "roots"
-        x = new Node(short,long,parent)
+        x = new taxFunc.Node(short,long,parent)
         flattendList.push(x)
     })
 
     return flattendList
+}
 
-    function Node(short,long,parent) {
+taxFunc.Node =function(short,long,parent) {
             this.short = short
             this.long = long
             this.parent = parent
     }
-}
 
- taxFunc.save_taxonomy = function(col){
+taxFunc.save_taxonomy = function(col){
         // var dynamic_Taxonomies
         dynamic_classification = []
         $("div[class=node]").each(function() {

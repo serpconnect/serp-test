@@ -1,6 +1,6 @@
 window.addEventListener('load', start)
 
-var taxFunc = window.taxFunc = {}
+
 
 var dynamic_Taxonomies = []
 
@@ -55,7 +55,7 @@ function clear_target() {
 }
 
 function generate() {
-    x = document.getElementById('collection').value
+    x = document.getElementById('collect').value
     generate_submit_classification(x)
 }
 
@@ -76,7 +76,7 @@ function inspect_taxonomy(entry_id) {
     dump_taxonomy(window.tx.treeMap({}))
 }
 
-taxFunc.byNbrOfChildren = function(a, b) {
+byNbrOfChildren = function(a, b) {
     return a.children.length - b.children.length
 }
 
@@ -91,7 +91,7 @@ function classification_append_row(evt) {
             el("div.leaf", [
                     el("div.header", [
                         el("label", [newLeaf]),
-                        taxFunc.generate_checkbox()
+                        generate_checkbox()
                     ])
                 ])
         )
@@ -117,7 +117,7 @@ function classification_add_row(evt) {
     ]))
 }
 /* when user changes the checkbox value of a facet */
- taxFunc.classification_checkbox_click = function(evt) {
+ classification_checkbox_click = function(evt) {
     var header = this.parentNode
     console.log(this)
     if (!this.checked) {
@@ -132,9 +132,9 @@ function classification_add_row(evt) {
         // header.parentNode.insertBefore(add, header.nextSibling)
     }
 }
-    taxFunc.generate_checkbox = function() {
+    generate_checkbox = function() {
     var box = el("input", {type:"checkbox"})
-    box.addEventListener('change', taxFunc.classification_checkbox_click, false)
+    box.addEventListener('change', classification_checkbox_click, false)
     return box
 }
 

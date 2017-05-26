@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
 	function toggleButtonState() {
         var btns = document.querySelectorAll('.btn')
         for (var i = 0; i < btns.length; i++) {
@@ -14,18 +13,24 @@ $(document).ready(function() {
 	var modals = window.modals = {}
 	var modalAnimation = 121
 
-// Modal Template
-	// var modalObject = {
- //            desc: "create new collection",
- //            message: "",
- //            //single string message that goes above input boxes
- //            input: [['input0','text','e.g new password'],['input0','text','e.g old password']],
- //            //[textbox names, types, placeholder] //else put '[]'
- //            //automatically takes input[0] as first parameter for method passed in.. etc
- //            btnText: "Create"
- //            //text on button
- //        };
- //        // Create a new collection
+	function insertAfter(referenceNode,newNode){
+		referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling)
+	}
+
+	function shrinkFacets(current){
+		parent = document.getElementById(current['parent']).style
+		child =document.getElementById(current['short']).style
+		child.marginLeft= parent.marginLeft + "5%"
+		child.marginRight= parent.marginRight+ "5%"
+		child.width = parent.width - "5%"
+	}
+
+	function appendChildren (par,list){
+			for(var i=0;i<list.length;i++){
+				par.appendChild(list[i])
+			}
+		}
+
     function findModal(node) {
         if (node.classList.contains('modal') ||
             node.classList.contains('confirm'))
@@ -136,35 +141,139 @@ $(document).ready(function() {
 
 	 /* Inspect facets modal with taxonomy extension for collection */
 	modals.dynamicInfoModal = function(facet, unique) {
-		var facets = unique.map(uniq => el("li.modal-li", [uniq]))
-		var addButton = el('div.add-facet', [])
-		var subLevel = 
-				el('div.header',[
-					addButton,
-					el('div.add-facet-text',["add sub facet For " + facet])
-				] )
+
+ 	dropDownMenu = function(){
+		var dropDownFacets = document.getElementsByClassName('modal-header-title')
+		var list =[]
+		for(var i=0;i<dropDownFacets.length;i++){
+			var cur = dropDownFacets[i].innerHTML
+			a = el('a', {
+					text:cur,
+					onClick:"alert()"
+				}) 
+			list.push( a ) 
+			// a.addEventListener('click', (evt) => {
+			// 	evt.target.innerHTML
+			// }
+			list.push( a )
+		}
+		return list
+		}
+		
+		function getDropFacets(evt){
+				appendChildren(evt.target.children[0], dropDownMenu())
+				evt.target.children[0].classList.toggle("dropdown-show");
+		}
+
+		generate_DropDown =function(){
+			newEntryDropDown = 
+							el('div.entry-dropDown',[
+								el('div.entry-dropDownBtn',[ 
+								  el( 'div.entry-dropDown-content', []) 
+								])
+							])
+
+			newEntryDropDown.addEventListener('click', function(evt) {
+				getDropFacets(evt)
+			})
+
+			return newEntryDropDown
+		}
+
+		var facets = unique.map(uniq =>
+							el('div',[
+									el("li.modal-li", [uniq]),
+									generate_DropDown()
+								])
+							)
+							
+		// var addButton = el('div.add-facet', [])
+		var subLevel = el('div',[
+					el('div.add-facet', []),
+					el('div.add-facet-text',["add sub facet"]),
+					] )
+
 		var modal = el('div#modal.modal', [
 			el('div', [
 				el('div.modal-entry-type', ['inspecting entities']),
 				closeButton(),
-				el('div.modal-header-title', [facet]),
-				el("div.modal-divider"),
-				subLevel,
+				el('div#'+facet+'.facet-container',[
+					el('div.modal-header-title', [facet]),
+					subLevel,
+					el("div.modal-divider")
+					]),
 				el('ul.modal-ul'),
 				facets,
 				el('ul.modal-ul')
 			])
 		])
 
-		addButton.addEventListener('click', (evt) => {
-		    console.log('yeah yeah eyah')
+		subLevel.addEventListener('click', (evt) => {
+			generate_textBox()
+		})	
+
+		generate_textBox = function (){
+	      window.modals.addTextBox( function (newshort,newlong) {
+	      		//To DO - push to back end, then update modal.
+      		var newNode = new window.taxFunc.Node(newshort,newlong,facet)
+      		// header = newNode['short']
+      		var facets = document.getElementsByClassName('modal-header-title')
+      		for(var i=0; i < facets.length;i++){
+      			var current = facets[i]
+	      		if(current.innerHTML==newNode['parent']){
+	      			var newFacet = el('div#'+newNode['short']+'.facet-container',[	
+									el('div.modal-header-title',[ newNode['short'] ] ),
+									el("div.modal-divider")
+								])
+	      			var refNode = current.nextSibling.nextSibling
+	      			insertAfter(refNode,newFacet)
+	      			shrinkFacets(newNode)
+	      			return
+	      		}
+	      	}
 	    })
+	  }
 
         document.body.appendChild(modal)
         setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
 	 }
+
+	 modals.addTextBox = function(method) {
+	 	var inputboxes =  
+			[el('input#inputBox0.modal-input-box', {
+					name: "input0",
+					type: "text",
+					placeholder: "short identifier for subfacet.."
+			}),
+			el('input#inputBox1.modal-input-box', {
+				name: "input1",
+				type: "text",
+				placeholder: "full title for subfacet.."
+			})]
+
+		var confirmBtn = el('button#confirm.btn', ['confirm'])
+		
+		var modal = el('div#modal.modal.textBox.appear', [
+			el('div#centerTextBox', [
+				closeButton(),
+				el("div.modal-header-title", ["add subfacet to "] ),
+				el("div#bottom-divider.modal-small-divider"),
+				inputboxes,
+				el("div#bottom-divider.modal-small-divider"),
+				confirmBtn, cancelButton()
+			])
+		])
+
+		confirmBtn.addEventListener('click', (evt)=> {
+			document.body.removeChild(modal)
+			var args = inputboxes.map(input => input.value)
+            method.apply(modal, args)
+		})
+
+		document.body.appendChild(modal)
+	}
 
 /** 
 	 * Create a modal that displays allows extension of a taxonomy for a given collection
@@ -226,27 +335,22 @@ $(document).ready(function() {
 
 		saveBtn.addEventListener("click", function(evt) {
 			taxFunc.save_taxonomy(cID)
+			//To Do - change list to only save new nodes
         });
 
 	    document.body.appendChild(modal)
         setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
-
-		// function generate_checkbox() {
-  //  			var box = el("input", {type:"checkbox"})
-  // 			box.addEventListener('change', classification_checkbox_click, false)
-  // 		 	return box
-		// }
 	 }
 
 	/** 
 	 * Create a modal that displays contents of an entry & an edit button.
-	 * 
+	 *
 	 * @param {object} entry 	straight from the API
 	 * @param {object} taxonomy also straight from the API
 	 * @param {object} options 	configure some stuff
-	 * 
+	 *
 	 * options.button = [buttonEl, ..., buttonEl]
 	 *     - button elements are added after the edit button
 	 * */
@@ -276,9 +380,9 @@ $(document).ready(function() {
 					el('div.modal-sub-item', [entry.doi]),
 					el("div.modal-divider")
 				],
-				editBtn, 
+				editBtn,
 				extraButtons
-			])	
+			])
 		])
 
 		editBtn.addEventListener("click", function(evt) {
@@ -291,29 +395,86 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	/* Create simple modal */
-    modals.confirmPopUp = function(desc, method) {
-      var confirmBtn = el('button#confirm.btn', ['confirm'])
-      var modal = el('div.confirm', [
-              el('div', [
-                  closeButton(),
-                el("div.confirm-header-title", [desc]),
-                //name of modal
-                el("div#bottom-divider.confirm-divider"),
-                confirmBtn, cancelButton()
-            ])
-          ])
 
-        confirmBtn.addEventListener('click', (evt) => {
-            method.apply({modal})
-        })
-      
-      setTimeout(function(){
-			  document.getElementById('modal').classList.add('appear');
-      }, modalAnimation)
-      
-      document.body.appendChild(modal)
-	 }
+	/* Creates a modal with fuzzy search */
+	modals.fuzzyModal = function(obj,method) {
+		var message = [el("div.modal-sub-item", [obj.message])]
+		var list = obj.list
+
+		 itemsFuzzy = new Fuse(list, {
+			threshold: 0.4
+		 })
+
+		 var inputboxes = obj.input.map((conf, i) => {
+			return el(`input#input${i}.modal-input-box`, {
+				name: conf[0],
+				type: conf[1],
+				placeholder: conf[2]
+			})
+		 })
+
+		 //creates optional button
+		 var button1 = el('button.btn', [obj.btnText])
+
+		 // Creates the fuzzy item divs
+		var div = el('div.items-container');
+		var emailMappings = {};
+		var i = 0;
+		list.forEach(item => {
+			var innerDiv = document.createElement('div');
+			innerDiv.className = 'item';
+			innerDiv.innerHTML = item;
+			emailMappings[i] = innerDiv;
+			div.appendChild(emailMappings[i]);
+			i++;
+		})
+
+		var modal = el('div#modal.modal', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [obj.desc]),
+				//name of modal
+				el("div.modal-divider"),
+				message,
+				inputboxes,
+				el("div#search-divider.modal-divider"),
+				div,
+				el("div#bottom-divider.modal-divider"),
+				button1, cancelButton()
+			])
+		 ])
+
+		button1.addEventListener('click', (evt) => {
+			//maybe apply toggleButtonState() ??
+			var args = inputboxes.map(input => input.value)
+			method.apply({modal}, args)
+		})
+
+		document.body.appendChild(modal)
+		// Focus on first input element
+		if (obj.input.length > 0) {
+				inputboxes[0].focus()
+		}
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
+
+		$("#input0").on("input", function(evt) {
+			var searchString = $(this).val();
+			if (searchString) {
+				$(".item").hide();
+				var results = itemsFuzzy.search(searchString);
+				if (results.length) {
+					for (var i = 0; i < results.length; ++i) {
+						var matchingEmail = results[i];
+						$(emailMappings[matchingEmail]).show();
+					}
+				}
+			} else {
+				$(".item").show();
+			}
+		});
+	}
 
     /**
      * Create configurable modal.
@@ -331,10 +492,10 @@ $(document).ready(function() {
      * with modal as context and input values are arguments.
      *
      **/
-    modals.optionsModal = function(obj, method) {
+    modals.optionsModal = function(obj, onConfirm, onCancel) {
         var message = [el("div.modal-sub-item", [obj.message])]
 
-        var inputboxes = obj.input.map((conf, i) => {
+        var inputboxes = (obj.input || []).map((conf, i) => {
             return el(`input#input${i}.modal-input-box`, {
                 name: conf[0],
                 type: conf[1],
@@ -344,6 +505,7 @@ $(document).ready(function() {
 
         //creates optional button
         var button1 = el('button.btn', [obj.btnText])
+		var cancelBtn = cancelButton()
 
         var modal = el('div#modal.modal', [
             el('div', [
@@ -356,36 +518,126 @@ $(document).ready(function() {
                 inputboxes,
 
                 el("div#bottom-divider.modal-divider"),
-                button1, cancelButton()
+                button1, cancelBtn
             ])
         ])
 
         button1.addEventListener('click', (evt) => {
             //maybe apply toggleButtonState() ??
             var args = inputboxes.map(input => input.value)
-            method.apply({modal}, args)
+            onConfirm.apply(modal, args)
         })
 
+		cancelBtn.addEventListener('click', (evt) => {
+			if (onCancel)
+				onCancel.apply(modal)
+		})
+
         document.body.appendChild(modal)
-		    setTimeout(function() {
-			    document.getElementById('modal').classList.add('appear');
-		    }, modalAnimation)
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('appear');
+		}, modalAnimation)
 
         // Focus on first input element
-        if (obj.input.length > 0) {
+        if (obj.input && obj.input.length) {
             inputboxes[0].focus()
         }
     }
 
+			 
+	modals.confirmDeleteOwnerPopUp = function (obj, method) {
+		var list = obj.list || [];
+
+		var confirmBtn = el('button#confirm.btn', ['confirm'])
+		var modal = el('div#modal.modal.appear', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [obj.desc]),
+				el("div.modal-divider"),
+				el("div", [obj.message]),
+				el('p.modal-sub-item', [
+					list.map(item => el('div', ['· ' + item]))		
+				]),
+				el("div", [obj.bottomMessage]),
+				el("div#bottom-divider.modal-divider"),
+				confirmBtn, cancelButton()
+			])
+		])
+
+		confirmBtn.addEventListener('click', (evt) => {
+			method.apply({ modal })
+		})
+
+		document.body.appendChild(modal)
+	}
+
+	/* Create simple modal */
+	modals.confirmPopUp = function(desc, onConfirm) {
+		modals.optionsModal({
+			desc: desc,
+			message: "",
+			input: [],
+			btnText: 'confirm'
+		}, onConfirm)
+		setTimeout(function() {
+			document.getElementById('modal').classList.add('confirm');
+		}, modalAnimation)
+	}
+
+		 /* Create simple modal with unique id */
+ 	    modals.confirmKickPopUp = function(desc, method) {
+ 	      var confirmBtn = el('button#confirm.btn', ['confirm'])
+ 	      var modal = el('div#modalConf.modal.confirm', [
+ 	              	el('div', [
+ 	                closeButton(),
+ 	                el("div.modal-header-title", [desc]),
+ 	                //name of modal
+ 	                el("div#bottom-divider.modal-divider"),
+ 	                confirmBtn, cancelButton()
+ 	            ])
+ 	          ])
+
+ 	        confirmBtn.addEventListener('click', (evt) => {
+ 	            method.apply({modal})
+ 	        })
+
+ 	      setTimeout(function(){
+ 				  document.getElementById('modalConf').classList.add('appear');
+ 				  document.getElementById('modalConf').classList.add('confirm');
+ 					//document.getElementsByClassName("modal confirm appear").style.zIndex = "1051";
+
+
+ 				//	alert($(this).data('id'))
+ 	      }, modalAnimation)
+
+ 	      document.body.appendChild(modal)
+ 		 }
+
 	modals.clearAll = function() {
 		var modal = document.querySelector('.modal')
-		if (modal)
+		while (modal){
 			modal.parentNode.removeChild(modal)
+			modal = document.querySelector('.modal');
+		}
 
 		var confirm = document.querySelector('.confirm')
 		if (confirm)
 			confirm.parentNode.removeChild(confirm)
 	}
+
+	modals.clearTop = function(){
+		var modal = document.querySelector('.modal')
+		if (modal)
+			modal.parentNode.removeChild(modal)
+	}
+
+	modals.clearConfirm = function(){
+		var confirmModal = document.querySelector('#modalConf')
+		if (confirmModal)
+			confirmModal.parentNode.removeChild(confirmModal)
+	}
+
+
 
 	 //adds entries to a modal and returns the id of the entry that got clicked
 	 modals.listModal = function(obj, method) {
@@ -402,7 +654,7 @@ $(document).ready(function() {
 				document.body.removeChild(modal)
 				method.apply({modal}, args)
 			});
-				
+
 			return elEntry;
 		});
 
@@ -419,7 +671,7 @@ $(document).ready(function() {
 
 				el("div#bottom-divider.modal-divider"),
 				cancelButton()
-			]) 
+			])
 		])
 
 		document.body.appendChild(modal)
@@ -441,7 +693,7 @@ window.addEventListener('load', () => {
 	document.addEventListener('keydown', (evt) => {
 		if (evt.keyCode !== 27)
 			return
-		
+
 		window.modals.clearAll()
 	}, false)
 }, false)

@@ -56,12 +56,10 @@ $(document).ready(function() {
             }
             
             if(uniqueCollection()){
-                console.log('uo')
                 window.modals.dynamicInfoModal(facet,unique),function () {
                 }
             }
             else{
-                console.log('here')
                 window.modals.infoModal(facet,unique),function () {
                 }
             }
@@ -253,7 +251,6 @@ $(document).ready(function() {
     $("#collection-dropdown").change(function (evt) {
         selectDataset(this.value)
         window.location.hash = this.value
-        console.log(uniqueCollection())
     })
 
     // classification took place
