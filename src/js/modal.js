@@ -160,19 +160,19 @@ $(document).ready(function() {
 				var cur = dropDownFacets[i]
 				a = el('a', {
 						text:cur.innerText
-					}) 
-				list.push( a ) 
-				
+					})
+				list.push( a )
+
 				a.addEventListener('click', (evt) => {
 					moveEntry(location, evt.target.innerHTML+"-entry-container")
 					cont.classList.toggle("dropdown-show");
 					evt.stopPropagation();
-					//stops the parent calling event listener 
+					//stops the parent calling event listener
 				})
-			}	
+			}
 			return list
-		}	
-		
+		}
+
 		function getDropFacets(evt){
 				var content = evt.target.children[0]
 				var entry = "entry" + evt.target.id.substring(8)
@@ -182,17 +182,23 @@ $(document).ready(function() {
 		//
 
 		generate_DropDown =function(i){
-			newEntryDropDown = 
+			newEntryDropDown =
 							el('div.entry-dropDown',[
-								el('div#dropDown'+i+'.entry-dropDownBtn',[ 
-								  el( 'div.entry-dropDown-content', []) 
+								el('div#dropDown'+i+'.entry-dropDownBtn',[
+								  el( 'div.entry-dropDown-content', [])
 								])
 							])
 			x = document.getElementsByClassName("dropdown-show")
-			for(var i=0;i<x.length;i++){
-				console.log((x[i].classList))
+			for(var j=0;j<x.length;j++){
+				console.log((x[j].classList))
 			}
-			newEntryDropDown.addEventListener('click', function(evt) {
+			var button = newEntryDropDown.children[0];
+			button.addEventListener('click', function(evt) {
+				var content = evt.target.children[0];
+				$(".dropdown-show").filter((i,e) => {return e != content})
+					.each((i,e) => {
+						e.classList.toggle("dropdown-show");
+					});
 				getDropFacets(evt)
 			}) //creates the dropdown list
  			return newEntryDropDown
@@ -222,7 +228,7 @@ $(document).ready(function() {
 						facets
 					])
 				]),
-				el('div.dyn-modal-button-wrapper',[	
+				el('div.dyn-modal-button-wrapper',[
 					saveBtn,
 					cancelButton()
 				])
@@ -231,7 +237,7 @@ $(document).ready(function() {
 
 		subLevel.addEventListener('click', (evt) => {
 			generate_textBox()
-		})	
+		})
 
 		generate_newFacet = function(current, id){
 			removeBtn = el('div.modal-remove-facet', [])
@@ -242,7 +248,7 @@ $(document).ready(function() {
       			removeFacet(children)
       			heading.remove()
       		})
-      		var newFacet = el('div#'+id+'.facet-container',[	
+      		var newFacet = el('div#'+id+'.facet-container',[
       								// el("div.modal-divider"),
 									el('div.modal-header-title',[id] ),
 									removeBtn,
@@ -294,32 +300,32 @@ $(document).ready(function() {
 	    function removeFacet(children){
 	    	while(children.length!=0){
       			var current = children.shift()
-      			moveEntry( current.id, facet+"-entry-container") 
+      			moveEntry( current.id, facet+"-entry-container")
    			}
 	    }
 
-	    saveBtn.addEventListener("click", function(evt) {
-	    	//only save entries for sub facets- otherwise set to root
-	    	//
-			var facets = document.getElementsByClassName('facet-container')
-			for (var i =0;i < facets.length; i++){
-						x = GetFacetChildren()
-						x.forEach( function(){
-							y = new Node(x.id, x.long, )
-						})
-      			}
-			Node =function(short,long,parent) {
-	            this.short = short
-	            this.long = long
-	            this.parent = parent
-    		}
-			// $.getJSON("/js/default_classification.json", function(json) {
-			    
-			// })
-		
-			// taxFunc.save_taxonomy(cID)
-			//To Do - change list to only save new nodes
-        });
+	    // saveBtn.addEventListener("click", function(evt) {
+	    // 	//only save entries for sub facets- otherwise set to root
+	    // 	//
+			// var facets = document.getElementsByClassName('facet-container')
+			// for (var i =0;i < facets.length; i++){
+			// 			x = GetFacetChildren()
+			// 			x.forEach( function(){
+			// 				y = new Node(x.id, x.long, )
+			// 			})
+      // 			}
+			// Node =function(short,long,parent) {
+	    //         this.short = short
+	    //         this.long = long
+	    //         this.parent = parent
+    	// 	}
+			// // $.getJSON("/js/default_classification.json", function(json) {
+			//
+			// // })
+			//
+			// // taxFunc.save_taxonomy(cID)
+			// //To Do - change list to only save new nodes
+      //   });
 
         document.body.appendChild(modal)
         setTimeout(function(){
@@ -328,7 +334,7 @@ $(document).ready(function() {
 
         subFac.forEach( function(uniq){
 			generate_newFacet(document.getElementById(facet), uniq)
-		}) //creates sub facets on load 
+		}) //creates sub facets on load
 
 		//dynEntries.forEach(){
 		// 	go through all entries and use moveEntry() for entry position
@@ -337,7 +343,7 @@ $(document).ready(function() {
 	 }
 
 	 modals.addTextBox = function(method) {
-	 	var inputboxes =  
+	 	var inputboxes =
 			[el('input#inputBox0.modal-input-box', {
 					name: "input0",
 					type: "text",
@@ -350,7 +356,7 @@ $(document).ready(function() {
 			})]
 
 		var confirmBtn = el('button#confirm.btn', ['confirm'])
-		
+
 		var modal = el('div#modal.modal.textBox.appear', [
 			el('div#centerTextBox', [
 				closeButton(),
@@ -371,7 +377,7 @@ $(document).ready(function() {
 		document.body.appendChild(modal)
 	}
 
-/** 
+/**
 	 * Create a modal that displays allows extension of a taxonomy for a given collection
      * div.classification
      *     div.node
@@ -440,7 +446,7 @@ $(document).ready(function() {
 		}, modalAnimation)
 	 }
 
-	/** 
+	/**
 	 * Create a modal that displays contents of an entry & an edit button.
 	 *
 	 * @param {object} entry 	straight from the API
@@ -642,7 +648,7 @@ $(document).ready(function() {
         return modal
     }
 
-			 
+
 	modals.confirmDeleteOwnerPopUp = function (obj, method) {
 		var list = obj.list || [];
 
@@ -654,7 +660,7 @@ $(document).ready(function() {
 				el("div.modal-divider"),
 				el("div", [obj.message]),
 				el('p.modal-sub-item', [
-					list.map(item => el('div', ['· ' + item]))		
+					list.map(item => el('div', ['· ' + item]))
 				]),
 				el("div", [obj.bottomMessage]),
 				el("div#bottom-divider.modal-divider"),
