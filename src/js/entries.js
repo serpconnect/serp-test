@@ -139,7 +139,7 @@ $(document).ready(function() {
 
             var btns = row.querySelectorAll('button')
             for (var j = 0; j < btns.length; j++)
-                btns[i].dataset.entryNumber = num
+                btns[j].dataset.entryNumber = num
                 
             row.dataset.entryNumber = num
         }

@@ -109,7 +109,7 @@
   }
 
   function calculateCSVRow(entry, entryTaxonomy, taxonomy){
-    var csvRow = Object.values(entry)
+    var csvRow = Object.keys(entry).map(k => entry[k])
       .map(value => String(value))
       .join(CSVDelimiter());
 
@@ -126,23 +126,31 @@
   }
 
   function exportToCSV(csvContent) {
-      var filename = `${filenameInput()}.csv`;
-      var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      if (navigator.msSaveBlob) { // IE 10+
-          navigator.msSaveBlob(blob, filename);
-      } else {
-          var link = document.createElement("a");
-          if (link.download !== undefined) { // feature detection
-              // Browsers that support HTML5 download attribute
-              var url = URL.createObjectURL(blob);
-              link.setAttribute("href", url);
-              link.setAttribute("download", filename);
-              link.style.visibility = 'hidden';
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
+    var filename = `${filenameInput()}.csv`;
+    var blob = new Blob([csvContent], { type: 'application/csv' });
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        var link = document.createElement("a");
+        if (link.download !== undefined) { // feature detection
+          // Browsers that support HTML5 download attribute
+          var url = URL.createObjectURL(blob);
+          link.setAttribute("href", url);
+          link.setAttribute("download", filename);
+          link.style.visibility = 'hidden';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else { // Safari 9.x and earlier
+          var data = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(csvContent);
+          var tab = window.open(data, "_blank");
+          if(tab){
+            tab.focus();
+          } else {
+            window.open(data, "_self");
           }
-      }
+        }
+    }
   }
 
   function createExportModal(){
@@ -165,7 +173,10 @@
             el("div", [
                 el('button#exportBtn.btn', ["Export"]),
                 el('button#exportCancelBtn.btn', ["Cancel"]),
-            ])
+            ]),
+            el("p", ["Using Safari 9.x or earlier? The content will open in a new tab or \
+            this page, depending on your browser preferences. Press \"cmd\" + \"s\", choose \
+            a filename (include .csv), change Format to \"Page Source\" and click Save."])
         ])
     ]);
     setTimeout(() => modal.classList.add("appear"), 100);
