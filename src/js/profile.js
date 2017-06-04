@@ -1,7 +1,6 @@
 $(function() {
     //stores friends emails of the logged in user
     var friends = [];
-
     user.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {

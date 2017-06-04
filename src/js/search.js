@@ -4,7 +4,6 @@ $(document).ready(function() {
     $('input:checkbox').removeAttr('checked');
     $("#sort-dropdown").val("collections");
     $("#collection-dropdown").val("all");
-
     // stores all the queued entries
     var dataset = [];
     var selectedEntries = []
@@ -35,8 +34,8 @@ $(document).ready(function() {
     $('th').click(evt => {
         if (!evt.target.classList.contains('clickable'))
             return
-        //anchor
         var facet = evt.target.dataset.facet
+        console.log(dataset)
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
@@ -44,7 +43,6 @@ $(document).ready(function() {
 
             var entities = entries.map(entry => entry.taxonomy[facet.toUpperCase()])
             var unique = []
-
             for (var i = entities.length - 1; i >= 0; i--) {
                 var entity = entities[i]
                 if (!entity) continue
@@ -54,9 +52,14 @@ $(document).ready(function() {
                         unique.push(entity[j])
                 }
             }
-            
+             
+             var items =["hh"]
+              dynEntries = []
+              //reuse fitsCurrentClassification() for dynEntries
+
             if(uniqueCollection()){
-                window.modals.dynamicInfoModal(facet,unique),function () {
+                //get unique facets + entries
+                    window.modals.dynamicInfoModal(facet,unique,items, dynEntries),function () {
                 }
             }
             else{

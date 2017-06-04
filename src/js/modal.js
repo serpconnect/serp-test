@@ -9,27 +9,28 @@ $(document).ready(function() {
                 btns[i].setAttribute('disabled', true)
         }
     }
-
 	var modals = window.modals = {}
 	var modalAnimation = 121
 
 	function insertAfter(referenceNode,newNode){
 		referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling)
-	}
+	} //inserts a Node after a Node
 
-	function shrinkFacets(current){
-		parent = document.getElementById(current['parent']).style
-		child =document.getElementById(current['short']).style
-		child.marginLeft= parent.marginLeft + "5%"
-		child.marginRight= parent.marginRight+ "5%"
-		child.width = parent.width - "5%"
-	}
+	function shrinkFacets(current, parent){
+		p_style = parent.style
+		c_style = current.style
+		c_style.marginLeft= p_style.marginLeft + "5%"
+		c_style.marginRight= p_style.marginRight+ "5%"
+		c_style.width = p_style.width - "5%"
+	} //Creates a subfacet (a la search page) so
+	// that the subfacets shrunk versions of their parents
 
 	function appendChildren (par,list){
 			for(var i=0;i<list.length;i++){
 				par.appendChild(list[i])
 			}
 		}
+	//appends a list of children to a node
 
     function findModal(node) {
         if (node.classList.contains('modal') ||
@@ -140,71 +141,91 @@ $(document).ready(function() {
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
-	modals.dynamicInfoModal = function(facet, unique) {
+	modals.dynamicInfoModal = function(facet, unique, subFac, dynEntries) {
+		//implement dynamic loading.
+		moveEntry = function (location,destination){
+			var dest = document.getElementById(destination)
+			var loc = document.getElementById(location)
+			dest.appendChild(loc)
+		}
 
- 	dropDownMenu = function(){
-		var dropDownFacets = document.getElementsByClassName('modal-header-title')
-		var list =[]
-		for(var i=0;i<dropDownFacets.length;i++){
-			var cur = dropDownFacets[i].innerHTML
-			a = el('a', {
-					text:cur,
-					onClick:"alert()"
-				}) 
-			list.push( a ) 
-			// a.addEventListener('click', (evt) => {
-			// 	evt.target.innerHTML
-			// }
-			list.push( a )
-		}
-		return list
-		}
+	 	dropDownMenu = function(location,cont){
+			var dropDownFacets = document.getElementsByClassName('modal-header-title')
+			var list =[]
+			while (cont.hasChildNodes()) {
+    			cont.removeChild(cont.lastChild);
+			} //stops duplicates coming into list
+
+			for(var i=0;i<dropDownFacets.length;i++){
+				var cur = dropDownFacets[i]
+				a = el('a', {
+						text:cur.innerText
+					}) 
+				list.push( a ) 
+				
+				a.addEventListener('click', (evt) => {
+					moveEntry(location, evt.target.innerHTML+"-entry-container")
+					cont.classList.toggle("dropdown-show");
+					evt.stopPropagation();
+					//stops the parent calling event listener 
+				})
+			}	
+			return list
+		}	
 		
 		function getDropFacets(evt){
-				appendChildren(evt.target.children[0], dropDownMenu())
-				evt.target.children[0].classList.toggle("dropdown-show");
-		}
+				var content = evt.target.children[0]
+				var entry = "entry" + evt.target.id.substring(8)
+				appendChildren(content, dropDownMenu(entry,content))
+				content.classList.toggle("dropdown-show");
+		}//toggles the dropdown list from showing and not showing
+		//
 
-		generate_DropDown =function(){
+		generate_DropDown =function(i){
 			newEntryDropDown = 
 							el('div.entry-dropDown',[
-								el('div.entry-dropDownBtn',[ 
+								el('div#dropDown'+i+'.entry-dropDownBtn',[ 
 								  el( 'div.entry-dropDown-content', []) 
 								])
 							])
-
+			x = document.getElementsByClassName("dropdown-show")
+			for(var i=0;i<x.length;i++){
+				console.log((x[i].classList))
+			}
 			newEntryDropDown.addEventListener('click', function(evt) {
 				getDropFacets(evt)
-			})
-
-			return newEntryDropDown
+			}) //creates the dropdown list
+ 			return newEntryDropDown
 		}
 
-		var facets = unique.map(uniq =>
-							el('div',[
-									el("li.modal-li", [uniq]),
-									generate_DropDown()
+		var facets = unique.map((uniq,i) =>
+							el('div#entry'+i,[
+									el("li.modal-li", [uniq, generate_DropDown(i)])
 								])
 							)
-							
-		// var addButton = el('div.add-facet', [])
-		var subLevel = el('div',[
+
+		var subLevel = el('div.add-facet-container',[
 					el('div.add-facet', []),
 					el('div.add-facet-text',["add sub facet"]),
 					] )
+		var saveBtn = el('button.btn', ['save'])
 
-		var modal = el('div#modal.modal', [
+		var modal = el('div#modal.dyn-modal', [
 			el('div', [
 				el('div.modal-entry-type', ['inspecting entities']),
 				closeButton(),
 				el('div#'+facet+'.facet-container',[
+					el("div.modal-divider"),
 					el('div.modal-header-title', [facet]),
 					subLevel,
-					el("div.modal-divider")
-					]),
-				el('ul.modal-ul'),
-				facets,
-				el('ul.modal-ul')
+					el("div#"+facet+"-entry-container.entry-container",[
+						facets
+					])
+				]),
+				el('div.dyn-modal-button-wrapper',[	
+					saveBtn,
+					cancelButton()
+				])
 			])
 		])
 
@@ -212,32 +233,107 @@ $(document).ready(function() {
 			generate_textBox()
 		})	
 
+		generate_newFacet = function(current, id){
+			removeBtn = el('div.modal-remove-facet', [])
+      		removeBtn.addEventListener('click', (evt)=>{
+      			var heading = evt.target.parentNode
+      			var entryContainer= document.getElementById(heading.id+'-entry-container')
+      			var children = GetFacetChildren(entryContainer)
+      			removeFacet(children)
+      			heading.remove()
+      		})
+      		var newFacet = el('div#'+id+'.facet-container',[	
+      								// el("div.modal-divider"),
+									el('div.modal-header-title',[id] ),
+									removeBtn,
+									el("div#"+id+"-entry-container.entry-container",[])
+								])
+	      	var refNode = current
+  			insertAfter(refNode,newFacet)
+  			shrinkFacets(newFacet, refNode)
+		}
+
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newshort,newlong) {
 	      		//To DO - push to back end, then update modal.
       		var newNode = new window.taxFunc.Node(newshort,newlong,facet)
-      		// header = newNode['short']
-      		var facets = document.getElementsByClassName('modal-header-title')
+      		//removes facet and appends current entries to root facet
+      		removeBtn = el('div.modal-remove-facet', [])
+      		removeBtn.addEventListener('click', (evt)=>{
+
+      			var heading = evt.target.parentNode
+      			var entryContainer= document.getElementById(heading.id+'-entry-container')
+      			var children = GetFacetChildren(entryContainer)
+      			removeFacet(children)
+      			heading.remove()
+      		})
+
+      		var facets = document.getElementsByClassName('facet-container')
       		for(var i=0; i < facets.length;i++){
       			var current = facets[i]
-	      		if(current.innerHTML==newNode['parent']){
-	      			var newFacet = el('div#'+newNode['short']+'.facet-container',[	
-									el('div.modal-header-title',[ newNode['short'] ] ),
-									el("div.modal-divider")
-								])
-	      			var refNode = current.nextSibling.nextSibling
-	      			insertAfter(refNode,newFacet)
-	      			shrinkFacets(newNode)
+	      		if(current.id==newNode['parent']){
+	      			generate_newFacet(current, newNode['short'])
+	      			shrinkFacets(facet[i],current)
 	      			return
 	      		}
 	      	}
 	    })
-	  }
+	    }
+
+	   function GetFacetChildren(facet){
+	   	//takes element as input
+	   	var list =[]
+	   		var entries = facet.children
+      			for (var i =0;i < entries.length; i++){
+      					list.push(entries[i])
+      			}
+      		return list
+	    } //returns a list of all children elements which are entries
+
+	    //puts all entries back to root facet
+	    function removeFacet(children){
+	    	while(children.length!=0){
+      			var current = children.shift()
+      			moveEntry( current.id, facet+"-entry-container") 
+   			}
+	    }
+
+	    saveBtn.addEventListener("click", function(evt) {
+	    	//only save entries for sub facets- otherwise set to root
+	    	//
+			var facets = document.getElementsByClassName('facet-container')
+			for (var i =0;i < facets.length; i++){
+						x = GetFacetChildren()
+						x.forEach( function(){
+							y = new Node(x.id, x.long, )
+						})
+      			}
+			Node =function(short,long,parent) {
+	            this.short = short
+	            this.long = long
+	            this.parent = parent
+    		}
+			// $.getJSON("/js/default_classification.json", function(json) {
+			    
+			// })
+		
+			// taxFunc.save_taxonomy(cID)
+			//To Do - change list to only save new nodes
+        });
 
         document.body.appendChild(modal)
         setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
+
+        subFac.forEach( function(uniq){
+			generate_newFacet(document.getElementById(facet), uniq)
+		}) //creates sub facets on load 
+
+		//dynEntries.forEach(){
+		// 	go through all entries and use moveEntry() for entry position
+		// }
+
 	 }
 
 	 modals.addTextBox = function(method) {

@@ -44,6 +44,10 @@
     > .node, >.leaf { margin: 0.5em; }
 }
 
+.facet-container{
+    padding-top:5px;
+}
+
 .add-facet {
     position: relative;
     margin-left: 5px;
@@ -60,10 +64,25 @@
     }
 }
 
+.add-facet-container{
+    display: inline-block;
+    cursor: pointer;
+}
+
 .add-facet-text{
     font-size: 10px;
 }
+
+.entry-container{
+    overflow: scroll;
+    overflow: scroll;
+    border-style: groove;
+    border-top-style: none;
+    border-width: 1px;
+}
+
 .entry-dropDownBtn{
+    margin-left: 5px;
     background-color: #4CAF50;
     color: black;
     border: none;
@@ -76,20 +95,26 @@
 
 /* Dropdown button on hover & focus */
 .entry-dropDownBtn:hover, .entry-dropDownBtn:focus {
-    background-color: #3e8e41;
+    background-color: @super-light-gray;
 }
 
 /* The container <div> - needed to position the dropdown content */
 .entry-dropDown{
+    top: 7px;
     position: relative;
     display: inline-block;
 }
 
 /* Dropdown Content (Hidden by Default) */
 .entry-dropDown-content{
+    top: 15px;
     display: none;
     position: absolute;
-    background-color: #f9f9f9;
+    background-color:  @super-light-gray;
+  /*  @dark-gray: #2b2b2b;
+@middling-gray: #525252;
+@light-gray: #A5A5A5;
+@super-light-gray: #E3E3E3;*/
     min-width: 160px;
     box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
     z-index: 1;
@@ -98,22 +123,22 @@
 /* Links inside the dropdown */
 .entry-dropDown-content a {
     color: black;
-    padding: 12px 16px;
+    padding: 2px 8px;
     text-decoration: none;
     display: block;
 }
 
 /* Change color of dropdown links on hover */
 .entry-dropDown-content a:hover {
-    background-color: #f1f1f1
+    background-color: @light-gray;
 }
 
 .dropdown-show {
     display:inline-block;
 }
 
-.remove-facet {
-    margin-top: .6rem;
+.modal-remove-facet {
+    margin-top: .3rem;
     position: absolute;
     margin-left: 5px;
     margin-right: -1px;
