@@ -184,31 +184,46 @@ $(document).ready(function() {
 		//
 
 		generate_DropDown =function(i){
+			// x = document.getElementsByClassName("dropdown-show")
+			// for(var j=0;j<x.length;j++){
+			// 	console.log((x[j].classList))
+			// }
+			var values = document.getElementsByClassName('modal-header-title')
 			newEntryDropDown =
-							el('div.entry-dropDown',[
-								el('div#dropDown'+i+'.entry-dropDownBtn',[
-								  el( 'div.entry-dropDown-content', [])
-								])
-							])
-			x = document.getElementsByClassName("dropdown-show")
-			for(var j=0;j<x.length;j++){
-				console.log((x[j].classList))
-			}
-			var button = newEntryDropDown.children[0];
-			button.addEventListener('click', function(evt) {
-				var content = evt.target.children[0];
-				$(".dropdown-show").filter((i,e) => {return e != content})
-					.each((i,e) => {
-						e.classList.toggle("dropdown-show");
-					});
-				getDropFacets(evt)
-			}) //creates the dropdown list
+					el("select.dropDowns", {id:"select"+i}, [
+						el("option", {value: facet}, [facet]),
+						subFac.map(e => {
+							return el("option", {value: e}, [e]);
+						})
+
+					])
+							// el('div.entry-dropDown',[
+							// 	el('div#dropDown'+i+'.entry-dropDownBtn',[
+							// 	  el( 'div.entry-dropDown-content', [])
+							// 	])
+							// ])
+
+			newEntryDropDown.addEventListener('change', evt => {
+				var row = $(evt.target).parent().parent().attr('id');
+				var moveTo = evt.target.value+"-entry-container";
+				moveEntry(row, moveTo);
+			})
+
+			// var button = newEntryDropDown.children[0];
+			// button.addEventListener('click', function(evt) {
+			// 	var content = evt.target.children[0];
+			// 	$(".dropdown-show").filter((i,e) => {return e != content})
+			// 		.each((i,e) => {
+			// 			e.classList.toggle("dropdown-show");
+			// 		});
+			// 	getDropFacets(evt)
+			// }) //creates the dropdown list
  			return newEntryDropDown
 		}
 
 		var facets = unique.map((uniq,i) =>
 							el('div#entry'+i,[
-									el("li.modal-li", [uniq, generate_DropDown(i)])
+									el("li.modal-li", [generate_DropDown(i), " " + uniq])
 								])
 							)
 
@@ -245,6 +260,7 @@ $(document).ready(function() {
 			removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
       			var heading = evt.target.parentNode
+						$(".dropDowns option[value='"+heading.id+"']").remove();
       			var entryContainer= document.getElementById(heading.id+'-entry-container')
       			var children = GetFacetChildren(entryContainer)
       			removeFacet(children)
@@ -263,12 +279,15 @@ $(document).ready(function() {
 
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newshort,newlong) {
+					var option = $("<option></option>").attr("value",newshort).text(newshort);
+					$(".dropDowns").append(option);
+
 	      		//To DO - push to back end, then update modal.
       		var newNode = new window.taxFunc.Node(newshort,newlong,facet)
       		//removes facet and appends current entries to root facet
       		removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
-
+						// Is there any way to actually get in here?
       			var heading = evt.target.parentNode
       			var entryContainer= document.getElementById(heading.id+'-entry-container')
       			var children = GetFacetChildren(entryContainer)
@@ -277,10 +296,11 @@ $(document).ready(function() {
       		})
 
       		var facets = document.getElementsByClassName('facet-container')
+					console.log(newNode);
       		for(var i=0; i < facets.length;i++){
       			var current = facets[i]
 	      		if(current.id==newNode['parent']){
-	      			generate_newFacet(current, newNode['short'])
+	      			generate_newFacet(current, newNode['id'])
 	      			shrinkFacets(facet[i],current)
 	      			return
 	      		}
@@ -318,14 +338,14 @@ $(document).ready(function() {
 					nodes.push(node)
 				 //taxonomy
 				 	// y=document.getElementById(current+"-entry-container")
-				
+
 					// x = GetFacetChildren(y)
 					// x.forEach( function(current){
 					// 	return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
 					// }) //reclassifcation of entities
       			}
       		}
-      		console.log(nodes)	
+      		console.log(nodes)
         });
 
         document.body.appendChild(modal)
