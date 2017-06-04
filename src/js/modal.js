@@ -151,43 +151,44 @@ $(document).ready(function() {
 			dest.appendChild(loc)
 		}
 
-	 	dropDownMenu = function(location,cont){
-			var dropDownFacets = document.getElementsByClassName('modal-header-title')
-			var list =[]
-			while (cont.hasChildNodes()) {
-    			cont.removeChild(cont.lastChild);
-			} //stops duplicates coming into list
-
-			for(var i=0;i<dropDownFacets.length;i++){
-				var cur = dropDownFacets[i]
-				a = el('a', {
-						text:cur.innerText
-					})
-				list.push( a )
-
-				a.addEventListener('click', (evt) => {
-					moveEntry(location, evt.target.innerHTML+"-entry-container")
-					cont.classList.toggle("dropdown-show");
-					evt.stopPropagation();
-					//stops the parent calling event listener
-				})
-			}
-			return list
-		}
-
-		function getDropFacets(evt){
-				var content = evt.target.children[0]
-				var entry = "entry" + evt.target.id.substring(8)
-				appendChildren(content, dropDownMenu(entry,content))
-				content.classList.toggle("dropdown-show");
-		}//toggles the dropdown list from showing and not showing
+		// 	dropDownMenu = function(location,cont){
+		// 	var dropDownFacets = document.getElementsByClassName('modal-header-title')
+		// 	var list =[]
+		// 	while (cont.hasChildNodes()) {
+    // 			cont.removeChild(cont.lastChild);
+		// 	} //stops duplicates coming into list
 		//
+		// 	for(var i=0;i<dropDownFacets.length;i++){
+		// 		var cur = dropDownFacets[i]
+		// 		a = el('a', {
+		// 				text:cur.innerText
+		// 			})
+		// 		list.push( a )
+		//
+		// 		a.addEventListener('click', (evt) => {
+		// 			moveEntry(location, evt.target.innerHTML+"-entry-container")
+		// 			cont.classList.toggle("dropdown-show");
+		// 			evt.stopPropagation();
+		// 			//stops the parent calling event listener
+		// 		})
+		// 	}
+		// 	return list
+		// }
+
+		// function getDropFacets(evt){
+		// 		var content = evt.target.children[0]
+		// 		var entry = "entry" + evt.target.id.substring(8)
+		// 		appendChildren(content, dropDownMenu(entry,content))
+		// 		content.classList.toggle("dropdown-show");
+		// }//toggles the dropdown list from showing and not showing
+
 
 		generate_DropDown =function(i){
-			// x = document.getElementsByClassName("dropdown-show")
-			// for(var j=0;j<x.length;j++){
-			// 	console.log((x[j].classList))
-			// }
+			x = document.getElementsByClassName("dropdown-show")
+			for(var j=0;j<x.length;j++){
+				console.log((x[j].classList))
+			}
+
 			var values = document.getElementsByClassName('modal-header-title')
 			newEntryDropDown =
 					el("select.dropDowns", {id:"select"+i}, [
@@ -197,27 +198,13 @@ $(document).ready(function() {
 						})
 
 					])
-							// el('div.entry-dropDown',[
-							// 	el('div#dropDown'+i+'.entry-dropDownBtn',[
-							// 	  el( 'div.entry-dropDown-content', [])
-							// 	])
-							// ])
 
 			newEntryDropDown.addEventListener('change', evt => {
 				var row = $(evt.target).parent().parent().attr('id');
 				var moveTo = evt.target.value+"-entry-container";
 				moveEntry(row, moveTo);
-			})
+			}) //creates the dropdown list
 
-			// var button = newEntryDropDown.children[0];
-			// button.addEventListener('click', function(evt) {
-			// 	var content = evt.target.children[0];
-			// 	$(".dropdown-show").filter((i,e) => {return e != content})
-			// 		.each((i,e) => {
-			// 			e.classList.toggle("dropdown-show");
-			// 		});
-			// 	getDropFacets(evt)
-			// }) //creates the dropdown list
  			return newEntryDropDown
 		}
 
@@ -296,12 +283,10 @@ $(document).ready(function() {
       		})
 
       		var facets = document.getElementsByClassName('facet-container')
-					console.log(newNode);
       		for(var i=0; i < facets.length;i++){
       			var current = facets[i]
 	      		if(current.id==newNode['parent']){
 	      			generate_newFacet(current, newNode['id'])
-	      			shrinkFacets(facet[i],current)
 	      			return
 	      		}
 	      	}
