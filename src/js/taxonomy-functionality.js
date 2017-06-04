@@ -142,9 +142,9 @@ function flattendList(mapping){
     return flattendList
 }
 
-taxFunc.Node =function(short,long,parent) {
-            this.short = short
-            this.long = long
+taxFunc.Node =function(id,name,parent) {
+            this.id = id
+            this.name = name
             this.parent = parent
     }
 

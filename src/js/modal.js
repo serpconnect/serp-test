@@ -36,6 +36,8 @@ $(document).ready(function() {
         if (node.classList.contains('modal') ||
             node.classList.contains('confirm'))
             return node
+        else if (node.classList.contains('dyn-modal'))
+        	return node
         else
             return findModal(node.parentNode)
     }
@@ -302,23 +304,22 @@ $(document).ready(function() {
 	    	//only save entries for sub facets- otherwise set to root
 	    	//
 			var facets = document.getElementsByClassName('facet-container')
+			var nodes = []
 			for (var i =0;i < facets.length; i++){
-						x = GetFacetChildren()
-						x.forEach( function(){
-							y = new Node(x.id, x.long, )
-						})
+			current = facets[i].id
+				if(current!=facet){
+					node = new taxFunc.Node(current,current,facet)
+					nodes.push(node)
+				 //taxonomy
+				 	// y=document.getElementById(current+"-entry-container")
+				
+					// x = GetFacetChildren(y)
+					// x.forEach( function(current){
+					// 	return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
+					// }) //reclassifcation of entities
       			}
-			Node =function(short,long,parent) {
-	            this.short = short
-	            this.long = long
-	            this.parent = parent
-    		}
-			// $.getJSON("/js/default_classification.json", function(json) {
-			    
-			// })
-		
-			// taxFunc.save_taxonomy(cID)
-			//To Do - change list to only save new nodes
+      		}
+      		console.log(nodes)	
         });
 
         document.body.appendChild(modal)
@@ -780,7 +781,8 @@ $(document).ready(function() {
 window.addEventListener('load', () => {
 	document.body.addEventListener('click', (evt) => {
 		var remove = evt.target.classList.contains('modal') ||
-					 evt.target.classList.contains('confirm')
+					 evt.target.classList.contains('confirm') ||
+					 evt.target.classList.contains('dyn-modal')
 		if (remove)
 			document.body.removeChild(evt.target)
 	}, false)

@@ -53,8 +53,9 @@ $(document).ready(function() {
                         unique.push(entity[j])
                 }
             }
-// <<<<<<< HEAD
-             
+        //get dynamic taxonomy
+        //use same principle as above for subfacets and create a list of unique entries for each one
+        // entry
              var items =["hh"]
               dynEntries = []
               //reuse fitsCurrentClassification() for dynEntries
@@ -67,10 +68,6 @@ $(document).ready(function() {
             else{
                 window.modals.infoModal(facet,unique),function () {
                 }
-// =======
-
-            // window.modals.infoModal(facet,unique),function () {
-// >>>>>>> 074a9944615074b42f456a4780012e6240f95a7d
             }
         }
 
