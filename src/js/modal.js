@@ -262,9 +262,9 @@ $(document).ready(function() {
 		}
 
 		generate_textBox = function (){
-	      window.modals.addTextBox( function (newshort,newlong) {
+	      window.modals.addTextBox( function (newid,newname) {
 	      		//To DO - push to back end, then update modal.
-      		var newNode = new window.taxFunc.Node(newshort,newlong,facet)
+      		var newNode = new window.taxFunc.Node(newid,newname,facet)
       		//removes facet and appends current entries to root facet
       		removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
@@ -280,8 +280,7 @@ $(document).ready(function() {
       		for(var i=0; i < facets.length;i++){
       			var current = facets[i]
 	      		if(current.id==newNode['parent']){
-	      			generate_newFacet(current, newNode['short'])
-	      			shrinkFacets(facet[i],current)
+	      			generate_newFacet(current, newNode['id'])
 	      			return
 	      		}
 	      	}
@@ -310,22 +309,26 @@ $(document).ready(function() {
 	    	//only save entries for sub facets- otherwise set to root
 	    	//
 			var facets = document.getElementsByClassName('facet-container')
-			var nodes = []
+			// var nodes = {}
 			for (var i =0;i < facets.length; i++){
 			current = facets[i].id
 				if(current!=facet){
-					node = new taxFunc.Node(current,current,facet)
-					nodes.push(node)
+					var node = {"taxonomy":{"id":current ,"name":current, "parent":facet}}
+					console.log(node,JSON.stringify(node))
+			window.api.json("PUT", window.api.host + "/v1/collection/1446/taxonomy", node)
 				 //taxonomy
 				 	// y=document.getElementById(current+"-entry-container")
 				
 					// x = GetFacetChildren(y)
 					// x.forEach( function(current){
 					// 	return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
-					// }) //reclassifcation of entities
+					}
       			}
-      		}
-      		console.log(nodes)	
+      		
+
+   //    		console.log(nodes)	
+			// return window.api.json("PUT", window.api.host + "/v1/collection/1446/taxonomy", nodes)
+
         });
 
         document.body.appendChild(modal)
