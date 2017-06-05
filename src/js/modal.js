@@ -143,8 +143,9 @@ $(document).ready(function() {
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
-	modals.dynamicInfoModal = function(facet, unique, subFac, dynEntries,CID) {
+	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries,CID) {
 		//implement dynamic loading.
+		console.log(newClass)
 		moveEntry = function (location,destination){
 			var dest = document.getElementById(destination)
 			var loc = document.getElementById(location)
@@ -156,31 +157,54 @@ $(document).ready(function() {
 			for(var j=0;j<x.length;j++){
 				console.log((x[j].classList))
 			}
-
-			var values = document.getElementsByClassName('modal-header-title')
+			var values = document.getElementsByClassName('dyn-modal-header-title')
 			newEntryDropDown =
 					el("select.dropDowns", {id:"select"+i}, [
 						el("option", {value: facet}, [facet]),
-						subFac.taxonomy.map(e => {
+						subFac.taxonomy.filter(x => {return x.parent == facet}).map(e => {
 							return el("option", {value: e.id}, [e.id]);
 						})
 
 					])
-
+			
 			newEntryDropDown.addEventListener('change', evt => {
 				var row = $(evt.target).parent().parent().attr('id');
 				var moveTo = evt.target.value+"-entry-container";
 				moveEntry(row, moveTo);
 			}) //creates the dropdown list
-
  			return newEntryDropDown
 		}
 
-		var facets = unique.map((uniq,i) =>
-							el('div#entry'+i,[
-									el("li.modal-li", [generate_DropDown(i), " " + uniq])
-								])
-							)
+		if (newClass.length != 0){
+			var head = newClass[0];
+			var facets = head.text.map((uniq,i) =>
+				makeEntity(uniq)
+			)
+		}
+		
+		function setDropdownValues(parentID){
+			console.log(parentID)
+			var children = document.getElementById(parentID+"-entry-container").children
+			console.log(children)
+			for(var i = 0; i < children.length; i++){
+				var entry = children[i];
+				entry.children[0].children[0].value = parentID
+			}
+		}
+
+		function makeEntity(uniq){
+			return el('div#entry'+getIdFromEntity(uniq),[
+						el("li.modal-li", [generate_DropDown(getIdFromEntity(uniq)), " " + uniq])
+			])
+		}
+
+		function getIdFromEntity(name){
+			for(var i = 0; i < dynEntries.length; i++){
+				if(dynEntries[i].text == name){
+					return dynEntries[i].id
+				}
+			}
+		} 			
 
 		var subLevel = el('div.add-facet-container',[
 					el('div.add-facet', []),
@@ -194,7 +218,7 @@ $(document).ready(function() {
 				closeButton(),
 				el('div#'+facet+'.facet-container',[
 					el("div.modal-divider"),
-					el('div.modal-header-title', [facet]),
+					el('div.dyn-modal-header-title', [facet]),
 					subLevel,
 					el("div#"+facet+"-entry-container.entry-container",[
 						facets
@@ -212,6 +236,7 @@ $(document).ready(function() {
 		})
 
 		generate_newFacet = function(current, id){
+
 			removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
       			var heading = evt.target.parentNode
@@ -221,11 +246,13 @@ $(document).ready(function() {
       			removeFacet(children)
       			heading.remove()
       		})
+
       		var newFacet = el('div#'+id+'.facet-container',[
       								// el("div.modal-divider"),
-									el('div.modal-header-title',[id] ),
+									el('div.dyn-modal-header-title',[id] ),
 									removeBtn,
-									el("div#"+id+"-entry-container.entry-container",[])
+									el("div#"+id+"-entry-container.entry-container",[
+										])
 								])
 	      	var refNode = current
   			insertAfter(refNode,newFacet)
@@ -234,20 +261,53 @@ $(document).ready(function() {
 
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newid,newname) {
-					var option = $("<option></option>").attr("value",newid).text(newid);
-					$(".dropDowns").append(option);
-      		var newNode = new window.taxFunc.Node(newid,newname,facet)
-      		//removes facet and appends current entries to root facet
-      		var facets = document.getElementsByClassName('facet-container')
-      		for(var i=0; i < facets.length;i++){
-      			var current = facets[i]
-	      		if(current.id==newNode['parent']){
-	      			generate_newFacet(current, newNode['id'])
-	      			return
-	      		}
-	      	}
-	    })
+	      	if(newIDisValid(newid)) {
+				var option = $("<option></option>").attr("value",newid).text(newid);
+				$(".dropDowns").append(option);
+	      		var newNode = new window.taxFunc.Node(newid,newname,facet)
+	      		//removes facet and appends current entries to root facet
+	      		var facets = document.getElementsByClassName('facet-container')
+	      		for(var i=0; i < facets.length;i++){
+	      			var current = facets[i]
+		      		if(current.id==newNode['parent']){
+		      			generate_newFacet(current, newNode['id'])
+		      			document.body.removeChild(this)
+		      			return
+		      		}
+		      	}
+		     }
+		     else{
+		     	document.getElementById("confirm").parentNode.appendChild(
+		     		el("div.complaint", {text:"That name already exists"})
+		     	)
+		     }
+	      })
 	    }
+
+	   function newIDisValid(newid){
+	   	//checks against dyn taxonomy facets
+	   	var value = true
+	   		subFac.taxonomy.forEach(key=>{
+	   			if(key.id==newid.toLowerCase()){
+	   				value = false
+	   			}
+	   		})
+	   		//checks against base taxonomy
+	   		var keywords = Object.keys(window.central.getReverseMap())
+	   		keywords.forEach(key=>{
+	   			if(key==newid.toLowerCase()){
+	   				value =  false
+	   			}
+	   		})
+	   		//checks against newly created facets
+	   		var currentFacets = document.getElementsByClassName('facet-container')
+	   		for(var i in currentFacets){
+	   			if(currentFacets[i].id==newid.toLowerCase()){
+	   				value = false
+	   			}
+	   		}
+	   		return value
+	   }
 
 	   function GetFacetChildren(facet){
 	   	//takes element as input
@@ -267,10 +327,20 @@ $(document).ready(function() {
    			}
 	    }
 
+	    //takes in entity string and returns it's facetid in db
+	    function getEntityOrigin(entity){
+	    	for(var i = 0; i < newClass.length; i++){
+	    		for(var j = 0; j < newClass[i].text.length; j++){
+	    			if(newClass[i].text[j] == entity){
+						return newClass[i].facetId
+					}
+	    		}
+			}
+	    }
+
 	    saveBtn.addEventListener("click", function(evt) {
 	    	//only save entries for sub facets- otherwise set to root
 	    	//
-	    	console.log(subFac)
 			var facets = document.getElementsByClassName('facet-container')
 			// var nodes = {}
 			var i=0
@@ -284,35 +354,33 @@ $(document).ready(function() {
 				else{
 					i++
 				}
-			} //removes all subfacets with current.parent = facet from backend dynamic taxonomy
-
-			 
-			//
-			// subFac.taxonomy.forEach(function(current){
-			// 	if(current.parent==facet){
-			// 		var index= subFac.taxonomy.indexOf(current)
-			// 		subFac.taxonomy.splice(index,1)
-			// 	}
-			// })
-
+			} //removes all subfacets with current.parent = facet from backend dynamic taxonom 
+			
+			//reclassifies entities
 			for (var i =0;i < facets.length; i++){
-				current = facets[i].id
+				var current = facets[i].id
+					var x = document.getElementById(current+"-entry-container")
+					var children = GetFacetChildren(x)
+
+					children.forEach( function(child){
+						var text = child.innerText.trim()
+						var origin = getEntityOrigin(text)
+						var childId = child.id.substring(5);
+						var Ent = { "oldFacetId": origin, "newFacetId": current.toUpperCase(),"entities": [childId]					}
+						window.api.json("POST", window.api.host + "/v1/collection/"+CID+"/reclassify", Ent).done(f => {
+      					})
+					})
+      		} 
+      		//sorts out dynamic taxonomy
+			for (var i =0;i < facets.length; i++){
+				var current = facets[i].id
 				if(current!=facet){
-				console.log(current);
 				// var node = {"taxonomy":[{"name":current,"id":current,"parent":facet}],"version":+}
 				var node = {"id":current ,"name":current, "parent":facet}
 				subFac.taxonomy.push(node)
 				// adds all new subfacets with current.parent = facet to backend dynamic taxonomy
-
-				 //taxonomy
-				 	// y=document.getElementById(current+"-entry-container")
-
-					// x = GetFacetChildren(y)
-					// x.forEach( function(current){
-						// return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
 				}
       		}
-      		console.log(subFac)
       		 window.api.json("PUT", window.api.host + "/v1/collection/"+CID+"/taxonomy", subFac).done(f => {
       		 	
 
@@ -328,23 +396,25 @@ $(document).ready(function() {
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
 
-         // dynamicTaxonomy.taxonomy.forEach( function(current){
-         //            if(current.parent==facet){
-         //                items.push(current.id);
-         //            }
-         //        })
-
-        subFac.taxonomy.forEach( function(uniq){
-			if(uniq.parent==facet){
-                        generate_newFacet(document.getElementById(facet), uniq.id)
-                    }
-		}) //creates sub facets on load
-
-		//dynEntries.forEach(){
-		// 	go through all entries and use moveEntry() for entry position
-		// }
-
-	 }
+        //start from 1 as root already created
+        
+        subFac.taxonomy.forEach( (tax,i) => {
+        	if(tax.parent == facet){
+	            generate_newFacet(document.getElementById(facet), tax.id, i)
+	            var index=0
+	            while(index < newClass.length){
+	            	if (newClass[index].facetId==tax.id.toUpperCase()){
+	            		var entities = newClass[index].text.map((id) =>
+						makeEntity(id))
+						appendChildren( document.getElementById(tax.id+"-entry-container"), entities)
+						setDropdownValues(tax.id)
+						break;
+	            	}
+	            	index++
+	            }
+			}
+        })
+	}
 
 	 modals.addTextBox = function(method) {
 	 	var inputboxes =
@@ -373,7 +443,7 @@ $(document).ready(function() {
 		])
 
 		confirmBtn.addEventListener('click', (evt)=> {
-			document.body.removeChild(modal)
+			// document.body.removeChild(modal)
 			var args = inputboxes.map(input => input.value)
             method.apply(modal, args)
 		})

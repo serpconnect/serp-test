@@ -31,7 +31,9 @@ $(document).ready(function() {
         "sut" : "Properties of SUT",
         "other": "Other"
     }
-
+    central.getReverseMap =function(){
+    	return reverseMap
+    }
 	central.constructEntities= function(taxonomy, facet) {
 		var filtered = taxonomy[facet] || []
 

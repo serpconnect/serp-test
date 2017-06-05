@@ -41,6 +41,7 @@ $(document).ready(function() {
         if (!evt.target.classList.contains('clickable'))
             return
         var facet = evt.target.dataset.facet
+        console.log(facet, dataset)
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
@@ -64,12 +65,37 @@ $(document).ready(function() {
             }
         else{
             var CID = getCollectionID()
-            window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/classification").done(classification =>{
-                console.log(classification)
-                window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/entities").done(entities =>{
-                    window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
+
+        window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/entities").done(entities =>{
+            window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
                     .done(dynamicTaxonomy => {
-                        window.modals.dynamicInfoModal(facet,unique,dynamicTaxonomy, entities,CID),function () {
+                        var Facets = []
+                        var dyn = JSON.parse(JSON.stringify(dynamicTaxonomy.taxonomy))
+                        Facets.push(facet)
+                        while(dyn.length!=0){
+                            var x=dyn.shift()
+                            if(x.parent==facet)
+                                Facets.push(x.id)
+                        }
+                window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/classification").done(classification =>{
+                    var newClass =[]
+
+                    Facets.forEach(function(current){
+                        console.log(classification);
+                        var classif=JSON.parse(JSON.stringify(classification))
+                        while(classif.length!=0){
+                            var x = classif.shift()
+                            if(x.facetId==current.toUpperCase()){
+                                newClass.push(x)
+                            }
+                        }
+
+                    })
+                    // 
+                    if(newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()){
+                        newClass.unshift({facetId:facet, text:[]});
+                    }
+                    window.modals.dynamicInfoModal(facet,newClass,dynamicTaxonomy, entities,CID, classification),function () {
                         }
                     })
                     .fail(xhr => {
@@ -78,14 +104,6 @@ $(document).ready(function() {
                 }) 
             })    
         }
-        // items.forEach( function(cur){
-        //     console.log(cur[0])
-        // })
-        //get dynamic taxonomy
-        //get subfacets where facet = parent
-
-        //use same principle as above for subfacets and create a list of unique entries for each one
-              //reuse fitsCurrentClassification() for dynEntries
             
         }
 
