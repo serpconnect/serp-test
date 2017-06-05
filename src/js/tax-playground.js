@@ -104,16 +104,10 @@ function classification_append_row(evt) {
 /* when user clicks the [+] of a facet */
 function classification_add_row(evt) {
     var remove = el("div.remove", ["✖"])
-    var confirm = el("div.remove", ['\u2714'])
-    input = el("input#input")
     remove.addEventListener('click', classification_remove_row) 
-    confirm.addEventListener('click', classification_append_row) 
-    console.log(evt.parentNode, evt.nextSibling)
-    evt.parentNode.appendChild(el('div.entity-sample', [
-        input,
-        remove,
-         el("div.divider"),
-        confirm
+    this.parentNode.appendChild(el('div.entity-sample', [
+        el("input"),
+        remove
     ]))
 }
 /* when user changes the checkbox value of a facet */
@@ -126,10 +120,9 @@ function classification_add_row(evt) {
             header.parentNode.removeChild(header.nextSibling)
     } else {
         // TODO: Load text from somewhere
-        // var add = el("div.additional-data", ["click to add new leaf +"])
-        // add.addEventListener('click', 
-            classification_add_row(header) //, false)
-        // header.parentNode.insertBefore(add, header.nextSibling)
+        var add = el("div.additional-data", ["click to add new leaf +"])
+        add.addEventListener('click', classification_add_row, false)
+        header.parentNode.insertBefore(add, header.nextSibling)
     }
 }
     generate_checkbox = function() {
@@ -140,57 +133,64 @@ function classification_add_row(evt) {
 
 function generate_submit_classification(col) {
     clear_target()
-    x = isDynamic(col) //returns -1 if false
-    console.log(x)
-    if(x!=-1){
-        backend_repr = generate_Taxonomy(dynamic_Taxonomies[x])
-        var taxonomy = new Taxonomy(backend_repr)
-    }
-    else{
-        var taxonomy = new Taxonomy([])
-    }
+    var taxonomy = new Taxonomy([])
 
-    /**
-     * div.classification
-     *     div.node
-     *         span "Effect"
-     *         div.leaf
-     *             div.header
-     *                 label "Solve new problem"
-     *                 input "[x]"
-     *             div.additional-data "click to add description +"
-     *             div.entity-sample
-     *                 input
-     *                 div.remove "x"
-     */
-    var cxx = el('div.classification#classification', taxonomy.tree().map(
-        function build(node, i) {
-            if (node.isTreeLeaf()) {
-                return el("div.leaf", [
-                    el("div.header", [
-                        el("label", [node.name()]),
-                        generate_checkbox()
-                    ])
-                ])
-            } else {
-                return el("div.node", [
-                    el("span", [node.name()]),
-                    node.map(build).sort(byNbrOfChildren)
-                ])
+    api.ajax("GET", api.host + "/v1/collection/" + col + "/taxonomy")
+        .then(function (ext) {
+            while (ext.taxonomy.length) {
+                var node = ext.taxonomy.shift()
+                var parent = taxonomy.root.dfs(node.parent)
+                
+                if (!parent) {
+                    ext.taxonomy.push(node)
+                    continue
+                }
+
+                parent.addChild(new FacetNode(node.id, node.name, []))
             }
-        }).sort(byNbrOfChildren)
-    )
+        })
+        .then(() => {
+            /**
+             * div.classification
+             *     div.node
+             *         span "Effect"
+             *         div.leaf
+             *             div.header
+             *                 label "Solve new problem"
+             *                 input "[x]"
+             *             div.additional-data "click to add description +"
+             *             div.entity-sample
+             *                 input
+             *                 div.remove "x"
+             */
+            var cxx = el('div.classification#classification', taxonomy.tree().map(
+                function build(node, i) {
+                    if (node.isTreeLeaf()) {
+                        return el("div.leaf", [
+                            el("div.header", [
+                                el("label", [node.name()]),
+                                generate_checkbox()
+                            ])
+                        ])
+                    } else {
+                        return el("div.node", [
+                            el("span", [node.name()]),
+                            node.map(build).sort(byNbrOfChildren)
+                        ])
+                    }
+                }).sort(byNbrOfChildren)
+            )
 
-    var divider = el("div.center", [
-        el("div.classification-divider", [""]),
-        el("div.divider-title", ["Customise Classification"]),
-        el("div.classification-divider", [""])
-    ])
-    var saveBtn = el('button.btn', ['save'])
-    saveBtn.addEventListener('click', save_taxonomy, false)
-    TARGET.appendChild(el("div", [divider, cxx]))
-    TARGET.appendChild(saveBtn)
-
+            var divider = el("div.center", [
+                el("div.classification-divider", [""]),
+                el("div.divider-title", ["Customise Classification"]),
+                el("div.classification-divider", [""])
+            ])
+            var saveBtn = el('button.btn', ['save'])
+            saveBtn.addEventListener('click', save_taxonomy, false)
+            TARGET.appendChild(el("div", [divider, cxx]))
+            TARGET.appendChild(saveBtn)
+        })
 }
 
 function generate_Taxonomy(tax){

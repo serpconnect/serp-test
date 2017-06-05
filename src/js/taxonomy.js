@@ -62,7 +62,7 @@
      * Depth-first search for node with id.
      */
     Node.prototype.dfs = function(id) {
-        if (this.id() === id)
+        if (this.id().toLowerCase() === id.toLowerCase())
             return this
         
         for (var i = 0; i < this.tree.length; i++) {
@@ -134,7 +134,7 @@
     // identifier, name, children
      var MOCK_TAXONOMY = new Node("root", "root", [
         new Node("effect", "Effect", [
-            new Node("testing-adapt", "Adapt testing",[]),
+            new Node("adapting", "Adapt testing",[]),
             new Node("solving", "Solve new problem", []),
             new Node("assessing", "Assess new problem", []),
             new Node("improving", "Improve testing", [])
@@ -209,4 +209,5 @@
     }
 
     win.Taxonomy = Taxonomy
+    win.FacetNode = Node
 })(window);
