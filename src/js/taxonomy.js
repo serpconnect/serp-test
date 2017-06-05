@@ -118,44 +118,6 @@
     }
 }
 
-    /**
-     * Mock taxonomy
-     * 
-     * tree = {
-     *     long = short = "root",
-     *     tree = [
-     *         { long = short = "Effect", tree = [ ... ] },
-     *         { long = short = "Scope", tree = [ ... ] },
-     *         { long = short = "Context", tree = [ ... ] },
-     *         { long = short = "Intervention", tree = [] }
-     *     ]
-     * }
-     */
-    // identifier, name, children
-     var MOCK_TAXONOMY = new Node("root", "root", [
-        new Node("effect", "Effect", [
-            new Node("adapting", "Adapt testing",[]),
-            new Node("solving", "Solve new problem", []),
-            new Node("assessing", "Assess new problem", []),
-            new Node("improving", "Improve testing", [])
-        ]),
-        new Node("scope", "Scope", [
-            new Node("planning", "Test planning", []),
-            new Node("design", "Test design", []),
-            new Node("execution", "Test execution", []),
-            new Node("analysis", "Test analysis", [])
-        ]),
-        new Node("context", "Context", [
-            new Node("people", "People related constraints", []),
-            new Node("information", "Availability of information", []),
-            new Node("sut", "Properties of SUT", []),
-            new Node("other", "Other", [])
-        ]),
-        new Node("intervention", "Intervention", [
-            new Node("supply", "Supply Intervention", [])
-        ])
-    ])
-
      function dynamic(flatList) {
        return listSorter(flatList)
     }
@@ -166,16 +128,9 @@
     function Taxonomy(backend_repr) {   
         this.child2parent = {}
         this.short2long = {}
-        // TODO: Generate root from backend_repr
-        if(backend_repr.length > 0){
-          var DYNAMIC_TAXONOMY = dynamic(backend_repr)
-          this.root = DYNAMIC_TAXONOMY.clone(true)
-        }
-        else{
-          this.root = MOCK_TAXONOMY.clone(true)
-        }
-       
-           
+
+        this.root = new Node("root", "root", [])
+        this.extend(backend_repr)   
     }
 
     /**
@@ -186,6 +141,24 @@
             this.root = new_root
         else
             return this.root.clone(true)
+    }
+
+
+    /**
+     * Extend a taxonomy.
+     */
+    Taxonomy.prototype.extend = function (flat) {
+        while (flat.length) {
+            var node = flat.shift()
+            var parent = this.root.dfs(node.parent)
+            
+            if (!parent) {
+                flat.push(node)
+                continue
+            }
+
+            parent.addChild(new FacetNode(node.id, node.name, []))
+        }
     }
 
     /**
