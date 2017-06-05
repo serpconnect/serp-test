@@ -27,6 +27,54 @@
 		}
 	}
 
+	function rewrite(taxonomy, extended) {
+		return function(edge) {
+			var node = taxonomy.root.dfs(edge.type)
+			
+			if (node)
+				return edge
+
+			if (!extended)
+				return undefined
+
+			function dfs(parent, node, search) {
+				if (node.id().toLowerCase() === search.toLowerCase())
+					return parent
+				
+				for (var i = 0; i < node.tree.length; i++) {
+					var found = dfs(node, node.tree[i], search)
+					if (found)
+						return found
+				}
+
+				return undefined
+			}
+
+			var facet = edge.type
+			do {
+				var parent = undefined
+				for (var i = 0; i < extended.root.tree.length; i++) {
+					var found = dfs(extended.root, extended.root.tree[i], facet)
+					if (found) {
+						parent = found
+						break;
+					}
+				}
+				
+				if (!parent)
+					return undefined
+
+				facet = parent.id()
+			} while (!taxonomy.root.dfs(facet))
+
+			return {
+				source: edge.source,
+				target: edge.target,
+				type: facet
+			}
+		}
+	}
+
 	/* construct a node
 	 *	node: the graph node
 	 *	current: current index, out of max
@@ -48,11 +96,30 @@
 		}
 	}
 
-	function graph(data, conf) {
+	function graph(taxonomy, extendedTaxonomy, data, conf) {
 		var edges = data.edges()
 			.filter(remove_unused)
 			.filter(unique_edges())
+			.map(rewrite(taxonomy, extendedTaxonomy))
+			.filter(e => e != undefined)
 			.map(e => process_edge(e, conf))
+			
+		/* map facet name to node id: <facet><number> */
+		var name2id = {}
+		var nameMap = {}
+		taxonomy.tree().map(function (node, i) {
+			nameMap[node.short] = { name: node.short.toLowerCase(), counter: 0 }
+		})
+		function count(parent, node) {
+			if (!node.isTreeLeaf())
+				node.mapP(count)
+			else {
+				name2id[node.short.toLowerCase()] = nameMap[parent.short].name + 
+																nameMap[parent.short].counter
+				nameMap[parent.short].counter += 1
+			}
+		}
+		taxonomy.tree().map(child => child.mapP(count))
 
 		var rc = 0, cc = 0,
 			maxr = data.research().length,
@@ -72,7 +139,7 @@
 
 		var add_facet_node = function(name, y) {
 			nodes.push({
-				id: conf.id_lookup(name),
+				id: name2id[name],
 				x: 0.5,
 				y: y,
 				size: 8,
@@ -82,15 +149,11 @@
 			})
 		}
 
-		var taxonomy = new SERP()
-		var totalCategories = Object.keys(taxonomy).length
-		taxonomy.forTop(facet => {
-			var len = 0
-
-			if (taxonomy[facet])
-				len = Object.keys(taxonomy[facet]).length
-
-			taxonomy[facet] = {
+		var facets = {}
+		var totalCategories = taxonomy.root.tree.length
+		taxonomy.tree().mapP(function initWeight(parent, node, i) {
+			var len = node.tree.length
+			facets[node.short.toLowerCase()] = {
 				nodes: len,
 				counter: 0,
 				offset: 0,
@@ -99,26 +162,28 @@
 			}
 		})
 
-		var totalWeight = Object.keys(taxonomy)
-			.map(facet => taxonomy[facet].weight)
-			.reduce((a, b) => a + b)
-
+		var totalWeight = Object.keys(facets)
+			.map(facet => facets[facet].weight)
+			.reduce((a, b) => a + b, 0)
 
 		var yHeight = 0.9
 		var currentY = 0.0
-		taxonomy.forTop(facet => {
-			var cat = taxonomy[facet]
+		taxonomy.tree().map(function place(node, i) {
+			var cat = facets[node.short.toLowerCase()]
 			cat.segmentSize = yHeight * (cat.weight / totalWeight)
 			cat.nodeSize = (cat.segmentSize * 0.75) / (cat.nodes)
 			cat.offset = currentY
 			currentY += cat.segmentSize
 		})
 
-		SERP.forEach((f, c) => {
-			if (!c) return
+		taxonomy.tree().mapP(function add(parent, node, i) {
+			if (!node.isTreeLeaf() || parent.isRoot())
+				return node.mapP(add)
 
-			var facet = taxonomy[f]
-			add_facet_node(c, 0.05 + facet.offset + facet.segmentSize * 0.125 + (facet.nodeSize * facet.counter))
+			var facet = facets[parent.short.toLowerCase()]
+			add_facet_node(node.short.toLowerCase(), 0.05 + facet.offset + 
+									facet.segmentSize * 0.125 + 
+									facet.nodeSize * facet.counter)
 			facet.counter += 1
 		})
 

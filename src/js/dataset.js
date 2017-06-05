@@ -46,10 +46,19 @@ Dataset.loadQuery = function(query, cb) {
 	throw new Error("NYI")
 }
 Dataset.loadCollection = function(id, cb) {
-	window.api.ajax("GET", window.api.host + "/v1/collection/" + id + "/graph")
-	 .done(function (data) {
-	 	cb(new Dataset(data))
-	 })
+
+	Promise.all([
+		window.api.ajax("GET", window.api.host + "/v1/collection/" + id + "/graph"),
+		api.v1.collection.taxonomy(id)
+	]).then(promise => {
+		var dataset = new Dataset(promise[0])
+		var taxonomy = undefined
+
+		if (window.Taxonomy)
+			taxonomy = promise[1].taxonomy
+		
+		cb(dataset, taxonomy)
+	})
 }
 Dataset.loadDefault = function(cb) {
 	if (Dataset.default) {

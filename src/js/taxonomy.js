@@ -37,7 +37,7 @@
      * in the new structure, or not.
      */
     Node.prototype.map = function(fn) { return this.tree.map(fn) }
-    
+    Node.prototype.mapP = function(fn) { return this.tree.map((child, i) => fn(this, child, i))}
     /**
      * Recursively remove nodes without any entity leaves.
      */

@@ -25,10 +25,11 @@
 
 	var instance = undefined,
 		ctrl = undefined,
-		list = undefined
+		list = undefined,
+		serpTaxonomy = undefined
 
-	function explore(dataset, into) {
-		var graph = window.graph(dataset, window.explore_conf)
+	function explore(taxonomy, extended, dataset, into) {
+		var graph = window.graph(taxonomy, extended, dataset, window.explore_conf)
 		if (instance) {
 			list.changeDataset(dataset)
 			instance.graph.clear()
@@ -77,18 +78,29 @@
 		}
 	}
 
-	function exploreSet(set) {
-		explore(set, $$('#graph'))
+	function exploreSet(set, taxonomy) {
+		var extended = undefined
+		if (taxonomy) {
+			var extended = new Taxonomy([])
+			extended.tree(serpTaxonomy.tree())
+			extended.extend(taxonomy)
+		} 
+		explore(serpTaxonomy, extended, set, $$('#graph'))
 	}
 
 	window.onload = function() {
 		$$('#explore').classList.add('current-view')
 		$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
 		$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
+
 		var hasCollection = window.location.hash.length > 0
 		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
 		var found = false
-		window.user.collections()
+
+		api.v1.taxonomy()
+			.then(data => new Taxonomy(data.taxonomy))
+			.then(taxonomy => serpTaxonomy = taxonomy)
+			.then(() => window.user.collections())
 			.done(collz => {
 				var selector = $$('#dataset')
 
