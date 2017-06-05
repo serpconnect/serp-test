@@ -166,6 +166,10 @@ $(function () {
         return ajax("GET", endpoint("/v1/collection/" + cID + "/classification"))
     }
 
+    v1.collection.taxonomy = function (cid) {
+        return ajax("GET", endpoint("/v1/collection/" + cid + "/taxonomy"))
+    }
+
 	// Admin API
 	v1.admin.acceptEntry = function (id) {
 		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
@@ -205,6 +209,13 @@ $(function () {
     //
     v1.entry.taxonomy = function (id) {
         return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
+    }
+    v1.entry.collection = function (id) {
+        return ajax("GET", endpoint(`/v1/entry/${id}/collection`))
+    }
+
+    v1.taxonomy = function() {
+        return ajax("GET", endpoint("/v1/entry/taxonomy"))
     }
 
     // Root API
