@@ -133,8 +133,10 @@
 	        window.location.hash = '#' + this.value
 			if (this.value === "main")
 				Dataset.loadDefault(exploreSet)
-			else
+			else{
+				console.log(this.value,exploreSet)
 				Dataset.loadCollection(this.value, exploreSet)
+			}
 		})
 
 		// Some browsers do not support the css calc(), or it doesn't work.

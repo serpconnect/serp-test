@@ -528,12 +528,7 @@ $(document).ready(function() {
 	 *     - button elements are added after the edit button
 	 * */
 	modals.entryModal = function(CID,entry, taxonomy, options) {
-		console.log("entry",entry)
-		console.log("taxonomy",taxonomy)
-
-		// var baseTax = Object.keys(window.central.getReverseMap())
-		// baseTax.filter()
-
+		console.log(CID)
 
        	var editBtn = el('button#editBtn.edit-btn', ['edit'])
 		var extraButtons = (options && options.button) || []
@@ -580,7 +575,7 @@ $(document).ready(function() {
         	var references =  Object.keys(taxonomy)
         	references.forEach(ref=>{
         		dynamicTaxonomy.taxonomy.forEach( dyn => { 
-        			if(dyn.parent.toUpperCase()==ref){
+        			if(dyn.parent.toUpperCase()==ref && taxonomy[dyn.id.toUpperCase()]!= undefined){
         				createSubElements(dyn.id,ref,taxonomy[dyn.id.toUpperCase()])
         			}
         		})
@@ -588,7 +583,6 @@ $(document).ready(function() {
 		 })
 
         createSubElements =function(id,parent,entities){
-
         	var nodes = entities.map( current=>{
         		return el('div.modal-sub-sub-item',[
         				current

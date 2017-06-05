@@ -88,7 +88,7 @@ $(function () {
 
 		window.api.ajax("GET", window.api.host + "/v1/entry/" + id).done(entry => {
 			window.api.ajax("GET", window.api.host + "/v1/entry/" + id + "/taxonomy").done(taxonomy => {
-				modals.entryModal(entry, taxonomy, {
+				modals.entryModal(cID,entry, taxonomy, {
                     button: [removeBtn]
 				})
 			})

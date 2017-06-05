@@ -1,6 +1,8 @@
 $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
+    
+    var CID = window.location.hash.substring(1)
 
     user.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
@@ -123,8 +125,7 @@ $(document).ready(function() {
                 entryButton('reject', 'btn', entryNumber)
             ]
         }
-
-        modals.entryModal(entry, entry.taxonomy, modalOpt)
+        modals.entryModal(CID,entry, entry.taxonomy, modalOpt)
     }
 
     function removeEntry(entryNumber) {
