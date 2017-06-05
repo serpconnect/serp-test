@@ -82,29 +82,22 @@ $(document).ready(function() {
 
     // fill each key with an array of strings for which to autocomplete on
     // current data is for illustration purposes
-    var autocompleteMap = {
-        "intervention": [],
-        "adapting": [],
-        "solving": [],
-        "assessing": [],
-        "improving": [],
-        "planning": [],
-        "design":  [],
-        "execution": [],
-        "analysis": [],
-        "people":  [],
-        "information": [],
-        "sut" : [],
-        "other": []
-    };
+    var autocompleteMap = {};
+    function getFacetEntities(facet) {
+        return autocompleteMap[facet] || []
+    }
 
     // load taxonomy for autocomplete purposes only
-    window.api.ajax("GET", window.api.host + "/v1/entry/taxonomy").done(taxonomy => {
-        for (var i = 0; i < taxonomy.length; i++) {
-            var facet = taxonomy[i]
-            autocompleteMap[facet.facet.toLowerCase()] = facet.text
-        }
-    })
+    function reloadAutocomplete(collectionId) {
+        api.v1.collection.classification(collectionId)
+            .then(classification => {
+                for (var i = 0; i < classification.length; i++) {
+                    var facet = classification[i]
+                    var samples = facet.text.filter(txt => txt !== 'unspecified')
+                    autocompleteMap[facet.facetId.toLowerCase()] = samples
+                }
+            })
+    }
 
     // the various categories that make up the effect facet
     var effectSubfacets = ["solving", "adapting", "assessing", "improving"];
@@ -118,8 +111,6 @@ $(document).ready(function() {
         $("#reference-area").hide();
         $("#doi-area").hide();
     }
-
-
 
     function submitEntry(entry) {
         var id = entry.id
@@ -516,6 +507,7 @@ $(document).ready(function() {
                     modals.clearAll()
                     querystring.c = ok.id
                     updateCollectionList()
+                    reloadAutocomplete(ok.id)
                 })
                 .fail(xhr => {
                     $('.modal-complaint').remove()
@@ -678,6 +670,10 @@ $(document).ready(function() {
         }
     });
 
+    document.getElementById("collection").addEventListener('change', function (evt) {
+        reloadAutocomplete(this.value)
+    }, false)
+
 
     var additionalDataDescriptors = {
         // format is the following:
@@ -772,7 +768,7 @@ $(document).ready(function() {
         })
 
         new Awesomplete( "#"+idAttr, {
-            list: autocompleteMap[idName],
+            list: getFacetEntities(idName),
             filter: ausomplete.autocompleteFilter,
             replace: ausomplete.autocompleteUpdate
         })

@@ -162,6 +162,10 @@ $(function () {
 		return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
 	}
 
+    v1.collection.classification = function (cID) {
+        return ajax("GET", endpoint("/v1/collection/" + cID + "/classification"))
+    }
+
 	// Admin API
 	v1.admin.acceptEntry = function (id) {
 		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
