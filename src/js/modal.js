@@ -145,7 +145,6 @@ $(document).ready(function() {
 	 /* Inspect facets modal with taxonomy extension for collection */
 	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries,CID) {
 		//implement dynamic loading.
-		console.log(newClass)
 		moveEntry = function (location,destination){
 			var dest = document.getElementById(destination)
 			var loc = document.getElementById(location)
@@ -183,9 +182,7 @@ $(document).ready(function() {
 		}
 		
 		function setDropdownValues(parentID){
-			console.log(parentID)
 			var children = document.getElementById(parentID+"-entry-container").children
-			console.log(children)
 			for(var i = 0; i < children.length; i++){
 				var entry = children[i];
 				entry.children[0].children[0].value = parentID
@@ -530,16 +527,23 @@ $(document).ready(function() {
 	 * options.button = [buttonEl, ..., buttonEl]
 	 *     - button elements are added after the edit button
 	 * */
-	modals.entryModal = function(entry, taxonomy, options) {
+	modals.entryModal = function(CID,entry, taxonomy, options) {
+		console.log("entry",entry)
+		console.log("taxonomy",taxonomy)
+
+		// var baseTax = Object.keys(window.central.getReverseMap())
+		// baseTax.filter()
+
+
        	var editBtn = el('button#editBtn.edit-btn', ['edit'])
 		var extraButtons = (options && options.button) || []
-		console.log(taxonomy)
 		var modal = el('div#modal.modal', [
 			el('div',[
 				el('div.modal-entry-type', [entry.type]),
 				closeButton(),
 				el('div.modal-header-title', [`entry #${entry.id}`]),
 				el("div.modal-divider"),
+				window.central.constructFacet(taxonomy,"ATTEMPT1"),
 				window.central.constructFacet(taxonomy, "Intervention"),
 				window.central.constructFacet(taxonomy, "Effect"),
 				window.central.constructFacet(taxonomy, "Scope"),
@@ -569,7 +573,35 @@ $(document).ready(function() {
         setTimeout(function(){
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
-	 }
+
+
+		window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
+                    .done(dynamicTaxonomy => {
+        	var references =  Object.keys(taxonomy)
+        	references.forEach(ref=>{
+        		dynamicTaxonomy.taxonomy.forEach( dyn => { 
+        			if(dyn.parent.toUpperCase()==ref){
+        				createSubElements(dyn.id,ref,taxonomy[dyn.id.toUpperCase()])
+        			}
+        		})
+	        })
+		 })
+
+        createSubElements =function(id,parent,entities){
+
+        	var nodes = entities.map( current=>{
+        		return el('div.modal-sub-sub-item',[
+        				current
+        			])
+        	})
+        	var facet = el('ul.modal-entry-facet',[
+        					el('div#'+id+'.modal-header-title',[id,nodes]) 
+        				])
+        	console.log(parent,document.getElementById(parent))
+        	document.getElementById(parent).appendChild(facet)
+        }
+
+    }                
 
 
 	/* Creates a modal with fuzzy search */

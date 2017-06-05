@@ -35,13 +35,17 @@ $(document).ready(function() {
                 this.name = name
     }
 
+     function getCollectionID(){
+            return document.getElementById('collection-dropdown').value 
+    }
+
+
     // When clicking on a table header in the inspection view, bring up all
     // entities (classified examples) and present them in a modal.
     $('th').click(evt => {
         if (!evt.target.classList.contains('clickable'))
             return
         var facet = evt.target.dataset.facet
-        console.log(facet, dataset)
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
@@ -81,7 +85,6 @@ $(document).ready(function() {
                     var newClass =[]
 
                     Facets.forEach(function(current){
-                        console.log(classification);
                         var classif=JSON.parse(JSON.stringify(classification))
                         while(classif.length!=0){
                             var x = classif.shift()
@@ -107,9 +110,6 @@ $(document).ready(function() {
             
         }
 
-        function getCollectionID(){
-            return document.getElementById('collection-dropdown').value 
-        }
 
         var update = function (entry) {
             window.api.ajax("GET", window.api.host + "/v1/entry/" + entry.id + "/taxonomy")
@@ -447,7 +447,7 @@ $(document).ready(function() {
         $(".entry-title").unbind("click").on("click", function(evt) {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
-
+            var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
@@ -472,7 +472,7 @@ $(document).ready(function() {
                  window.user.getEntry(id),
                  window.user.getTaxonomyEntry(id)
                ]).then(promise=>{
-                 window.modals.entryModal(promise[0],promise[1],
+                 window.modals.entryModal(CID,promise[0],promise[1],
                     admin ? { button: removeBtn } : {}
               )
             })
@@ -550,7 +550,7 @@ $(document).ready(function() {
         $("td:first-child").unbind("click").on("click", function(evt) {
             var entryNumber = $(this).data("entry-number");
             var id= dataset[entryNumber].id
-
+            var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
@@ -572,7 +572,8 @@ $(document).ready(function() {
                  window.user.getEntry(id),
                  window.user.getTaxonomyEntry(id)
                ]).then(promise=>{
-                 window.modals.entryModal(promise[0],promise[1],
+                console.log(promise[0],promise[1])
+                 window.modals.entryModal(CID,promise[0],promise[1],
                     admin ? { button: removeBtn } : {}
               )
             })

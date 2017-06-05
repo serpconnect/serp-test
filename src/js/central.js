@@ -60,7 +60,7 @@ $(document).ready(function() {
 
 		if (!samples.length) return undefined
 
-		return el("div.modal-header-title", [
+		return el("div#"+name.toUpperCase()+".modal-header-title", [
 			name,
 			samples.map(facet => central.constructSubfacet(taxonomy, facet))
 		])
