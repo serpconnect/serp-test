@@ -123,7 +123,7 @@ $(document).ready(function() {
 
     function submitEntry(entry) {
         var id = entry.id
-
+        console.log(entry)
         if (!id)
             return window.api.json("POST", window.api.host + "/v1/entry/new", entry)
 

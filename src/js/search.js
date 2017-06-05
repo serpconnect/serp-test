@@ -30,49 +30,67 @@ $(document).ready(function() {
         return type ? type.substring(1) : null
     }
 
+     dynamicEntries = function(id,name){
+                this.id = id
+                this.name = name
+    }
+
     // When clicking on a table header in the inspection view, bring up all
     // entities (classified examples) and present them in a modal.
     $('th').click(evt => {
         if (!evt.target.classList.contains('clickable'))
             return
         var facet = evt.target.dataset.facet
-        console.log(dataset)
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
             if (remaining !== 0) return
 
             var entities = entries.map(entry => entry.taxonomy[facet.toUpperCase()])
+           
             var unique = []
             for (var i = entities.length - 1; i >= 0; i--) {
                 var entity = entities[i]
                 if (!entity) continue
-
                 for (var j = entity.length - 1; j >= 0; j--) {
                     if (unique.indexOf(entity[j]) === -1)
                         unique.push(entity[j])
                 }
             }
-        //get dynamic taxonomy
-        //use same principle as above for subfacets and create a list of unique entries for each one
-        // entry
-             var items =["hh"]
-              dynEntries = []
-              //reuse fitsCurrentClassification() for dynEntries
-
-            if(uniqueCollection()){
+       if( isNaN(getCollectionID()) ){
                 //get unique facets + entries
-                    window.modals.dynamicInfoModal(facet,unique,items, dynEntries),function () {
+                   window.modals.infoModal(facet,unique),function () {
                 }
             }
-            else{
-                window.modals.infoModal(facet,unique),function () {
-                }
-            }
+        else{
+            var CID = getCollectionID()
+            window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/classification").done(classification =>{
+                console.log(classification)
+                window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/entities").done(entities =>{
+                    window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
+                    .done(dynamicTaxonomy => {
+                        window.modals.dynamicInfoModal(facet,unique,dynamicTaxonomy, entities,CID),function () {
+                        }
+                    })
+                    .fail(xhr => {
+                        console.log(xhr.responseText)
+                    }) 
+                }) 
+            })    
+        }
+        // items.forEach( function(cur){
+        //     console.log(cur[0])
+        // })
+        //get dynamic taxonomy
+        //get subfacets where facet = parent
+
+        //use same principle as above for subfacets and create a list of unique entries for each one
+              //reuse fitsCurrentClassification() for dynEntries
+            
         }
 
-        function uniqueCollection(){
-            return !isNaN( document.getElementById('collection-dropdown').value )
+        function getCollectionID(){
+            return document.getElementById('collection-dropdown').value 
         }
 
         var update = function (entry) {

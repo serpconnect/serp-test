@@ -143,45 +143,13 @@ $(document).ready(function() {
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
-	modals.dynamicInfoModal = function(facet, unique, subFac, dynEntries) {
+	modals.dynamicInfoModal = function(facet, unique, subFac, dynEntries,CID) {
 		//implement dynamic loading.
 		moveEntry = function (location,destination){
 			var dest = document.getElementById(destination)
 			var loc = document.getElementById(location)
 			dest.appendChild(loc)
 		}
-
-		// 	dropDownMenu = function(location,cont){
-		// 	var dropDownFacets = document.getElementsByClassName('modal-header-title')
-		// 	var list =[]
-		// 	while (cont.hasChildNodes()) {
-    // 			cont.removeChild(cont.lastChild);
-		// 	} //stops duplicates coming into list
-		//
-		// 	for(var i=0;i<dropDownFacets.length;i++){
-		// 		var cur = dropDownFacets[i]
-		// 		a = el('a', {
-		// 				text:cur.innerText
-		// 			})
-		// 		list.push( a )
-		//
-		// 		a.addEventListener('click', (evt) => {
-		// 			moveEntry(location, evt.target.innerHTML+"-entry-container")
-		// 			cont.classList.toggle("dropdown-show");
-		// 			evt.stopPropagation();
-		// 			//stops the parent calling event listener
-		// 		})
-		// 	}
-		// 	return list
-		// }
-
-		// function getDropFacets(evt){
-		// 		var content = evt.target.children[0]
-		// 		var entry = "entry" + evt.target.id.substring(8)
-		// 		appendChildren(content, dropDownMenu(entry,content))
-		// 		content.classList.toggle("dropdown-show");
-		// }//toggles the dropdown list from showing and not showing
-
 
 		generate_DropDown =function(i){
 			x = document.getElementsByClassName("dropdown-show")
@@ -193,8 +161,8 @@ $(document).ready(function() {
 			newEntryDropDown =
 					el("select.dropDowns", {id:"select"+i}, [
 						el("option", {value: facet}, [facet]),
-						subFac.map(e => {
-							return el("option", {value: e}, [e]);
+						subFac.taxonomy.map(e => {
+							return el("option", {value: e.id}, [e.id]);
 						})
 
 					])
@@ -266,21 +234,10 @@ $(document).ready(function() {
 
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newid,newname) {
-					var option = $("<option></option>").attr("value",newshort).text(newshort);
+					var option = $("<option></option>").attr("value",newid).text(newid);
 					$(".dropDowns").append(option);
-	      		//To DO - push to back end, then update modal.
       		var newNode = new window.taxFunc.Node(newid,newname,facet)
       		//removes facet and appends current entries to root facet
-      		removeBtn = el('div.modal-remove-facet', [])
-      		removeBtn.addEventListener('click', (evt)=>{
-						// Is there any way to actually get in here?
-      			var heading = evt.target.parentNode
-      			var entryContainer= document.getElementById(heading.id+'-entry-container')
-      			var children = GetFacetChildren(entryContainer)
-      			removeFacet(children)
-      			heading.remove()
-      		})
-
       		var facets = document.getElementsByClassName('facet-container')
       		for(var i=0; i < facets.length;i++){
       			var current = facets[i]
@@ -313,27 +270,57 @@ $(document).ready(function() {
 	    saveBtn.addEventListener("click", function(evt) {
 	    	//only save entries for sub facets- otherwise set to root
 	    	//
+	    	console.log(subFac)
 			var facets = document.getElementsByClassName('facet-container')
 			// var nodes = {}
+			var i=0
+			while(i<subFac.taxonomy.length){
+				current=subFac.taxonomy[i]
+				if(current.parent==facet){
+					var index= subFac.taxonomy.indexOf(current)
+					subFac.taxonomy.splice(i,1)
+					i=0
+				}
+				else{
+					i++
+				}
+			} //removes all subfacets with current.parent = facet from backend dynamic taxonomy
+
+			 
+			//
+			// subFac.taxonomy.forEach(function(current){
+			// 	if(current.parent==facet){
+			// 		var index= subFac.taxonomy.indexOf(current)
+			// 		subFac.taxonomy.splice(index,1)
+			// 	}
+			// })
+
 			for (var i =0;i < facets.length; i++){
-			current = facets[i].id
+				current = facets[i].id
 				if(current!=facet){
-					var node = {"taxonomy":{"id":current ,"name":current, "parent":facet}}
-					console.log(node,JSON.stringify(node))
-			window.api.json("PUT", window.api.host + "/v1/collection/1446/taxonomy", node)
+				console.log(current);
+				// var node = {"taxonomy":[{"name":current,"id":current,"parent":facet}],"version":+}
+				var node = {"id":current ,"name":current, "parent":facet}
+				subFac.taxonomy.push(node)
+				// adds all new subfacets with current.parent = facet to backend dynamic taxonomy
+
 				 //taxonomy
 				 	// y=document.getElementById(current+"-entry-container")
 
 					// x = GetFacetChildren(y)
 					// x.forEach( function(current){
-					// 	return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
-					}
-      			}
-      		
+						// return window.api.json("PUT", window.api.host + "/v1/entry/" + current.id, facets[i])
+				}
+      		}
+      		console.log(subFac)
+      		 window.api.json("PUT", window.api.host + "/v1/collection/"+CID+"/taxonomy", subFac).done(f => {
+      		 	
 
-   //    		console.log(nodes)	
-			// return window.api.json("PUT", window.api.host + "/v1/collection/1446/taxonomy", nodes
-      		console.log(nodes)
+      		 })
+
+      		 document.body.removeChild(modal)
+
+
         });
 
         document.body.appendChild(modal)
@@ -341,8 +328,16 @@ $(document).ready(function() {
 			document.getElementById('modal').classList.add('appear');
 		}, modalAnimation)
 
-        subFac.forEach( function(uniq){
-			generate_newFacet(document.getElementById(facet), uniq)
+         // dynamicTaxonomy.taxonomy.forEach( function(current){
+         //            if(current.parent==facet){
+         //                items.push(current.id);
+         //            }
+         //        })
+
+        subFac.taxonomy.forEach( function(uniq){
+			if(uniq.parent==facet){
+                        generate_newFacet(document.getElementById(facet), uniq.id)
+                    }
 		}) //creates sub facets on load
 
 		//dynEntries.forEach(){
