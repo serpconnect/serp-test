@@ -276,9 +276,22 @@ function load_entries(coll_id) {
 function load_taxonomy(entry_id) {
     console.log(entry_id)
     document.getElementById('entry').value = entry_id
-    return api.v1.entry.taxonomy(entry_id).then(function (classification) {
-        var taxonomy = new Taxonomy({})
-        return taxonomy.classify(classification)
+    
+    return new Promise((resolve, reject) => {
+        api.v1.entry.collection(entry_id).then(coll => {
+            return Promise.all([
+                api.v1.taxonomy(),
+                api.v1.entry.taxonomy(entry_id),
+                api.v1.collection.taxonomy(coll.id)
+            ]).then(data => {            
+                var taxonomy = new Taxonomy(data[0].taxonomy)
+                var classification = data[1]
+                var extension = data[2].taxonomy
+                
+                taxonomy.extend(extension)
+                resolve(taxonomy.classify(classification))
+            })
+        })
     })
 }
 

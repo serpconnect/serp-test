@@ -62,7 +62,6 @@ function classification_add_row(evt) {
 function generate_submit_classification(col) {
     clear_target()
     x = isDynamic(col) //returns -1 if false
-    console.log(x)
     if(x!=-1){
         backend_repr = generate_Taxonomy(dynamic_Taxonomies[x])
         var taxonomy = new Taxonomy(backend_repr)
@@ -159,7 +158,6 @@ taxFunc.save_taxonomy = function(col){
             if(isLeaf(current)){
                $(current).children( ".leaf" ).each(function() {
                     var parent = current.children[0].textContent
-                    console.log(current.children[0])
                     var child = $(this).children(".header")[0].children[0].textContent
                     var leaf = new Node(parent, child)
                     dynamic_classification.push(leaf);

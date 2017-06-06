@@ -264,10 +264,8 @@ $(document).ready(function() {
 	      		var newNode = new window.taxFunc.Node(newid,newname,facet)
 	      		//removes facet and appends current entries to root facet
 	      		var facets = document.getElementsByClassName('facet-container')
-                console.log(facets)
 	      		for(var i=0; i < facets.length;i++){
 	      			var current = facets[i]
-                    console.log(current.id, newNode.parent)
 		      		if(current.id === newNode.parent){
 		      			generate_newFacet(current, newNode['id'], newNode.name)
 		      			document.body.removeChild(this)
@@ -396,7 +394,6 @@ $(document).ready(function() {
 	            generate_newFacet(document.getElementById(facet), tax.id, tax.name)
                 var index = 0
 	            while(index < newClass.length){
-                    console.log(index, newClass[index].facetId, tax.id, tax.name)
 	            	if (newClass[index].facetId.toLowerCase() === tax.id.toLowerCase()){
 	            		var entities = newClass[index].text.map((id) =>
 						makeEntity(id))
@@ -524,74 +521,78 @@ $(document).ready(function() {
 	 * options.button = [buttonEl, ..., buttonEl]
 	 *     - button elements are added after the edit button
 	 * */
-	modals.entryModal = function(CID,entry, taxonomy, options) {
-		console.log(CID)
+	modals.entryModal = function(CID, entry, taxonomy, options) {
+        var classification = new Promise((resolve, reject) => {
+            api.v1.entry.collection(entry.id).then(coll => {
+                return Promise.all([
+                    api.v1.taxonomy(),
+                    api.v1.collection.taxonomy(coll.id)
+                ]).then(data => {            
+                    var serp = new Taxonomy(data[0].taxonomy)
+                    var extension = data[1].taxonomy
+                    
+                    serp.extend(extension)
+                    resolve(serp.classify(taxonomy))
+                })
+            })
+        })
+        .then(root => root.shake())
+        .then(root => {
+            function explore(node, depth) {
+                if (node.isEntityLeaf())
+                    return el("div.entity", [node.name()])
 
-       	var editBtn = el('button#editBtn.edit-btn', ['edit'])
-		var extraButtons = (options && options.button) || []
-		var modal = el('div#modal.modal', [
-			el('div',[
-				el('div.modal-entry-type', [entry.type]),
-				closeButton(),
-				el('div.modal-header-title', [`entry #${entry.id}`]),
-				el("div.modal-divider"),
-				window.central.constructFacet(taxonomy,"ATTEMPT1"),
-				window.central.constructFacet(taxonomy, "Intervention"),
-				window.central.constructFacet(taxonomy, "Effect"),
-				window.central.constructFacet(taxonomy, "Scope"),
-				window.central.constructFacet(taxonomy, "Context"),
-				el("div.modal-divider"),
-				entry.type === "challenge" ? [
-					el('div.modal-header-title', ['Description']),
-					el('div.modal-sub-item', [entry.description]),
-					el("div.modal-divider")
-				] : [
-					el('div.modal-header-title', ['References']),
-					el('div.modal-sub-item', [entry.reference]),
-					el('div.modal-header-title', ['DOI']),
-					el('div.modal-sub-item', [entry.doi]),
-					el("div.modal-divider")
-				],
-				editBtn,
-				extraButtons
-			])
-		])
+                var children = node.map((n, i) => explore(n, depth + 1))
+                if (depth > 2)
+                    return children
+                
+                return el("div.sublevel.level-" + depth, [
+                    node.name(),
+                    children
+                ])
+            }
 
-		editBtn.addEventListener("click", function(evt) {
-            window.location = `/submit.html?e=${entry.id}`;
-        });
+            return el("div.root", [
+                root && root.map((n, i) => explore(n, 0))
+                || "Entry is not classified"
+            ])
+        })
+        .then(html => {
+            var editBtn = el('button#editBtn.edit-btn', ['edit'])
+            var extraButtons = (options && options.button) || []
+            var modal = el('div#modal.modal', [
+                el('div',[
+                    el('div.modal-entry-type', [entry.type]),
+                    closeButton(),
+                    el('div.modal-header-title', [`entry #${entry.id}`]),
+                    el("div.modal-divider"),
+                    html,
+                    el("div.modal-divider"),
+                    entry.type === "challenge" ? [
+                        el('div.modal-header-title', ['Description']),
+                        el('div.modal-sub-item', [entry.description]),
+                        el("div.modal-divider")
+                    ] : [
+                        el('div.modal-header-title', ['References']),
+                        el('div.modal-sub-item', [entry.reference]),
+                        el('div.modal-header-title', ['DOI']),
+                        el('div.modal-sub-item', [entry.doi]),
+                        el("div.modal-divider")
+                    ],
+                    editBtn,
+                    extraButtons
+                ])
+            ])
 
-	    document.body.appendChild(modal)
-        setTimeout(function(){
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+            editBtn.addEventListener("click", function(evt) {
+                window.location = `/submit.html?e=${entry.id}`;
+            });
 
-
-		window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
-                    .done(dynamicTaxonomy => {
-        	var references =  Object.keys(taxonomy)
-        	references.forEach(ref=>{
-        		dynamicTaxonomy.taxonomy.forEach( dyn => { 
-        			if(dyn.parent.toUpperCase()==ref && taxonomy[dyn.id.toUpperCase()]!= undefined){
-        				createSubElements(dyn.id,ref,taxonomy[dyn.id.toUpperCase()])
-        			}
-        		})
-	        })
-		 })
-
-        createSubElements =function(id,parent,entities){
-        	var nodes = entities.map( current=>{
-        		return el('div.modal-sub-sub-item',[
-        				current
-        			])
-        	})
-        	var facet = el('ul.modal-entry-facet',[
-        					el('div#'+id+'.modal-header-title',[id,nodes]) 
-        				])
-        	console.log(parent,document.getElementById(parent))
-        	document.getElementById(parent).appendChild(facet)
-        }
-
+            document.body.appendChild(modal)
+            setTimeout(function(){
+                document.getElementById('modal').classList.add('appear');
+            }, modalAnimation)
+        })
     }                
 
 

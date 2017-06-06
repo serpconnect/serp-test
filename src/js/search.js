@@ -147,14 +147,11 @@ $(document).ready(function () {
         var nodes = []
         var nodemap = {}
 
-        console.log('process', collectionName, graph, extendedTaxonomy)
-
         // Map extended facet onto parent in serp taxonomy
         var ext2serp = {}
         if (extendedTaxonomy) {
             while (extendedTaxonomy.length) {
                 var facet = extendedTaxonomy.shift()
-                console.log(facet)
 
                 if (ext2serp[facet.parent]) {
                     ext2serp[facet.id] = ext2serp[facet.parent]
@@ -623,7 +620,6 @@ $(document).ready(function () {
                 window.user.getEntry(id),
                 window.user.getTaxonomyEntry(id)
             ]).then(promise => {
-                console.log(promise[0], promise[1])
                 window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
                 )
