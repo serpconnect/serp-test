@@ -161,7 +161,7 @@ $(document).ready(function() {
 					el("select.dropDowns", {id:"select"+i}, [
 						el("option", {value: facet}, [facet]),
 						subFac.taxonomy.filter(x => {return x.parent == facet}).map(e => {
-							return el("option", {value: e.id}, [e.id]);
+							return el("option", {value: e.id}, [e.name]);
 						})
 
 					])
@@ -232,7 +232,7 @@ $(document).ready(function() {
 			generate_textBox()
 		})
 
-		generate_newFacet = function(current, id){
+		generate_newFacet = function(current, id, name){
 
 			removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
@@ -243,10 +243,10 @@ $(document).ready(function() {
       			removeFacet(children)
       			heading.remove()
       		})
-
-      		var newFacet = el('div#'+id+'.facet-container',[
+            console.log(name, id)
+      		var newFacet = el('div#'+id+'.facet-container', { 'data-name': name }, [
       								// el("div.modal-divider"),
-									el('div.dyn-modal-header-title',[id] ),
+									el('div.dyn-modal-header-title',[String(name)] ),
 									removeBtn,
 									el("div#"+id+"-entry-container.entry-container",[
 										])
@@ -258,8 +258,12 @@ $(document).ready(function() {
 
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newid,newname) {
+            console.log(newname)
 	      	if(newIDisValid(newid)) {
-				var option = $("<option></option>").attr("value",newid).text(newid);
+                newid = newid.toUpperCase()
+				var option = $("<option></option>")
+                    .attr("value",newid)
+                    .text(newname);
 				$(".dropDowns").append(option);
 	      		var newNode = new window.taxFunc.Node(newid,newname,facet)
 	      		//removes facet and appends current entries to root facet
@@ -267,7 +271,7 @@ $(document).ready(function() {
 	      		for(var i=0; i < facets.length;i++){
 	      			var current = facets[i]
 		      		if(current.id==newNode['parent']){
-		      			generate_newFacet(current, newNode['id'])
+		      			generate_newFacet(current, newNode['id'], newNode.name)
 		      			document.body.removeChild(this)
 		      			return
 		      		}
@@ -371,9 +375,11 @@ $(document).ready(function() {
       		//sorts out dynamic taxonomy
 			for (var i =0;i < facets.length; i++){
 				var current = facets[i].id
+				var facetName = facets[i].dataset.name
+
 				if(current!=facet){
 				// var node = {"taxonomy":[{"name":current,"id":current,"parent":facet}],"version":+}
-				var node = {"id":current ,"name":current, "parent":facet}
+				var node = {"id":current ,"name":facetName, "parent":facet}
 				subFac.taxonomy.push(node)
 				// adds all new subfacets with current.parent = facet to backend dynamic taxonomy
 				}
@@ -397,7 +403,7 @@ $(document).ready(function() {
         
         subFac.taxonomy.forEach( (tax,i) => {
         	if(tax.parent == facet){
-	            generate_newFacet(document.getElementById(facet), tax.id, i)
+	            generate_newFacet(document.getElementById(facet), tax.id, tax.name)
 	            var index=0
 	            while(index < newClass.length){
 	            	if (newClass[index].facetId==tax.id.toUpperCase()){
