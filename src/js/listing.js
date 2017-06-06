@@ -1,5 +1,8 @@
 (function(scope) {
 
+	getCollectionID = function(){
+		return document.getElementById('dataset').value
+	}
 
 	function makeEntry(entry) {
 		var entryId = String(entry.id)
@@ -21,9 +24,11 @@
 
 	function inspectEntry(evt) {
 		var id = this.dataset.entryId
+		var options =[]
+		var CID = getCollectionID()
 		window.user.getEntry(id).done(entry => {
 			window.user.getTaxonomyEntry(id).done(taxonomy => {
-				window.modals.entryModal(entry, taxonomy),function () {
+				window.modals.entryModal(CID, entry, taxonomy),function () {
 
 					}
 			})

@@ -1,0 +1,18 @@
+extends base
+block view-specific-scripts
+
+    // app
+    script(src="js/util/el.js")
+    script(src="js/taxonomy.js")
+    script(src="js/tax-playground.js")
+    script(src="js/modal.js")
+    script(src="js/central.js")
+
+block content
+    h1 taxonomy playground
+    select#collect.options
+    select#entry.options
+    button#modal.btn modal
+    button#generate.btn generate
+    button#inspect.btn inspect
+    div#taxonomy

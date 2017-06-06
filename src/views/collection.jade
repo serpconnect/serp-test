@@ -3,6 +3,8 @@ block view-specific-scripts
     script(src="js/util/el.js")
     script(src="js/collection.js")
     script(src="js/modal.js")
+    script(src="js/taxonomy.js")
+    script(src="js/taxonomy-functionality.js")
     script(src="js/export.js")
     
 block content
@@ -18,8 +20,8 @@ block content
                 span#id.user-email id
                 span#owner.user-email owner
                 div.user-options
+                    div
                     button#leave.btn leave collection
                     button#export.btn export collection
-                    
                 div.collections-main-title statistics
                     p.collection-stats 0 entries, 0 members

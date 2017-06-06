@@ -31,7 +31,9 @@ $(document).ready(function() {
         "sut" : "Properties of SUT",
         "other": "Other"
     }
-
+    central.getReverseMap =function(){
+    	return reverseMap
+    }
 	central.constructEntities= function(taxonomy, facet) {
 		var filtered = taxonomy[facet] || []
 
@@ -58,7 +60,7 @@ $(document).ready(function() {
 
 		if (!samples.length) return undefined
 
-		return el("div.modal-header-title", [
+		return el("div#"+name.toUpperCase()+".modal-header-title", [
 			name,
 			samples.map(facet => central.constructSubfacet(taxonomy, facet))
 		])

@@ -39,6 +39,10 @@ $(function () {
 		$('#id').text(collection.id)
 	}
 
+	function getCollectionName(){
+		return $('#name').text()
+	}
+
 	/* X member(s), Y entr(y|ies) */
     function formatStats(members, entries) {
         var mems = members === 1 ? "member" : "members"
@@ -51,6 +55,13 @@ $(function () {
 		$('.collection-stats').text(formatStats(stats.members, stats.entries))
 	}
 
+	$("#taxonomy").click(evt => { 
+        window.modals.taxonomyModal(cID, getCollectionName(), function () {
+            
+        })
+    })
+
+	document.getElementById('leave').addEventListener('click', leave, false)
     // Create leave collection modal
 	document.getElementById('leave').addEventListener('click', (evt) => {
 		var title = `${$('#name').text()} (#${cID})`

@@ -17,6 +17,8 @@ $(document).ready(function() {
     });
 
     var querystring = {}
+    var collectionTaxonomy = undefined
+
     // find a more permanent fix for this
     // without setTimeout the additional-data elements don't appear in firefox,
     if (window.location.search) {
@@ -46,6 +48,8 @@ $(document).ready(function() {
                         .attr("value", coll.id)
                     })
                 ).val(querystring.c || def)
+            if (!querystring.e)
+                selectCollection(querystring.c || def)
         })
     }
     updateCollectionList()
@@ -58,17 +62,21 @@ $(document).ready(function() {
     var currentEntry = undefined
     if (querystring.e) {
         var eurl = window.api.host + "/v1/entry/" + querystring.e
-        window.api.ajax("GET", eurl)
-            .done(entry => {
-                window.api.ajax("GET", eurl + "/taxonomy").done(taxonomy => {
-                    currentEntry = entry
+        var entry = undefined
+        Promise.all([
+            api.v1.entry.collection(querystring.e),
+            api.ajax("GET", eurl),
+            api.v1.entry.taxonomy(querystring.e)
+        ]).then(promise => {
+            entry = promise[1]
+            entry.entryType = entry.type
+            entry.serpClassification = promise[2]
+            currentEntry = entry
 
-                    entry.serpClassification = taxonomy
-                    entry.entryType = entry.type
-
-                    fillAccordingToEntry(entry, true)
-                })
-            })
+            return selectCollection(promise[0].id)
+        }).then(() => {
+            fillAccordingToEntry(entry, true)
+        })
     }
 
     // clear all checkboxes upon refreshing the page
@@ -82,29 +90,113 @@ $(document).ready(function() {
 
     // fill each key with an array of strings for which to autocomplete on
     // current data is for illustration purposes
-    var autocompleteMap = {
-        "intervention": [],
-        "adapting": [],
-        "solving": [],
-        "assessing": [],
-        "improving": [],
-        "planning": [],
-        "design":  [],
-        "execution": [],
-        "analysis": [],
-        "people":  [],
-        "information": [],
-        "sut" : [],
-        "other": []
-    };
+    var autocompleteMap = {};
+    function getFacetEntities(facet) {
+        return autocompleteMap[facet] || []
+    }
 
     // load taxonomy for autocomplete purposes only
-    window.api.ajax("GET", window.api.host + "/v1/entry/taxonomy").done(taxonomy => {
-        for (var i = 0; i < taxonomy.length; i++) {
-            var facet = taxonomy[i]
-            autocompleteMap[facet.facet.toLowerCase()] = facet.text
+    function reloadAutocomplete(collectionId) {
+        api.v1.collection.classification(collectionId)
+            .then(classification => {
+                for (var i = 0; i < classification.length; i++) {
+                    var facet = classification[i]
+                    var samples = facet.text.filter(txt => txt !== 'unspecified')
+                    autocompleteMap[facet.facetId] = samples
+                }
+            })
+    }
+
+    byNbrOfChildren = function(a, b) {
+        return a.children.length - b.children.length
+    }
+
+    /* Generate a classification setup a la submit page */
+    function classification_remove_row(evt) {
+        var sample = this.parentNode
+        sample.parentNode.removeChild(sample)
+    }
+    
+    /* when user clicks the [+] of a facet */
+    function classification_add_row(evt) {
+        var remove = el("div.remove", ["✖"])
+        remove.addEventListener('click', classification_remove_row) 
+
+        var input = el('input')
+        var row = el('div.entity-sample', [
+            input,
+            remove
+        ])
+        this.parentNode.appendChild(row)
+
+        var facet = this.parentNode.querySelector('.header').dataset.facetId
+        new Awesomplete( input, { 
+            list: autocompleteMap[facet], 
+            filter: ausomplete.autocompleteFilter, 
+            replace: ausomplete.autocompleteUpdate
+        })
+
+        return row
+    }
+
+    /* when user changes the checkbox value of a facet */
+    function classification_checkbox_click(evt) {
+        var header = this.parentNode
+
+        if (!this.checked) {
+            /* the [+] and inputs are siblings to the header */
+            while (header.nextSibling)
+                header.parentNode.removeChild(header.nextSibling)
+        } else {
+            // TODO: Load text from somewhere
+            var add = el("div.additional-data", ["click to add new leaf +"])
+            add.addEventListener('click', classification_add_row, false)
+            header.parentNode.insertBefore(add, header.nextSibling)
         }
-    })
+    }
+    
+    generate_checkbox = function() {
+        var box = el("input", {type:"checkbox"})
+        box.addEventListener('change', classification_checkbox_click, false)
+        return box
+    }
+
+    function generateClassification(taxonomy) {
+        /**
+         * div.classification
+         *     div.node
+         *         span "Effect"
+         *         div.leaf
+         *             div.header
+         *                 label "Solve new problem"
+         *                 input "[x]"
+         *             div.additional-data "click to add description +"
+         *             div.entity-sample
+         *                 input
+         *                 div.remove "x"
+         */
+        var clazz = el('div.classification#classification', taxonomy.tree().map(
+            function build(node, i) {
+                if (node.isTreeLeaf()) {
+                    return el("div.leaf", [
+                        el("div.header", {'data-facet-id': node.short}, [
+                            el("label", [node.name()]),
+                            generate_checkbox()
+                        ])
+                    ])
+                } else {
+                    return el("div.node", [
+                        el("span", [node.name()]),
+                        node.map(build).sort(byNbrOfChildren)
+                    ])
+                }
+            }).sort(byNbrOfChildren))
+
+        var div = document.querySelector('.submit-facets')
+        while (div.firstChild)
+            div.removeChild(div.lastChild)
+        div.appendChild(clazz)
+    }
 
     // the various categories that make up the effect facet
     var effectSubfacets = ["solving", "adapting", "assessing", "improving"];
@@ -119,8 +211,6 @@ $(document).ready(function() {
         $("#doi-area").hide();
     }
 
-
-
     function submitEntry(entry) {
         var id = entry.id
 
@@ -132,34 +222,16 @@ $(document).ready(function() {
     }
 
     function getClassification() {
-        var classification = {
-                "intervention": null,
-                "adapting": null,
-                "solving": null,
-                "assessing": null,
-                "improving":null,
-                "planning":null,
-                "design": null,
-                "execution":null,
-                "analysis":null,
-                "people": null,
-                "information": null,
-                "sut" : null,
-                "other": null
-        };
+        var classification = {}
 
-        $(".checkbox input:checked").each(function() {
-            var subfacet = $(this).attr("name");
-            classification[subfacet] = [];
-            var $parent = $(this).closest(".sub-facet");
-            var $additionalData = $parent.find(".additional-data-wrapper input");
-            $additionalData.each(function() {
-                // save the additional data for this subfacet
-                classification[subfacet].push($(this).val());
-            })
-            // if entry was selected but not examplified, tell backend it is unspecified
-            if (!classification[subfacet].length)
-                classification[subfacet].push("unspecified")
+        $(".header > input:checked").each(function() {
+            var parent = this.parentNode
+            var facet = parent.dataset.facetId
+            var samples = Array.from(parent.
+                parentNode.querySelectorAll(".entity-sample input"))
+                .map(sample => sample.value)
+
+            classification[facet] = samples || ['unspecified']
         });
 
         return classification;
@@ -168,18 +240,14 @@ $(document).ready(function() {
     function clearPageState() {
         clearInputBoxes();
         clearCheckboxes();
-        enableEffectFacet();
         clearComplaints();
     }
 
     function clearCheckboxes() {
         // iterate over each checkbox that has been checked
-        $(".checkbox input:checked").each(function() {
-            var $parent = $(this).closest(".sub-facet");
-            // remove the checks from checkboxes and its associated divs
-            $(this).attr("checked", false);
-            $parent.find(".additional-data").remove();
-            $parent.find(".additional-data-wrapper").remove();
+        $(".header > input:checked").each(function() {
+            this.checked = false
+            classification_checkbox_click.bind(this).call({})
         });
     }
 
@@ -188,28 +256,6 @@ $(document).ready(function() {
         $("#doi").val("");
         $("#reference").val("");
         $("#description").val("");
-    }
-
-    function enableEffectFacet() {
-        for (var i = 0; i < effectSubfacets.length; i++) {
-            var subfacet = effectSubfacets[i];
-            var $input = $("#" + subfacet + "-box");
-            // enable all of the subfacets once again
-            $input.removeAttr("disabled");
-            $input.closest("label.sub-facet").removeClass("disabled-subfacet");
-        }
-    }
-
-    function disableEffectFacet(name) {
-        for (var i = 0; i < effectSubfacets.length; i++) {
-            var subfacet = effectSubfacets[i];
-            if (subfacet !== name) {
-                var $input = $("#" + subfacet + "-box");
-                $input.attr("disabled", "true");
-                $input.closest("label.sub-facet").addClass("disabled-subfacet");
-            } else {
-            }
-        }
     }
 
     // creates a table row with the data contained in entry
@@ -239,23 +285,12 @@ $(document).ready(function() {
 
         $row.append(titleCell);
 
-        // effect
-        createCell("solving");
-        createCell("adapting");
-        createCell("assessing");
-        createCell("improving");
-
-        // scope
-        createCell("planning", true);
-        createCell("design", true);
-        createCell("execution", true);
-        createCell("analysis", true);
-
-        // context
-        createCell("people");
-        createCell("information");
-        createCell("sut");
-        createCell("other");
+        collectionTaxonomy.tree().map(function create(node, i) {
+            if (!node.isTreeLeaf())
+                node.map(create)
+            else
+                createCell(node.short)
+        })
 
         // position + 2 rationale: nth-child(1) === table head
         // => we need to offset with 1
@@ -288,21 +323,10 @@ $(document).ready(function() {
         }
     }
 
-    function getEntry() {
-        if ($("#collection").attr("disabled") === "disabled") {
-            // if dropdown is disabled => use input for new collection name
-            var collection = $("#new-collection").val();
-            // add the new collection name to the dropdown
-            var $option = jqEl("option").attr("value", collection).text(collection);
-            $("#collection").append($option);
-        } else {
-            // otherwise, use selected option in dropdown
-            var collection = $("#collection").val();
-        }
-
+    function getEntry() {      
         var entry = {
             entryType: $(".circular-checkbox input:checked").val(),
-            collection: collection,
+            collection: $("#collection").val(),
             reference: $("#reference").val(),
             description: $("#description").val(),
             doi: $("#doi").val(),
@@ -354,26 +378,30 @@ $(document).ready(function() {
 
         // toggle the correct radio button
         $("#" + entry["entryType"] + "-button").trigger("click");
-        var classifications = entry["serpClassification"];
+        var classification = entry.serpClassification
 
         // fill in the correct checkboxes
-        for (var key in classifications) {
-            var subfacet = key.toLowerCase()
-            if (classifications[key]) {
-                var $subfacetInput = $("#" + subfacet + "-box");
-                $subfacetInput.trigger("click");
+        for (var key in classification) {
+            var header = document.querySelector(`[data-facet-id="${key}"]`)
+            
+            var checkbox = header.querySelector('input')
+            checkbox.checked = true
+            classification_checkbox_click.bind(checkbox).call({})
+            
+            var leaf = header.parentNode
+            var addData = leaf.querySelector('.additional-data')
 
-                var subfacetData = classifications[key];
-                if (subfacetData[0] === "unspecified")
-                    continue
-                // fill in the additional data that's been specified for the checkboxes
-                for (var i = 0; i < subfacetData.length; i++) {
-                    var datum = subfacetData[i];
-                    var $additionalData = createAdditionalInput(subfacet, $subfacetInput.closest(".sub-facet"));
-                    $additionalData.val(datum);
-                }
+            var entities = classification[key];
+            if (entities[0] === "unspecified")
+               continue
+
+            // fill in the additional data that's been specified for the checkboxes
+            for (var i = 0; i < entities.length; i++) {
+                var row = classification_add_row.bind(addData).call({})
+                row.querySelector('input').value = entities[i]
             }
         }
+        
         if (!noswap)
             swapButtons();
     }
@@ -398,7 +426,7 @@ $(document).ready(function() {
 
     function removeEntry(entryNumber) {
         // remove the entry from the table
-        var position = entryNumber + 2;
+        var position = Number(entryNumber) + 2;
         $("#queue-table tr:nth-child(" + position + ")").remove();
         // remove from our internal array
         queuedEntries.splice(entryNumber, 1);
@@ -407,7 +435,7 @@ $(document).ready(function() {
         $cells.splice(0, entryNumber);
         $cells.each(function(cell) {
             var $cell = $($cells[cell]);
-            var oldEntryNumber = $cell.data("entryNumber");
+            var oldEntryNumber = Number($cell.data("entryNumber"));
             $cell.data("entryNumber", oldEntryNumber - 1);
         });
         // clear the input boxes
@@ -425,15 +453,7 @@ $(document).ready(function() {
         $(".additional-data-wrapper").remove();
 
         // clear stuff related to creating a new collection
-        $("#collection").removeAttr("disabled");
-        $("#collection").removeClass("disabled-dropdown");
         $("#submit-create-collection").text("create a new collection");
-        var $newCollection = $("#new-collection");
-        $newCollection.slideUp();
-        if ($newCollection.val().length > 0) {
-            $("#collection").val($newCollection.val());
-        }
-        $newCollection.val("");
     }
 
     /* All interactive/clickable elements */
@@ -516,6 +536,7 @@ $(document).ready(function() {
                     modals.clearAll()
                     querystring.c = ok.id
                     updateCollectionList()
+                    reloadAutocomplete(ok.id)
                 })
                 .fail(xhr => {
                     $('.modal-complaint').remove()
@@ -528,7 +549,6 @@ $(document).ready(function() {
     });
 
     $("#submit-btn").on("click", function(evt) {
-
         var isSubmitBtn = this.textContent === "submit"
         if (isSubmitBtn) {
             var entry = getEntry()
@@ -640,144 +660,50 @@ $(document).ready(function() {
         $("#description-area").slideToggle();
         $("#doi-area").slideToggle();
         clearComplaints();
-        updateCheckboxText();
     });
 
-  // event handler for classifying submissions
+    function generateOverviewTable(taxonomy) {
+        var div = document.getElementById('queue-table')
+        while (div.firstChild)
+            div.removeChild(div.lastChild)
 
-    $(".checkbox input").on("click", function(evt) {
-        var thisEl = $(this);
-        var name = thisEl.attr("name");
+        var thead = el('thead', [
+            el('tr', [
+                el('th'),
+                taxonomy.tree().map(function build(node, i) {
+                    if (!node.isTreeLeaf())
+                        return node.map(build)
+                    return el('th', [node.long])
+                })
+            ])
+        ])
 
-
-        // if the input box has been checked
-        if (thisEl.is(":checked")) {
-            // create the additional info text snippet
-            var descriptor = getAdditionalDataDescriptor(name);
-            var $infoText = jqEl("div").addClass("additional-data").text("click to add " + descriptor + " +");
-
-            // create an event handler for when the text snippet is clicked on
-            $infoText.on("click", function(evt) {
-                createAdditionalInput(name, $(this).parent());
-            });
-
-            thisEl.closest("label.sub-facet").append($infoText)
-
-            // check to see if the checkbox that was clicked was part of the
-            // effect facet
-            if (effectSubfacets.indexOf(name) > -1) {
-                disableEffectFacet(name);
-            }
-        } else {
-            // check to see if an effect subfacet was unchecked
-            if (effectSubfacets.indexOf(name) > -1) {
-                enableEffectFacet();
-            }
-            thisEl.closest("label.sub-facet").find(".additional-data-wrapper").remove();
-            thisEl.closest("label.sub-facet").find(".additional-data").remove();
-        }
-    });
-
-
-    var additionalDataDescriptors = {
-        // format is the following:
-        // subfacet:
-        //    [challenge text, research text]
-
-        // Intervention facet
-        "intervention":
-            ["an intervention under study", "an intervention under study"],
-
-        // Effect facet
-        "adapting":
-            ["description of test context challenge", "targeted test context"],
-        "solving":
-            ["a problem description", "a problem description"],
-        "assessing":
-            ["assessment target", "observed effect on test assessment"],
-        "improving":
-            ["improvement target", "observed improvement"],
-
-        // Scope facet
-        "planning":
-            ["a task-description", "a task-description"],
-        "design":
-            ["a task-description", "a task-description"],
-        "execution" :
-            ["a task-description", "a task-description"],
-        "analysis":
-            ["a task-description", "a task-description"],
-
-        // Context facet
-        "people":
-            ["description of a delimiting factor", "description of a delimiting factor"],
-        "information":
-            ["description of a delimiting factor", "description of a delimiting factor"],
-        "sut" :
-            ["description of a delimiting factor", "description of a delimiting factor"],
-        "other":
-            ["description of a delimiting factor", "description of a delimiting factor"]
+        div.appendChild(thead)
+        div.appendChild(el('tbody'))
     }
 
-    function getAdditionalDataDescriptor(subfacet) {
-        var isChallenge = $(".circular-checkbox input:checked").val() === "challenge";
-        var descriptor = isChallenge ? additionalDataDescriptors[subfacet][0] : additionalDataDescriptors[subfacet][1];
-        return descriptor;
-    }
+    function selectCollection(id) {
+        $("#collection").val(id)
+        reloadAutocomplete(id)
 
-    function updateCheckboxText() {
-        for (var subfacet in additionalDataDescriptors) {
-            var descriptor = getAdditionalDataDescriptor(subfacet);
-            $("#" + subfacet + "-box").parent().siblings(".additional-data").text("click to add " + descriptor + " +");
-        }
-    }
-
-    // factory function to create and insert the input element for supplying the additional data
-    function createAdditionalInput(text, element) {
-        var $inputParent = jqEl("div").addClass("additional-data-wrapper").addClass("ui-widget");
-        var $input = jqEl("input").attr("placeholder", "enter additional data for " + text).attr("name", text);
-        $input.addClass("facet-additional-input");
-
-
-        // we need an id for jquery ui's autocomplete to work
-        // idName e.g. "analysis" from "analysis-box" etc
-        var idName = element.children().children().attr("id").split("-")[0];
-        var idAttr = idName + $(".facet-additional-input").length;
-        $input.attr("id", idAttr);
-
-        var $removeBtn = jqEl("div");
-        $removeBtn.addClass("remove-additional-data");
-        $removeBtn.on("click", function(evt) {
-            $input.remove();
-        });
-
-        $inputParent.append($input);
-        $inputParent.append($removeBtn);
-        element.append($inputParent);
-
-        // Scroll down if autocomplete box isn't fully visible.
-        $input.on("click", function(evt) {
-            var len = 230 // max height of autocomplete (ish)
-
-            // Imagine a box (autocomplete) within another box (browser).
-            var winMinY = window.scrollY
-            var winMaxY = winMinY + window.innerHeight
-            var divMinY = $input.offset().top
-            var divMaxY = divMinY + len
-
-            // User must have been able to click the input field, i.e.
-            // divMinY < winMinY, otherwise it shouldn't be visible.
-             if (divMaxY > winMaxY)
-                scrollDown(winMinY + (divMaxY - winMaxY))
+        return Promise.all([
+            api.v1.taxonomy(),
+            api.v1.collection.taxonomy(id),
+        ]).then(promise => {
+            var taxonomy = new Taxonomy(promise[0].taxonomy)
+            taxonomy.extend(promise[1].taxonomy)
+            collectionTaxonomy = taxonomy
+            return taxonomy
         })
-
-        new Awesomplete( "#"+idAttr, {
-            list: autocompleteMap[idName],
-            filter: ausomplete.autocompleteFilter,
-            replace: ausomplete.autocompleteUpdate
+        .then(taxonomy => {
+            generateClassification(taxonomy)
+            generateOverviewTable(taxonomy)
         })
-        return $input;
     }
+
+    document.getElementById("collection").addEventListener('change', function (evt) {
+        selectCollection(this.value)
+    }, false)
 
     // more efficient way of creating elements than purely using jquery;
     // basically an alias for document.createElement - returns a jquery element

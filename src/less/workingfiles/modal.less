@@ -53,10 +53,81 @@
   transform:translateY(0);
 }
 
+.dyn-modal {
+    overflow: hidden;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+
+    -webkit-transition: all 200ms ease-in;
+    -moz-transition: all 200ms ease-in;
+    transition: all 200ms ease-in;
+
+    // hide initially
+    opacity: 1;
+    pointer-events: auto;
+
+}
+
+// modal content
+.dyn-modal > div {
+    min-width: 500px;
+    max-width: 700px;
+
+    max-height: 400px;
+
+    background: #fff;
+    position: relative;
+    margin: 7% auto;
+
+    padding: 30px;
+    background-color: @bg-color;
+    border-radius: 2px;
+
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    opacity:0;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    transform:translateY(-200px);
+    -webkit-transition: all 200ms ease-in;
+    -moz-transition: all 200ms ease-in;
+    transition: all 200ms ease-in;
+
+}
+
+.dyn-modal.appear > div {
+  opacity:1;
+  transform:translateY(0);
+}
+
+.dyn-modal-button-wrapper{
+    float:right;
+    > button{
+        margin-left:5px;
+    }
+}
+
+.modal-entry-facet{
+    margin: 0;
+}
+
+
 //for smaller confrimation modals
 .modal.confirm > div{
+    margin: 0 auto;
     max-width: 25%;
     max-height: 10%;
+}
+
+.modal.textBox > div{
+    margin: 0 auto;
+    max-width: 25%;
+    max-height: 20%;
 }
 
 .modal h2 {
@@ -126,6 +197,20 @@
     margin-top: 15px;
     margin-bottom: 15px;
 }
+
+.modal-sub-divider {
+    border-bottom: 1px solid @super-light-gray;
+    width: 75%;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.modal-small-divider {
+    border-bottom: 1px solid @super-light-gray;
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
 .modal-sub-item {
     margin-left: 20px;
     font-size: 11pt;
@@ -148,7 +233,6 @@
 .modal-entry > button {
     float: right;
 }
-
 .modal-input-box {
     font-family: "Open Sans";
     font-size: 12pt;
@@ -225,4 +309,10 @@
     margin-bottom: 10px;
     vertical-align: top;
     color: @red;
+}
+
+#centerTextBox {
+     overflow:hidden;
+    margin-top: 20%;
+    position: relative;
 }
