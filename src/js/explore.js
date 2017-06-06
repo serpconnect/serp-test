@@ -130,13 +130,13 @@
 			})
 
 		$$('#dataset').addEventListener('change', function (evt) {
-	        window.location.hash = '#' + this.value
-			if (this.value === "main")
+			if (this.value === "main") {
+                window.location.hash = ""
 				Dataset.loadDefault(exploreSet)
-			else{
-				console.log(this.value,exploreSet)
+            } else {
+                window.location.hash = '#' + this.value
 				Dataset.loadCollection(this.value, exploreSet)
-			}
+            }
 		})
 
 		// Some browsers do not support the css calc(), or it doesn't work.

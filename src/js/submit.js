@@ -107,7 +107,7 @@ $(document).ready(function() {
             })
     }
 
-    byNbrOfChildren = function(a, b) {
+    function byNbrOfChildren (a, b) {
         return a.children.length - b.children.length
     }
 
@@ -155,7 +155,7 @@ $(document).ready(function() {
         }
     }
     
-    generate_checkbox = function() {
+    function generate_checkbox () {
         var box = el("input", {type:"checkbox"})
         box.addEventListener('change', classification_checkbox_click, false)
         return box

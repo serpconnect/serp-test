@@ -1,6 +1,6 @@
 (function(scope) {
 
-	getCollectionID = function(){
+	function getCollectionID(){
 		return document.getElementById('dataset').value
 	}
 

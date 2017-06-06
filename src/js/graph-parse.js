@@ -19,6 +19,9 @@
 
 	/* Connect an entry node with a facet node */
 	function process_edge(edge, conf) {
+		var targetId = conf.id_lookup(edge.type.toLowerCase())
+		if (!targetId)
+			console.log(edge.type.toLowerCase(), remove_unused(edge))
 		return {
 			id: `${edge.source}--${edge.type}--${edge.target}`,
 			source: edge.source + "",
@@ -98,10 +101,10 @@
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
 		var edges = data.edges()
-			.filter(remove_unused)
 			.filter(unique_edges())
 			.map(rewrite(taxonomy, extendedTaxonomy))
-			.filter(e => e != undefined)
+			.filter(e => e && e.target && e.source && e.type)
+			.filter(remove_unused)
 			.map(e => process_edge(e, conf))
 			
 		/* map facet name to node id: <facet><number> */

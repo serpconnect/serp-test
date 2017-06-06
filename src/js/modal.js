@@ -147,13 +147,13 @@ $(document).ready(function() {
         var FACET = facet.toUpperCase()
 
 		//implement dynamic loading.
-		moveEntry = function (location,destination){
+		function moveEntry(location,destination){
 			var dest = document.getElementById(destination)
 			var loc = document.getElementById(location)
 			dest.appendChild(loc)
 		}
 
-		generate_DropDown =function(i){
+		function generate_DropDown (i){
 			var x = document.getElementsByClassName("dropdown-show")
 			var values = document.getElementsByClassName('dyn-modal-header-title')
 			var newEntryDropDown =
@@ -230,8 +230,7 @@ $(document).ready(function() {
 			generate_textBox()
 		})
 
-		generate_newFacet = function(current, id, name){
-
+		function generate_newFacet(current, id, name){
 			removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
       			var heading = evt.target.parentNode
@@ -253,7 +252,7 @@ $(document).ready(function() {
   			shrinkFacets(newFacet, refNode)
 		}
 
-		generate_textBox = function (){
+		function generate_textBox(){
 	      window.modals.addTextBox( function (newid,newname) {
 	      	if(newIDisValid(newid)) {
                 newid = newid.toUpperCase()
