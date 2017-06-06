@@ -17,8 +17,8 @@ $(document).ready(function() {
 	} //inserts a Node after a Node
 
 	function shrinkFacets(current, parent){
-		p_style = parent.style
-		c_style = current.style
+		var p_style = parent.style
+		var c_style = current.style
 		c_style.marginLeft= p_style.marginLeft + "5%"
 		c_style.marginRight= p_style.marginRight+ "5%"
 		c_style.width = p_style.width - "5%"
@@ -231,7 +231,7 @@ $(document).ready(function() {
 		})
 
 		function generate_newFacet(current, id, name){
-			removeBtn = el('div.modal-remove-facet', [])
+			var removeBtn = el('div.modal-remove-facet', [])
       		removeBtn.addEventListener('click', (evt)=>{
       			var heading = evt.target.parentNode
 						$(".dropDowns option[value='"+heading.id+"']").remove();
