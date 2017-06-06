@@ -30,12 +30,7 @@ $(document).ready(function () {
         var type = window.location.hash
         return type ? type.substring(1) : null
     }
-
-    dynamicEntries = function (id, name) {
-        this.id = id
-        this.name = name
-    }
-
+    
     function getCollectionID() {
         return document.getElementById('collection-dropdown').value
     }
