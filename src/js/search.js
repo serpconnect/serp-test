@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     $("#search").addClass("current-view");
     // clear all checkboxes upon refreshing the page
     $('input:checkbox').removeAttr('checked');
@@ -9,6 +9,7 @@ $(document).ready(function() {
     var selectedEntries = []
     var loggedIn = false
     var admin = false;
+    var serpTaxonomy = undefined
 
     var currentClassification = {
         adapting: false,
@@ -17,12 +18,12 @@ $(document).ready(function() {
         improving: false,
         planning: false,
         design: false,
-        execution:false,
-        analysis:false,
+        execution: false,
+        analysis: false,
         people: false,
         information: false,
-        sut : false,
-        other : false
+        sut: false,
+        other: false
     }
 
     function getCollectionFromPreviousPage() {
@@ -30,13 +31,13 @@ $(document).ready(function() {
         return type ? type.substring(1) : null
     }
 
-     dynamicEntries = function(id,name){
-                this.id = id
-                this.name = name
+    dynamicEntries = function (id, name) {
+        this.id = id
+        this.name = name
     }
 
-     function getCollectionID(){
-            return document.getElementById('collection-dropdown').value 
+    function getCollectionID() {
+        return document.getElementById('collection-dropdown').value
     }
 
 
@@ -47,12 +48,13 @@ $(document).ready(function() {
             return
         var facet = evt.target.dataset.facet
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
+        
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
             if (remaining !== 0) return
 
             var entities = entries.map(entry => entry.taxonomy[facet.toUpperCase()])
-           
+
             var unique = []
             for (var i = entities.length - 1; i >= 0; i--) {
                 var entity = entities[i]
@@ -62,52 +64,59 @@ $(document).ready(function() {
                         unique.push(entity[j])
                 }
             }
-       if( isNaN(getCollectionID()) ){
-                //get unique facets + entries
-                   window.modals.infoModal(facet,unique),function () {
-                }
-            }
-        else{
             var CID = getCollectionID()
 
-        window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/entities").done(entities =>{
-            window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/taxonomy")
-                    .done(dynamicTaxonomy => {
-                        var Facets = []
-                        var dyn = JSON.parse(JSON.stringify(dynamicTaxonomy.taxonomy))
-                        Facets.push(facet)
-                        while(dyn.length!=0){
-                            var x=dyn.shift()
-                            if(x.parent==facet)
-                                Facets.push(x.id)
-                        }
-                window.api.json("GET", window.api.host + "/v1/collection/"+CID+"/classification").done(classification =>{
-                    var newClass =[]
+            if (isNaN(CID)) {
+                //get unique facets + entries
+                window.modals.infoModal(facet, unique)
+                return
+            }
 
-                    Facets.forEach(function(current){
-                        var classif=JSON.parse(JSON.stringify(classification))
-                        while(classif.length!=0){
-                            var x = classif.shift()
-                            if(x.facetId==current.toUpperCase()){
-                                newClass.push(x)
-                            }
-                        }
+            api.v1.collection.isOwner(CID)
+                .done(owner => {
+                    if (owner)
+                        showTaxonomyModal()
+                    else
+                        window.modals.infoModal(facet, unique)
+                })
 
-                    })
-                    // 
-                    if(newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()){
-                        newClass.unshift({facetId:facet, text:[]});
+            function showTaxonomyModal() {
+                Promise.all([
+                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/entities"),
+                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/taxonomy")
+                ]).then(promise => {
+                    var entities = promise[0]
+                    var dynamicTaxonomy = promise[1]
+
+                    var Facets = []
+                    var dyn = JSON.parse(JSON.stringify(dynamicTaxonomy.taxonomy))
+                    Facets.push(facet)
+                    while (dyn.length != 0) {
+                        var x = dyn.shift()
+                        if (x.parent.toLowerCase() === facet.toLowerCase())
+                            Facets.push(x.id)
                     }
-                    window.modals.dynamicInfoModal(facet,newClass,dynamicTaxonomy, entities,CID, classification),function () {
+                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/classification").done(classification => {
+                        var newClass = []
+
+                        Facets.forEach(function (current) {
+                            var classif = JSON.parse(JSON.stringify(classification))
+                            while (classif.length != 0) {
+                                var x = classif.shift()
+                                if (x.facetId === current.toUpperCase()) {
+                                    newClass.push(x)
+                                }
+                            }
+
+                        })
+                        // 
+                        if (newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()) {
+                            newClass.unshift({ facetId: facet, text: [] });
                         }
+                        window.modals.dynamicInfoModal(facet, newClass, dynamicTaxonomy, entities, CID, serpTaxonomy)
                     })
-                    .fail(xhr => {
-                        console.log(xhr.responseText)
-                    }) 
-                }) 
-            })    
-        }
-            
+                }).catch(console.error)
+            }
         }
 
 
@@ -134,9 +143,33 @@ $(document).ready(function() {
     var mainDataset
     // entries partitioned/collection
     var collections = {}
-    function processGraph(graph, collectionName) {
+    function processGraph(graph, collectionName, extendedTaxonomy) {
         var nodes = []
         var nodemap = {}
+
+        console.log('process', collectionName, graph, extendedTaxonomy)
+
+        // Map extended facet onto parent in serp taxonomy
+        var ext2serp = {}
+        if (extendedTaxonomy) {
+            while (extendedTaxonomy.length) {
+                var facet = extendedTaxonomy.shift()
+                console.log(facet)
+
+                if (ext2serp[facet.parent]) {
+                    ext2serp[facet.id] = ext2serp[facet.parent]
+                    continue
+                }
+
+                var parent = serpTaxonomy.root.dfs(facet.parent)
+                if (parent) {
+                    ext2serp[facet.id] = parent.id()
+                    continue
+                }
+
+                extendedTaxonomy.push(facet)
+            }
+        }
 
         graph.nodes.forEach(node => {
             node.serpClassification = {}
@@ -152,7 +185,14 @@ $(document).ready(function() {
 
         // mark this facet as used, use /entry/{id}/taxonomy to get full tree
         graph.edges.forEach(edge => {
+            var facet = edge.type
             var node = nodes[nodemap[String(edge.source)]]
+
+            if (ext2serp[facet]) {
+                var parent = ext2serp[facet]
+                node.serpClassification[parent.toLowerCase()] = true
+            }
+
             node.serpClassification[edge.type.toLowerCase()] = true
         })
 
@@ -164,12 +204,20 @@ $(document).ready(function() {
             return
         }
 
-        window.api.ajax("GET", window.api.host + "/v1/collection/" + id + "/graph")
-        .done(graph => {
-            collections[id].entries = processGraph(graph, collections[id].name)
-            cb(collections[id].entries)
-        })
-        .fail(reason => cb([]))
+        Promise.all([
+            api.v1.collection.graph(id),
+            api.v1.collection.taxonomy(id)
+        ])
+            .then(promise => {
+                var graph = promise[0]
+                var taxonomy = promise[1].taxonomy
+
+                collections[id].entries = processGraph(graph, collections[id].name, taxonomy)
+                collections[id].taxonomy = taxonomy
+
+                cb(collections[id].entries)
+            })
+            .catch(reason => cb([]))
     }
     function updateDataset(toset) {
         dataset = toset
@@ -214,18 +262,18 @@ $(document).ready(function() {
         }
     }
 
-    function selectAllEntries(){
-    //  var length = $('.table-view-area tr').length-1;
-      for (var i = 0; i < dataset.length; i++) {
-          var entry = dataset[i];
-          if (selectedEntries.indexOf(entry.id) === -1){
+    function selectAllEntries() {
+        //  var length = $('.table-view-area tr').length-1;
+        for (var i = 0; i < dataset.length; i++) {
+            var entry = dataset[i];
+            if (selectedEntries.indexOf(entry.id) === -1) {
                 selectedEntries.push(entry.id);
-          }
-      }
-      $('.table-view-area tr').find('input[type=checkbox]').prop('checked', true);
+            }
+        }
+        $('.table-view-area tr').find('input[type=checkbox]').prop('checked', true);
     }
 
-    function exportEntries(){
+    function exportEntries() {
         if (!selectedEntries.length) {
             return
         }
@@ -248,7 +296,10 @@ $(document).ready(function() {
         admin = self.trust === "Admin";
     })
 
-    window.user.collections().done(collz => {
+    api.v1.taxonomy().then(data => {
+        serpTaxonomy = new Taxonomy(data.taxonomy)
+        return window.user.collections()
+    }).then(collz => {
         var selector = document.getElementById('collection-dropdown')
         var requested = getCollectionFromPreviousPage()
 
@@ -297,7 +348,7 @@ $(document).ready(function() {
     })
 
     // classification took place
-    $(".checkbox input").on("change", function(event) {
+    $(".checkbox input").on("change", function (event) {
         var subfacet = $(this).attr("name");
         currentClassification[subfacet] = !currentClassification[subfacet];
         updateViews(dataset);
@@ -349,13 +400,13 @@ $(document).ready(function() {
         $("#table-view-tab").toggleClass("active-tab").toggleClass("unactive-tab");
     }
 
-    $(".view-area-tab").on("click", function(evt) {
+    $(".view-area-tab").on("click", function (evt) {
         if ($(this).hasClass("unactive-tab")) {
             toggleTabs();
         }
     });
 
-    $("#sort-dropdown").on("change", function(evt) {
+    $("#sort-dropdown").on("change", function (evt) {
         var sortingOption = $(this).val();
         if (sortingOption == "newest") {
             dataset.sort(newestComparator);
@@ -367,28 +418,28 @@ $(document).ready(function() {
         updateViews(dataset);
     });
 
-    function getClassification(){
+    function getClassification() {
         var classification = {
-                "intevention": null,
-                "adapting": null,
-                "solving": null,
-                "assessing": null,
-                "improving":null,
-                "planning":null,
-                "design": null,
-                "execution":null,
-                "analysis":null,
-                "people": null,
-                "information": null,
-                "sut" : null,
-                "other": null
+            "intevention": null,
+            "adapting": null,
+            "solving": null,
+            "assessing": null,
+            "improving": null,
+            "planning": null,
+            "design": null,
+            "execution": null,
+            "analysis": null,
+            "people": null,
+            "information": null,
+            "sut": null,
+            "other": null
         };
 
         // iterate over each checkbox that has been checked
-        $(".checkbox input:checked").each(function() {
-             var subfacet = $(this).attr("name");
-             classification[subfacet] = [];
-             var $parent = $(this).closest(".sub-facet");
+        $(".checkbox input:checked").each(function () {
+            var subfacet = $(this).attr("name");
+            classification[subfacet] = [];
+            var $parent = $(this).closest(".sub-facet");
         });
         return classification;
     }
@@ -444,39 +495,39 @@ $(document).ready(function() {
 
 
 
-        $(".entry-title").unbind("click").on("click", function(evt) {
+        $(".entry-title").unbind("click").on("click", function (evt) {
             var entryNumber = $(this).data("entry-number");
-            var id= dataset[entryNumber].id
+            var id = dataset[entryNumber].id
             var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
-                  entryId: id
+                    entryId: id
                 })
-                .done(() => {
-                  window.modals.clearAll();
-                  dataset.splice(entryNumber,1);
-                  updateViews();
-                })
-                .fail(xhr => alert(xhr.responseText))
+                    .done(() => {
+                        window.modals.clearAll();
+                        dataset.splice(entryNumber, 1);
+                        updateViews();
+                    })
+                    .fail(xhr => alert(xhr.responseText))
 
             }
 
             var removeBtn = el("button.btn", ["delete entry"])
             removeBtn.addEventListener('click', deleteEntry, false)
 
-            function insertid(id){return 0}
+            function insertid(id) { return 0 }
 
 
             Promise.all([
-                 window.user.getEntry(id),
-                 window.user.getTaxonomyEntry(id)
-               ]).then(promise=>{
-                 window.modals.entryModal(CID,promise[0],promise[1],
+                window.user.getEntry(id),
+                window.user.getTaxonomyEntry(id)
+            ]).then(promise => {
+                window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
-              )
+                )
             })
-      })
+        })
     }
 
     // creates a table row with the data contained in entry
@@ -488,7 +539,7 @@ $(document).ready(function() {
         var maxLength = 35;
         // choose as the row descriptor either the project name, description
         // (for challenges), or the reference (for research results)
-        var entryTitle = entry["projectName"]  || entry["description"] || entry["reference"];
+        var entryTitle = entry["projectName"] || entry["description"] || entry["reference"];
         entryTitle = entryTitle.length > maxLength ?
             entryTitle.substring(0, maxLength - 3) + "..." :
             entryTitle.substring(0, maxLength);
@@ -547,21 +598,21 @@ $(document).ready(function() {
 
         // refresh on-click listeners for all entries in first column;
         // (a click initiates an entry inspection)
-        $("td:first-child").unbind("click").on("click", function(evt) {
+        $("td:first-child").unbind("click").on("click", function (evt) {
             var entryNumber = $(this).data("entry-number");
-            var id= dataset[entryNumber].id
+            var id = dataset[entryNumber].id
             var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
                 window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
-                  entryId: id
+                    entryId: id
                 })
-                .done(() => {
-                  window.modals.clearAll();
-                  dataset.splice(entryNumber,1);
-                  updateViews();
-                })
-                .fail(xhr => alert(xhr.responseText))
+                    .done(() => {
+                        window.modals.clearAll();
+                        dataset.splice(entryNumber, 1);
+                        updateViews();
+                    })
+                    .fail(xhr => alert(xhr.responseText))
 
             }
 
@@ -569,13 +620,13 @@ $(document).ready(function() {
             removeBtn.addEventListener('click', deleteEntry, false)
 
             Promise.all([
-                 window.user.getEntry(id),
-                 window.user.getTaxonomyEntry(id)
-               ]).then(promise=>{
-                console.log(promise[0],promise[1])
-                 window.modals.entryModal(CID,promise[0],promise[1],
+                window.user.getEntry(id),
+                window.user.getTaxonomyEntry(id)
+            ]).then(promise => {
+                console.log(promise[0], promise[1])
+                window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
-              )
+                )
             })
         })
 
@@ -591,7 +642,7 @@ $(document).ready(function() {
 
     // convenience function for capitalizing sentences
     // TODO: rip performance (don't extend prototype, use function instead)
-    String.prototype.capitalize = function() {
+    String.prototype.capitalize = function () {
         return this.charAt(0).toUpperCase() + this.slice(1);
     }
 
@@ -600,17 +651,17 @@ $(document).ready(function() {
 
 
 // Switch all buttons between disabled and enabled state
-  function toggleButtonState() {
-      var btns = document.querySelectorAll('.btn')
-      for (var i = 0; i < btns.length; i++) {
-          btns[i].classList.toggle('submit-disabled')
-          if (btns[i].getAttribute('disabled'))
-              btns[i].removeAttribute('disabled')
-          else
-              btns[i].setAttribute('disabled', true)
+function toggleButtonState() {
+    var btns = document.querySelectorAll('.btn')
+    for (var i = 0; i < btns.length; i++) {
+        btns[i].classList.toggle('submit-disabled')
+        if (btns[i].getAttribute('disabled'))
+            btns[i].removeAttribute('disabled')
+        else
+            btns[i].setAttribute('disabled', true)
 
-      }
-  }
+    }
+}
 
 function newestComparator(a, b) {
     return b.date - a.date;

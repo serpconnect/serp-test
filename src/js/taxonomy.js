@@ -74,54 +74,6 @@
         return undefined
     }
 
-    function listSorter(list){
-    var order = ["effect","scope","context", "intervention"]
-    var j= 0  
-    var listolists=[]
-    var i =0
-    while (list.length>0){
-        var current = list[i]
-        if(current.short.toLowerCase() == order[j]){
-            j++
-            var y = findChildren(current)
-            listolists.push(y) 
-        }
-        i++
-        if(i==list.length){
-            i=0
-        }
-    }
-    var Dyn_TAXONOMY = new Node("root", "root", listolists)
-    return  Dyn_TAXONOMY
-
-    function findChildren(node){
-        var levelList=[]
-        var k=0
-        index =list.length
-        while(k<index){
-            var next=list[k]
-            k++ 
-            if(hasChild(node,next)){
-                var child = findChildren(next)
-                levelList.push(child)
-                index =list.length
-                k=0
-            }
-        }   
-            var levelNode = new Node(node.short, node.long,levelList)
-            list.splice(list.indexOf(node), 1)
-            return levelNode
-    }
-
-    function hasChild(currentLvl,nextLvl){
-        return currentLvl.short == nextLvl.parent
-    }
-}
-
-     function dynamic(flatList) {
-       return listSorter(flatList)
-    }
-
     /**
      * A tree representation of a taxonomy.
      */
@@ -147,7 +99,8 @@
     /**
      * Extend a taxonomy.
      */
-    Taxonomy.prototype.extend = function (flat) {
+    Taxonomy.prototype.extend = function (flattened) {
+        var flat = JSON.parse(JSON.stringify(flattened))
         while (flat.length) {
             var node = flat.shift()
             var parent = this.root.dfs(node.parent)

@@ -143,7 +143,9 @@ $(document).ready(function() {
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
-	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries,CID) {
+	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries, CID, serpTaxonomy) {       
+        var FACET = facet.toUpperCase()
+
 		//implement dynamic loading.
 		moveEntry = function (location,destination){
 			var dest = document.getElementById(destination)
@@ -152,17 +154,13 @@ $(document).ready(function() {
 		}
 
 		generate_DropDown =function(i){
-			x = document.getElementsByClassName("dropdown-show")
-			for(var j=0;j<x.length;j++){
-				console.log((x[j].classList))
-			}
+			var x = document.getElementsByClassName("dropdown-show")
 			var values = document.getElementsByClassName('dyn-modal-header-title')
-			newEntryDropDown =
+			var newEntryDropDown =
 					el("select.dropDowns", {id:"select"+i}, [
 						el("option", {value: facet}, [facet]),
-						subFac.taxonomy.filter(x => {return x.parent == facet}).map(e => {
-							return el("option", {value: e.id}, [e.name]);
-						})
+						subFac.taxonomy.filter(x => x.parent === FACET)
+                                        .map(e => el("option", {value: e.id}, [e.name]))
 
 					])
 			
@@ -243,7 +241,6 @@ $(document).ready(function() {
       			removeFacet(children)
       			heading.remove()
       		})
-            console.log(name, id)
       		var newFacet = el('div#'+id+'.facet-container', { 'data-name': name }, [
       								// el("div.modal-divider"),
 									el('div.dyn-modal-header-title',[String(name)] ),
@@ -258,7 +255,6 @@ $(document).ready(function() {
 
 		generate_textBox = function (){
 	      window.modals.addTextBox( function (newid,newname) {
-            console.log(newname)
 	      	if(newIDisValid(newid)) {
                 newid = newid.toUpperCase()
 				var option = $("<option></option>")
@@ -268,9 +264,11 @@ $(document).ready(function() {
 	      		var newNode = new window.taxFunc.Node(newid,newname,facet)
 	      		//removes facet and appends current entries to root facet
 	      		var facets = document.getElementsByClassName('facet-container')
+                console.log(facets)
 	      		for(var i=0; i < facets.length;i++){
 	      			var current = facets[i]
-		      		if(current.id==newNode['parent']){
+                    console.log(current.id, newNode.parent)
+		      		if(current.id === newNode.parent){
 		      			generate_newFacet(current, newNode['id'], newNode.name)
 		      			document.body.removeChild(this)
 		      			return
@@ -285,38 +283,37 @@ $(document).ready(function() {
 	      })
 	    }
 
-	   function newIDisValid(newid){
-	   	//checks against dyn taxonomy facets
-	   	var value = true
-	   		subFac.taxonomy.forEach(key=>{
-	   			if(key.id==newid.toLowerCase()){
-	   				value = false
-	   			}
-	   		})
-	   		//checks against base taxonomy
-	   		var keywords = Object.keys(window.central.getReverseMap())
-	   		keywords.forEach(key=>{
-	   			if(key==newid.toLowerCase()){
-	   				value =  false
-	   			}
-	   		})
+	    function newIDisValid(newid){
+            var newId = newid.toUpperCase()
+
+            //checks against dyn taxonomy facets
+            var inSub = subFac.taxonomy
+                .filter(facet => facet.id.toUpperCase() === newId)
+
+            if (inSub.length > 0)
+                return false
+            
+	   		// checks against base taxonomy
+            if (serpTaxonomy.root.dfs(newId))
+                return false
+
 	   		//checks against newly created facets
-	   		var currentFacets = document.getElementsByClassName('facet-container')
-	   		for(var i in currentFacets){
-	   			if(currentFacets[i].id==newid.toLowerCase()){
-	   				value = false
-	   			}
-	   		}
-	   		return value
+	   		var inNew = Array.from(document.getElementsByClassName('facet-container'))
+               .filter(el => el.id.toUpperCase() === newId)
+            
+            if (inNew.length > 0)
+                return false
+            
+            return true
 	   }
 
 	   function GetFacetChildren(facet){
-	   	//takes element as input
-	   	var list =[]
+            //takes element as input
+            var list =[]
 	   		var entries = facet.children
-      			for (var i =0;i < entries.length; i++){
-      					list.push(entries[i])
-      			}
+            for (var i =0;i < entries.length; i++){
+                list.push(entries[i])
+            }
       		return list
 	    } //returns a list of all children elements which are entries
 
@@ -341,57 +338,49 @@ $(document).ready(function() {
 
 	    saveBtn.addEventListener("click", function(evt) {
 	    	//only save entries for sub facets- otherwise set to root
-	    	//
-			var facets = document.getElementsByClassName('facet-container')
-			// var nodes = {}
-			var i=0
-			while(i<subFac.taxonomy.length){
-				current=subFac.taxonomy[i]
-				if(current.parent==facet){
-					var index= subFac.taxonomy.indexOf(current)
-					subFac.taxonomy.splice(i,1)
-					i=0
-				}
-				else{
-					i++
+			for (var i = 0; i < subFac.taxonomy.length; i++) {
+				var current = subFac.taxonomy[i]
+				if (current.parent === FACET) {
+					subFac.taxonomy.splice(i--, 1)
 				}
 			} //removes all subfacets with current.parent = facet from backend dynamic taxonom 
 			
 			//reclassifies entities
+			var facets = document.getElementsByClassName('facet-container')
 			for (var i =0;i < facets.length; i++){
 				var current = facets[i].id
-					var x = document.getElementById(current+"-entry-container")
-					var children = GetFacetChildren(x)
+                var x = document.getElementById(current+"-entry-container")
+                var children = GetFacetChildren(x)
 
-					children.forEach( function(child){
-						var text = child.innerText.trim()
-						var origin = getEntityOrigin(text)
-						var childId = child.id.substring(5);
-						var Ent = { "oldFacetId": origin, "newFacetId": current.toUpperCase(),"entities": [childId]					}
-						window.api.json("POST", window.api.host + "/v1/collection/"+CID+"/reclassify", Ent).done(f => {
-      					})
-					})
+                children.forEach( function(child){
+                    var text = child.innerText.trim()
+                    var origin = getEntityOrigin(text)
+                    var childId = child.id.substring(5);
+                    var Ent = { 
+                        oldFacetId: origin, 
+                        newFacetId: current.toUpperCase(),
+                        entities: [childId]	
+                    }
+                    window.api.json("POST", window.api.host + "/v1/collection/"+CID+"/reclassify", Ent)
+                })
       		} 
+              
       		//sorts out dynamic taxonomy
-			for (var i =0;i < facets.length; i++){
+			for (var i = 0; i < facets.length; i++){
 				var current = facets[i].id
-				var facetName = facets[i].dataset.name
 
-				if(current!=facet){
-				// var node = {"taxonomy":[{"name":current,"id":current,"parent":facet}],"version":+}
-				var node = {"id":current ,"name":facetName, "parent":facet}
-				subFac.taxonomy.push(node)
-				// adds all new subfacets with current.parent = facet to backend dynamic taxonomy
-				}
+				if(current.toUpperCase() === FACET)
+                    continue
+
+                subFac.taxonomy.push({
+                    id: current.toUpperCase() ,
+                    name: facets[i].dataset.name, 
+                    parent:FACET
+                })
       		}
-      		 window.api.json("PUT", window.api.host + "/v1/collection/"+CID+"/taxonomy", subFac).done(f => {
-      		 	
 
-      		 })
-
-      		 document.body.removeChild(modal)
-
-
+            window.api.json("PUT", window.api.host + "/v1/collection/"+CID+"/taxonomy", subFac)
+      		document.body.removeChild(modal)
         });
 
         document.body.appendChild(modal)
@@ -402,11 +391,13 @@ $(document).ready(function() {
         //start from 1 as root already created
         
         subFac.taxonomy.forEach( (tax,i) => {
-        	if(tax.parent == facet){
+            // tax={id, parent, name}
+        	if(tax.parent.toLowerCase() === facet.toLowerCase()){
 	            generate_newFacet(document.getElementById(facet), tax.id, tax.name)
-	            var index=0
+                var index = 0
 	            while(index < newClass.length){
-	            	if (newClass[index].facetId==tax.id.toUpperCase()){
+                    console.log(index, newClass[index].facetId, tax.id, tax.name)
+	            	if (newClass[index].facetId.toLowerCase() === tax.id.toLowerCase()){
 	            		var entities = newClass[index].text.map((id) =>
 						makeEntity(id))
 						appendChildren( document.getElementById(tax.id+"-entry-container"), entities)
