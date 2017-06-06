@@ -66,6 +66,12 @@
 
   function getTaxonomyAndExport(){
     api.v1.collection.graph(cID).done(graph => {
+      if(graph.nodes.length===0){
+        complain(document.getElementById("exportBtn").parentNode,
+                 "The collection has no entries to export");
+        return
+      }
+
       var taxonomy = getTaxonomy(graph);
 
       api.v1.collection.entries(cID).done(entries => {
