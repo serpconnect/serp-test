@@ -9,8 +9,11 @@ $(document).ready(function() {
                 btns[i].setAttribute('disabled', true)
         }
     }
+
 	var modals = window.modals = {}
 	var modalAnimation = 121
+
+	modals.toggleButtonState = toggleButtonState
 
 	function insertAfter(referenceNode,newNode){
 		referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling)
@@ -51,12 +54,14 @@ $(document).ready(function() {
         document.body.removeChild(modal)
     }
 
+    modals.closeButton = closeButton
     function closeButton() {
         var btn = el('div.close-btn', [''])
         btn.addEventListener('click', removeModal, false)
         return btn
     }
 
+    modals.cancelButton = cancelButton
     function cancelButton() {
         var btn = el('button.btn', ['cancel'])
         btn.addEventListener('click', removeModal, false)
@@ -143,7 +148,7 @@ $(document).ready(function() {
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
-	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries, CID, serpTaxonomy) {       
+	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries, CID, serpTaxonomy) {
         var FACET = facet.toUpperCase()
 
 		//implement dynamic loading.
@@ -163,7 +168,7 @@ $(document).ready(function() {
                                         .map(e => el("option", {value: e.id}, [e.name]))
 
 					])
-			
+
 			newEntryDropDown.addEventListener('change', evt => {
 				var row = $(evt.target).parent().parent().attr('id');
 				var moveTo = evt.target.value+"-entry-container";
@@ -178,7 +183,7 @@ $(document).ready(function() {
 				makeEntity(uniq)
 			)
 		}
-		
+
 		function setDropdownValues(parentID){
 			var children = document.getElementById(parentID+"-entry-container").children
 			for(var i = 0; i < children.length; i++){
@@ -199,7 +204,7 @@ $(document).ready(function() {
 					return dynEntries[i].id
 				}
 			}
-		} 			
+		}
 
 		var subLevel = el('div.add-facet-container',[
 					el('div.add-facet', []),
@@ -289,7 +294,7 @@ $(document).ready(function() {
 
             if (inSub.length > 0)
                 return false
-            
+
 	   		// checks against base taxonomy
             if (serpTaxonomy.root.dfs(newId))
                 return false
@@ -297,10 +302,10 @@ $(document).ready(function() {
 	   		//checks against newly created facets
 	   		var inNew = Array.from(document.getElementsByClassName('facet-container'))
                .filter(el => el.id.toUpperCase() === newId)
-            
+
             if (inNew.length > 0)
                 return false
-            
+
             return true
 	   }
 
@@ -340,8 +345,8 @@ $(document).ready(function() {
 				if (current.parent === FACET) {
 					subFac.taxonomy.splice(i--, 1)
 				}
-			} //removes all subfacets with current.parent = facet from backend dynamic taxonom 
-			
+			} //removes all subfacets with current.parent = facet from backend dynamic taxonom
+
 			//reclassifies entities
 			var facets = document.getElementsByClassName('facet-container')
 			for (var i =0;i < facets.length; i++){
@@ -353,15 +358,15 @@ $(document).ready(function() {
                     var text = child.innerText.trim()
                     var origin = getEntityOrigin(text)
                     var childId = child.id.substring(5);
-                    var Ent = { 
-                        oldFacetId: origin, 
+                    var Ent = {
+                        oldFacetId: origin,
                         newFacetId: current.toUpperCase(),
-                        entities: [childId]	
+                        entities: [childId]
                     }
                     window.api.json("POST", window.api.host + "/v1/collection/"+CID+"/reclassify", Ent)
                 })
-      		} 
-              
+      		}
+
       		//sorts out dynamic taxonomy
 			for (var i = 0; i < facets.length; i++){
 				var current = facets[i].id
@@ -371,7 +376,7 @@ $(document).ready(function() {
 
                 subFac.taxonomy.push({
                     id: current.toUpperCase() ,
-                    name: facets[i].dataset.name, 
+                    name: facets[i].dataset.name,
                     parent:FACET
                 })
       		}
@@ -386,7 +391,7 @@ $(document).ready(function() {
 		}, modalAnimation)
 
         //start from 1 as root already created
-        
+
         subFac.taxonomy.forEach( (tax,i) => {
             // tax={id, parent, name}
         	if(tax.parent.toLowerCase() === facet.toLowerCase()){
@@ -493,9 +498,8 @@ $(document).ready(function() {
 				closeButton(),
 				el('div.modal-header-title'),// [`collection #${cID}`]),
 				el("div.modal-divider"),
-				saveBtn,
 				el("div"),
-				cancelButton()
+				saveBtn, cancelButton()
 			])
 		])
 
@@ -526,10 +530,10 @@ $(document).ready(function() {
                 return Promise.all([
                     api.v1.taxonomy(),
                     api.v1.collection.taxonomy(coll.id)
-                ]).then(data => {            
+                ]).then(data => {
                     var serp = new Taxonomy(data[0].taxonomy)
                     var extension = data[1].taxonomy
-                    
+
                     serp.extend(extension)
                     resolve(serp.classify(taxonomy))
                 })
@@ -544,7 +548,7 @@ $(document).ready(function() {
                 var children = node.map((n, i) => explore(n, depth + 1))
                 if (depth > 2)
                     return children
-                
+
                 return el("div.sublevel.level-" + depth, [
                     node.name(),
                     children
@@ -592,7 +596,7 @@ $(document).ready(function() {
                 document.getElementById('modal').classList.add('appear');
             }, modalAnimation)
         })
-    }                
+    }
 
 
 	/* Creates a modal with fuzzy search */
