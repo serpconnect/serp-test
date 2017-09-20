@@ -131,15 +131,9 @@ $(function() {
 
     function deleteColl(evt){
       var id=getId(this.parentNode);
-      var coll = "#" + id;
-      window.modals.confirmKickPopUp(`Are you sure you want to delete ${coll}?`, () => {
-        window.api.ajax("POST", window.api.host + "/v1/admin/delete-collection",{id:id})
-          .done(ok => {
-            cleanup(this.modal)
-            location.reload(true)
-          })
-          .fail(xhr => complain(xhr.responseText))
-        })
+      window.components.deleteCollectionModal(id)
+        .then(cleanup)
+        .catch(complain)
     }
 
     function collectionOption(name, callback) {
@@ -239,9 +233,8 @@ $(function() {
 
     function setup(self) {
         if(self.trust != "Admin"){
-          window.location = "/profile.html"
+            window.location = "/profile.html"
         }
-
 
         update(self)
         var div = document.querySelector('.profile-area-wrapper')
