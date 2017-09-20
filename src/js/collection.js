@@ -1,5 +1,5 @@
 $(function () {
-  var isOwner;
+	var isOwner;
 	var toProfilePage = () => window.location = "/profile.html"
 
 	// Only allow user to inspect specific collection
@@ -16,19 +16,18 @@ $(function () {
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
 
 	window.api.v1.account.collections()
-		.then(collections =>{
-      return collections.filter(collection => {
-        return collection.id === Number(cID)
-      }).pop()
-    }).then(collection=> {
-      setupName(collection)
-      return api.v1.collection.isOwner(collection.id)
+		.then(collections => {
+      		return collections.filter(collection => {
+        		return collection.id === Number(cID)
+      		}).pop()
+    }).then(collection => {
+		setupName(collection)
+		return api.v1.collection.isOwner(collection.id)
     }).then(owner =>{
-      isOwner=owner;
-      $('#owner').text(owner ? " (owner)" : "")
-      $('#leave').text(owner ? "delete collection" : "leave collection")
-    })
-		.fail()//toProfilePage)
+		isOwner=owner;
+		$('#owner').text(owner ? " (owner)" : "")
+		$('#leave').text(owner ? "delete collection" : "leave collection")
+    }).fail()//toProfilePage)
 
 	window.api.v1.collection.stats(cID)
 		.done(setupStats)
@@ -55,20 +54,10 @@ $(function () {
 		$('.collection-stats').text(formatStats(stats.members, stats.entries))
 	}
 
-	$("#taxonomy").click(evt => { 
-        window.modals.taxonomyModal(cID, getCollectionName(), function () {
-            
-        })
-    })
-
-	document.getElementById('leave').addEventListener('click', leave, false)
     // Create leave collection modal
 	document.getElementById('leave').addEventListener('click', (evt) => {
-		var title = `${$('#name').text()} (#${cID})`
-    var message = isOwner? `Delete ${title}?`  : `Leave ${title}?`
-		window.modals.confirmPopUp(message, () => {
-			window.api.v1.collection.leave(cID).always(toProfilePage)
-		})
+		window.components.leaveCollectionModal(cID, isOwner)
+			.then(toProfilePage)
   }, false)
 
 	document.getElementById('export').addEventListener('click', (evt) => {
