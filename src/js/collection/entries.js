@@ -39,35 +39,6 @@ $(function () {
 		})
 	}
 
-	var reverseMap = {
-    	"adapting": "Effect",
-        "solving": "Effect",
-        "assessing": "Effect",
-        "improving": "Effect",
-        "planning": "Scope",
-        "design": "Scope",
-        "execution": "Scope",
-        "analysis": "Scope",
-        "people": "Context",
-        "information": "Context",
-        "sut" : "Context",
-        "other": "Context"
-    }
-    var shorthandMap = {
-        "adapting": "Adapt testing",
-        "solving": "Solve new problem",
-        "assessing": "Assess testing",
-        "improving": "Improve testing",
-        "planning": "Test planning",
-        "design": "Test design",
-        "execution": "Test execution",
-        "analysis": "Test analysis",
-        "people": "People related constraints",
-        "information": "Availability of information",
-        "sut" : "Properties of SUT",
-        "other": "Other"
-    }
-
 	function inspectEntry(evt) {
 		var id = this.dataset.entryId
 
