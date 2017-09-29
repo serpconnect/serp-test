@@ -36,7 +36,8 @@ $(document).ready(function() {
     $("#submit").addClass("current-view");
 
     function updateCollectionList() {
-        return window.user.collections().done(collz => {
+        return window.user.collections()
+        .then(collz => {
             var def = 0
             $("#collection")
                 .empty()
@@ -50,6 +51,8 @@ $(document).ready(function() {
                 ).val(querystring.c || def)
             if (!querystring.e)
                 selectCollection(querystring.c || def)
+        }).catch(err => {
+            selectCollection(undefined)
         })
     }
     updateCollectionList()
@@ -116,11 +119,11 @@ $(document).ready(function() {
         var sample = this.parentNode
         sample.parentNode.removeChild(sample)
     }
-    
+
     /* when user clicks the [+] of a facet */
     function classification_add_row(evt) {
         var remove = el("div.remove", ["✖"])
-        remove.addEventListener('click', classification_remove_row) 
+        remove.addEventListener('click', classification_remove_row)
 
         var input = el('input')
         var row = el('div.entity-sample', [
@@ -130,9 +133,9 @@ $(document).ready(function() {
         this.parentNode.appendChild(row)
 
         var facet = this.parentNode.querySelector('.header').dataset.facetId
-        new Awesomplete( input, { 
-            list: autocompleteMap[facet], 
-            filter: ausomplete.autocompleteFilter, 
+        new Awesomplete( input, {
+            list: autocompleteMap[facet],
+            filter: ausomplete.autocompleteFilter,
             replace: ausomplete.autocompleteUpdate
         })
 
@@ -154,7 +157,7 @@ $(document).ready(function() {
             header.parentNode.insertBefore(add, header.nextSibling)
         }
     }
-    
+
     function generate_checkbox () {
         var box = el("input", {type:"checkbox"})
         box.addEventListener('change', classification_checkbox_click, false)
@@ -323,7 +326,7 @@ $(document).ready(function() {
         }
     }
 
-    function getEntry() {      
+    function getEntry() {
         var entry = {
             entryType: $(".circular-checkbox input:checked").val(),
             collection: $("#collection").val(),
@@ -383,11 +386,11 @@ $(document).ready(function() {
         // fill in the correct checkboxes
         for (var key in classification) {
             var header = document.querySelector(`[data-facet-id="${key}"]`)
-            
+
             var checkbox = header.querySelector('input')
             checkbox.checked = true
             classification_checkbox_click.bind(checkbox).call({})
-            
+
             var leaf = header.parentNode
             var addData = leaf.querySelector('.additional-data')
 
@@ -401,7 +404,7 @@ $(document).ready(function() {
                 row.querySelector('input').value = entities[i]
             }
         }
-        
+
         if (!noswap)
             swapButtons();
     }
@@ -682,20 +685,28 @@ $(document).ready(function() {
         div.appendChild(el('tbody'))
     }
 
+    /**
+     *  If id is undefined, only display the serp taxonomy.
+     *  If the collection taxonomy fails to load, only display the serp taxonomy.
+     *  If both taxonomies load, then extend the serp taxonomy and show it.
+     **/
     function selectCollection(id) {
-        $("#collection").val(id)
-        reloadAutocomplete(id)
+        if (id) {
+            $("#collection").val(id)
+            reloadAutocomplete(id)
+        }
 
-        return Promise.all([
-            api.v1.taxonomy(),
-            api.v1.collection.taxonomy(id),
-        ]).then(promise => {
-            var taxonomy = new Taxonomy(promise[0].taxonomy)
-            taxonomy.extend(promise[1].taxonomy)
-            collectionTaxonomy = taxonomy
-            return taxonomy
-        })
-        .then(taxonomy => {
+        return api.v1.taxonomy()
+        .then(root => {
+            collectionTaxonomy = new Taxonomy(root.taxonomy)
+            return id ? api.v1.collection.taxonomy(id) : undefined
+        }).then(collData => {
+            if (collData)
+                collectionTaxonomy.extend(collData.taxonomy)
+            return collectionTaxonomy
+        }).catch(err => {
+            return collectionTaxonomy
+        }).then(taxonomy => {
             generateClassification(taxonomy)
             generateOverviewTable(taxonomy)
         })
