@@ -29,9 +29,12 @@ $(function () {
 			elEntries.removeChild(elEntries.firstChild)
 
 		entries.forEach(entry => {
-			var elEntry = el('div.collection-option-li', {
+			var elEntry = el('div.collection-option-li.collection-entry', {
 				'data-entry-id': entry.id
-			}, [entry.description || entry.reference || entry.DOI])
+			}, [
+				`(#${entry.id}) ` +
+				(entry.description || entry.reference || entry.DOI)
+			])
 
 			elEntry.addEventListener('click', inspectEntry, false)
 
