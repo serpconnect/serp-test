@@ -146,5 +146,6 @@ window.onload = function() {
 	Dataset.loadDefault(data => {
 		renderGraph('#challenges', data.filter("challenge"))
 		renderGraph('#research', data.filter("research"))
+		renderGraph('#taxonomy', data)
 	})
 }
