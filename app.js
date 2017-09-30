@@ -13,6 +13,7 @@ var less = require("less-middleware");
 app.set("port", "8181");
 app.set("views", path.join(__dirname, "src", "views"));
 app.set("view engine", "jade");
+app.set('view cache', false)
 app.use(less(path.join(__dirname, "src"), {
     // don't output css in src/less/
     dest: path.join(__dirname, "bin"),
