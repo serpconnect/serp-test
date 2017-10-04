@@ -66,15 +66,6 @@ window.onload = function() {
 		return Math.sin(angle - 0.5 * Math.PI) * radius
 	}
 
-	/* return the text of the second tspan (second line) for each facet */
-	function textLabel(d) {
-		/* for the root node, simply show number of entries */
-		if (d.name === 'serp')
-			return nbrSI(d.usage)
-
-		return `${nbrSI(d.usage)} (${nbrPercent(relativeUse(d))})`
-	}
-
 	/* Idea is to map the flat tree into an arc tree using the computed
 	 * extents (d.dx, d.dy). A partition layout normally looks something
 	 * like this: http://codepen.io/anon/pen/Bfpmg
@@ -136,16 +127,11 @@ window.onload = function() {
 			.attr('y', arcY)
 			/* svg doesn't support linebreaks, so we'll have to live with spans */
 			.append('tspan')
-				.text(d => d.name === 'serp' ? nodeId.substr(1) : d.name)
-			.append('tspan')
-				.text(textLabel)
-				.attr('x', arcX)
-				.attr('dy', '1.2em')
+				.text(d => d.name)
+
 	}
 
 	Dataset.loadDefault(data => {
-		renderGraph('#challenges', data.filter("challenge"))
-		renderGraph('#research', data.filter("research"))
 		renderGraph('#taxonomy', data)
 	})
 }
