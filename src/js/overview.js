@@ -1,4 +1,4 @@
-window.onload = function() {
+$(function () {
 	/* svg settings */
 	var width = 320
 	var height = 320
@@ -134,4 +134,4 @@ window.onload = function() {
 	Dataset.loadDefault(data => {
 		renderGraph('#taxonomy', data)
 	})
-}
+})
