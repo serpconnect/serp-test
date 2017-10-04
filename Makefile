@@ -4,7 +4,7 @@ all: install build
 install:
 	npm install
 
-release:
+release: clean
 	BUILD_MODE=prod node ./scripts/build.js
 	tar -czf frontend.tgz ./bin
 
@@ -14,15 +14,11 @@ build:
 test:
 	node test/all.js
 
-dev: build
-	node ./scripts/dev.js
-
-dev-server:
+dev: clean
 	NODE_ENV=development node app.js
 
-serve:
-	cd bin
-	python -m SimpleHTTPServer 8080
+live: clean
+	NODE_ENV=production node app.js
 
 clean:
 	rm -rf ./bin/
