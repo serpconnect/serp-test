@@ -156,16 +156,15 @@ $(document).ready(function() {
 		function generate_DropDown (i){
 			var x = document.getElementsByClassName("dropdown-show")
 			var values = document.getElementsByClassName('dyn-modal-header-title')
-			var newEntryDropDown =
-					el("select.dropDowns", {id:"select"+i}, [
-						el("option", {value: facet}, [facet]),
-						subFac.taxonomy.filter(x => x.parent === FACET)
-                                        .map(e => el("option", {value: e.id}, [e.name]))
+			var newEntryDropDown = el("select.dropDowns", {id: "select" + i}, [
+				el("option", {value: FACET}, [facet]),
+				subFac.taxonomy.filter(e => e.parent === FACET)
+								.map(e => el("option", {value: e.id}, [e.name]))
 
-					])
+			])
 			
 			newEntryDropDown.addEventListener('change', evt => {
-				var row = $(evt.target).parent().parent().attr('id');
+				var row = $(evt.target).parent().attr('id');
 				var moveTo = evt.target.value+"-entry-container";
 				moveEntry(row, moveTo);
 			}) //creates the dropdown list
@@ -183,13 +182,14 @@ $(document).ready(function() {
 			var children = document.getElementById(parentID+"-entry-container").children
 			for(var i = 0; i < children.length; i++){
 				var entry = children[i];
-				entry.children[0].children[0].value = parentID
+				entry.children[0].value = parentID
 			}
 		}
 
 		function makeEntity(uniq){
-			return el('div#entry'+getIdFromEntity(uniq),[
-						el("li.modal-li", [generate_DropDown(getIdFromEntity(uniq)), " " + uniq])
+			return el('div#entry'+getIdFromEntity(uniq), [
+				generate_DropDown(getIdFromEntity(uniq)),
+				el('span.entity', [uniq])
 			])
 		}
 
@@ -211,11 +211,11 @@ $(document).ready(function() {
 			el('div', [
 				el('div.modal-entry-type', ['inspecting entities']),
 				closeButton(),
-				el('div#'+facet+'.facet-container',[
+				el('div#'+FACET+'.facet-container',[
 					el("div.modal-divider"),
 					el('div.dyn-modal-header-title', [facet]),
 					subLevel,
-					el("div#"+facet+"-entry-container.entry-container",[
+					el("div#"+FACET+"-entry-container.entry-container",[
 						facets
 					])
 				]),
@@ -241,12 +241,12 @@ $(document).ready(function() {
       			heading.remove()
       		})
       		var newFacet = el('div#'+id+'.facet-container', { 'data-name': name }, [
-      								// el("div.modal-divider"),
-									el('div.dyn-modal-header-title',[String(name)] ),
-									removeBtn,
-									el("div#"+id+"-entry-container.entry-container",[
-										])
-								])
+				// el("div.modal-divider"),
+				el('div.dyn-modal-header-title',[String(name)] ),
+				removeBtn,
+				el("div#"+id+"-entry-container.entry-container",[
+					])
+			])
 	      	var refNode = current
   			insertAfter(refNode,newFacet)
   			shrinkFacets(newFacet, refNode)
@@ -324,6 +324,7 @@ $(document).ready(function() {
 
 	    //takes in entity string and returns it's facetid in db
 	    function getEntityOrigin(entity){
+			console.log(entity, newClass)
 	    	for(var i = 0; i < newClass.length; i++){
 	    		for(var j = 0; j < newClass[i].text.length; j++){
 	    			if(newClass[i].text[j] == entity){
@@ -344,15 +345,16 @@ $(document).ready(function() {
 			
 			//reclassifies entities
 			var facets = document.getElementsByClassName('facet-container')
-			for (var i =0;i < facets.length; i++){
+			for (var i = 0;i < facets.length; i++) {
 				var current = facets[i].id
                 var x = document.getElementById(current+"-entry-container")
                 var children = GetFacetChildren(x)
 
-                children.forEach( function(child){
-                    var text = child.innerText.trim()
-                    var origin = getEntityOrigin(text)
+                children.forEach( function(child) {
                     var childId = child.id.substring(5);
+                    var text = child.querySelector('.entity').textContent.trim()
+                    var origin = getEntityOrigin(text)
+					
                     var Ent = { 
                         oldFacetId: origin, 
                         newFacetId: current.toUpperCase(),
@@ -388,14 +390,13 @@ $(document).ready(function() {
         //start from 1 as root already created
         
         subFac.taxonomy.forEach( (tax,i) => {
-            // tax={id, parent, name}
+			// tax={id, parent, name}
         	if(tax.parent.toLowerCase() === facet.toLowerCase()){
-	            generate_newFacet(document.getElementById(facet), tax.id, tax.name)
+	            generate_newFacet(document.getElementById(FACET), tax.id, tax.name)
                 var index = 0
 	            while(index < newClass.length){
 	            	if (newClass[index].facetId.toLowerCase() === tax.id.toLowerCase()){
-	            		var entities = newClass[index].text.map((id) =>
-						makeEntity(id))
+	            		var entities = newClass[index].text.map((id) => makeEntity(id))
 						appendChildren( document.getElementById(tax.id+"-entry-container"), entities)
 						setDropdownValues(tax.id)
 						break;
