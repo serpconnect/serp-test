@@ -13,6 +13,7 @@ var less = require("less-middleware");
 app.set("port", "8181");
 app.set("views", path.join(__dirname, "src", "views"));
 app.set("view engine", "jade");
+app.set('view cache', false)
 app.use(less(path.join(__dirname, "src"), {
     // don't output css in src/less/
     dest: path.join(__dirname, "bin"),
@@ -28,14 +29,12 @@ app.use(methodOverride());
 app.use(express.static(path.join(__dirname, "bin"))); // host css
 app.use(express.static(path.join(__dirname, "src"))); // host everything else
 app.use(favicon(path.join(__dirname, "src/favicon.ico")));
+app.use(errorHandler());
 
 // Run `env=production node app.js` to use dev frontend with prod backend
 // Run `env=development node app.js` to use dev frontend and dev backend
-var env = process.env.env || app.get("env")
+var env = process.env.env || app.get("env") || "development"
 if ("development" === env) {
-    console.log("development mode activated")
-    app.use(errorHandler());
-
     app.use((req, res, nxt) => {
         res.locals.env = "dev"
         nxt()
@@ -53,66 +52,27 @@ app.use(function(req, res, next) {
         next()
 })
 
-app.get("/", function(req, res) {
-    res.render("index");
-});
+function renderView(page) {
+    return function(req, res) {
+        res.render(page);
+    }
+}
 
-app.get("/about", function(req, res) {
-    res.render("about");
-});
-
-app.get("/taxonomy", function(req, res) {
-    res.render("taxonomy");
-});
-
-app.get("/profile", function(req, res) {
-    res.render("profile");
-});
-
-app.get("/invitations", function(req, res) {
-    res.render("invitations");
-});
-
-app.get("/users", function(req, res) {
-    res.render("users");
-});
-
-app.get("/entries", function(req, res) {
-    res.render("entries");
-});
-
-app.get("/login", function(req, res) {
-    res.render("login");
-});
-
-app.get("/search", function(req, res) {
-    res.render("search");
-});
-
-app.get("/submit", function(req, res) {
-    res.render("submit");
-});
-
-app.get("/explore", function(req, res) {
-    res.render("explore");
-});
-
-app.get("/collection", function(req, res) {
-    res.render("collection");
-});
-app.get("/collection/entries", function(req, res) {
-    res.render("collection/entries");
-});
-app.get("/collection/users", function(req, res) {
-    res.render("collection/users");
-});
-app.get("/collections",function(req,res){
-  res.render("collections");
-});
-
-app.get("/resetpassword", function(req, res) {
-    res.render("resetpassword");
-});
+app.get("/", renderView('index'));
+app.get("/about", renderView("about"));
+app.get("/taxonomy", renderView("taxonomy"));
+app.get("/profile", renderView("profile"))
+app.get("/invitations", renderView("invitations"));
+app.get("/users", renderView("users"))
+app.get("/entries", renderView("entries"))
+app.get("/login", renderView("login"))
+app.get("/search", renderView("search"))
+app.get("/submit", renderView("submit"))
+app.get("/explore", renderView("explore"))
+app.get("/collection", renderView("collection"))
+app.get("/collection/entries", renderView("collection/entries"))
+app.get("/collection/users", renderView("collection/users"))
+app.get("/resetpassword", renderView("resetpassword"))
 
 app.get("*", function(req, res) {
     res.status(404).render("404");
@@ -120,7 +80,17 @@ app.get("*", function(req, res) {
 
 var server = http.createServer(app);
 server.listen(app.get("port"), function(){
-    console.log("Prototypal express server running on port " + app.get("port"));
+    console.log("Serving on port " + app.get("port"));
+    console.log("Views, Styles and Javascript files will be updated on each page reload")
+    console.log("Remember to modify `app.js` if you add new views")
+    console.log("Remember to modify `all.less` if you add new less files")
+    
+    if (env === "production") {
+        console.log("===[ LIVE MODE ]===")
+        console.log("You are connected to the live backend server. Be careful.")
+    } else {
+        console.log("===[ DEV MODE ]===")
+        console.log("Make sure you have the backend server available on port 8080")
+    }
 });
 
-var log = console.log;
