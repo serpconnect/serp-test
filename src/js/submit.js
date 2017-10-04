@@ -66,19 +66,33 @@ $(document).ready(function() {
     if (querystring.e) {
         var eurl = window.api.host + "/v1/entry/" + querystring.e
         var entry = undefined
-        Promise.all([
-            api.v1.entry.collection(querystring.e),
-            api.ajax("GET", eurl),
-            api.v1.entry.taxonomy(querystring.e)
-        ]).then(promise => {
-            entry = promise[1]
-            entry.entryType = entry.type
-            entry.serpClassification = promise[2]
-            currentEntry = entry
-
-            return selectCollection(promise[0].id)
+        
+        api.v1.entry.collection(querystring.e)
+        .then(collection => {
+            return selectCollection(collection.id)
+        }).catch(err => {
+            var msg = "You are not a member of the collection this entry belongs to and cannot edit this entry." +
+                "\nSelect a collection and click 'submit' to submit this entry to your own collection instead."
+            flashErrorMessage(msg)
+            var collections = document.querySelectorAll('#collection > option')
+            var i = 0
+            for (i = 0; i < collections.length; i++)
+                if (collections[i].textContent === "default")
+                    break
+            
+            return selectCollection(parseInt(collections[i].value))
         }).then(() => {
-            fillAccordingToEntry(entry, true)
+            return Promise.all([
+                api.ajax("GET", eurl),
+                api.v1.entry.taxonomy(querystring.e)
+            ]).then(promise => {
+                entry = promise[0]
+                entry.entryType = entry.type
+                entry.serpClassification = promise[1]
+                currentEntry = entry
+
+                fillAccordingToEntry(entry, true)
+            })
         })
     }
 
@@ -100,7 +114,9 @@ $(document).ready(function() {
 
     // load taxonomy for autocomplete purposes only
     function reloadAutocomplete(collectionId) {
-        api.v1.collection.classification(collectionId)
+        if (!collectionId) return
+
+        return api.v1.collection.classification(collectionId)
             .then(classification => {
                 for (var i = 0; i < classification.length; i++) {
                     var facet = classification[i]
@@ -386,6 +402,10 @@ $(document).ready(function() {
         // fill in the correct checkboxes
         for (var key in classification) {
             var header = document.querySelector(`[data-facet-id="${key}"]`)
+            if (header === null) {
+                // The entry contains facets the current taxonomy either has subclassed or doesn't have
+                continue
+            }
 
             var checkbox = header.querySelector('input')
             checkbox.checked = true
@@ -462,7 +482,7 @@ $(document).ready(function() {
     /* All interactive/clickable elements */
     function getUIElements() {
         return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
-                "#load-btn", "#import-json-btn", "#collection",
+                "#load-btn", "#collection",
                 "#submit-create-collection"
         ]
     }
@@ -628,14 +648,6 @@ $(document).ready(function() {
         }
     }
 
-    $("#import-json-btn").on("click", function(evt) {
-      if(loggedIn){
-        window.import.fromFile(pushEntry);
-      } else {
-        flashErrorMessage("Must be logged in");
-      }
-    });
-
     $("#remove-btn").on("click", function(evt) {
         // data's stored in the submit button
         var entryNumber = $("#submit-btn").data("currentEntry");
@@ -693,7 +705,6 @@ $(document).ready(function() {
     function selectCollection(id) {
         if (id) {
             $("#collection").val(id)
-            reloadAutocomplete(id)
         }
 
         return api.v1.taxonomy()
@@ -709,7 +720,10 @@ $(document).ready(function() {
         }).then(taxonomy => {
             generateClassification(taxonomy)
             generateOverviewTable(taxonomy)
-        })
+        }).then(() => {
+            if (currentEntry)
+                fillAccordingToEntry(currentEntry, true)
+        }).then(() => reloadAutocomplete(id))
     }
 
     document.getElementById("collection").addEventListener('change', function (evt) {
