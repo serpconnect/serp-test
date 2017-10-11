@@ -1,6 +1,5 @@
 body {
 	width: 100%;
-	height: ~"calc(100% - 15px)";
 }
 
 #graph {
@@ -40,8 +39,17 @@ body {
 	display: none;
 	position: absolute;
 	z-index: 10;
-	background: white;
-	top: ~"calc(87px + 35px)";
+	background: #f2f2f2;
+	width: 40em;
+	left: ~"calc(100%/2 - 40em/2)";
+	padding: 1em;
+	border: 1px solid #333;
+
+	> ul {}
+	> ul > li {
+		list-style-type: square;
+		margin: 0.5em;
+	}
 }
 
 #container {

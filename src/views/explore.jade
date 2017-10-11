@@ -29,28 +29,41 @@ block view-specific-scripts
 	script(src="js/explore.js")
 
 block content
-	ul#helpbox
-		li Click on a research entry or challenge entry to find matching entries.
+	div#helpbox
+		p.
+			The visualisation shows #[span.chl challenges] (left)
+			and #[span.res research] (right) as nodes with their
+			classification according to the taxonomy (center) as
+			edges.
 
-		li Click on a facet to filter out entries not connected to that facet.
+		p Interact with the visualisation by clicking on nodes:
 
-		li Click again on already clicked nodes to remove their filter.
+		ul
+			li #[span.chl challenge] - show matching #[span.res research]
+			li #[span.res research] - show matching #[span.chl challenges]
+			li taxonomy - filter #[span.chl challenges] and #[span.res research]
 
-		li Only one research or entry node can be selected at any time.
+		p. 
+			Only one #[span.chl challenge] or #[span.res research] 
+			node can be active at a given time.
 
-		li.
-			In the match view, the coloring indicates entry type:
+		p Click on selected nodes to remove the selection.
+
+		p.
+			In the Matches list, the coloring indicates entry type:
 			#[span.res research] or #[span.chl challenge]
 
-		li If an entry matches both effect and scope facets, it is a complete match and the entry retains its original color.
+		p When filtering by #[span.res research] or #[span.chl challenges] there are three cases:
+		ul
+			li Effect #[i and] scope -- complete match, node retains color
+			li Effect #[i or] scope -- #[span.inc incomplete] match, node changes color
+			li No match -- node is hidden
 
-		li If an entry matches either effect or scope facetsm it is an #[span.inc incomplete] match.
+		p Click #[button Reset] to remove all filters.
 
-		li Click 'Reset' (bottom right) to remove all filters.
+		p Click #[button Matches] to toggle list view of matched entries
 
-		li Click 'Matches' to toggle list view of matched entries
-
-		li Login to explore your collections.
+		p Login to explore your collections.
 
 	div#container
 		div#graph
@@ -62,6 +75,6 @@ block content
 		span.chl challenge
 		span.res research
 		span.inc incomplete
-	button#help.control-btn Tips
+	button#help.control-btn Help
 	button#reset.control-btn Reset
 	button#matches.control-btn Matches
