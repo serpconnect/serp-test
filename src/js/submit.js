@@ -10,17 +10,23 @@ $(document).ready(function() {
     });
 
     var loggedIn = false;
-    window.api.ajax("GET", window.api.host + "/v1/account/login").done(user => {
-      loggedIn = true;
-    }).fail(xhr => {
-      loggedIn = false;
-    });
+    api.v1.account.loggedIn()
+        .done(() => loggedIn = true)
+        .fail(() => loggedIn = false)
 
-    var querystring = {}
+    /* Set by selectCollection() when loading a collection */
     var collectionTaxonomy = undefined
-
-    // find a more permanent fix for this
-    // without setTimeout the additional-data elements don't appear in firefox,
+    
+     /* All interactive/clickable elements */
+     function getUIElements() {
+        return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
+                "#load-btn", "#collection",
+                "#submit-create-collection"
+        ]
+    }
+    
+    var querystring = {}
+    /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
     if (window.location.search) {
         var params = window.location.search.substring(1).split('&')
         for (var i = 0; i < params.length; i++) {
@@ -35,27 +41,31 @@ $(document).ready(function() {
     // set the little white line underneath the submit title
     $("#submit").addClass("current-view");
 
+    /* Update the select element with user's collections */
     function updateCollectionList() {
         return window.user.collections()
         .then(collz => {
+            var select = document.getElementById('collection')
             var def = 0
-            $("#collection")
-                .empty()
-                .append(collz.map(coll => {
-                    if (coll.name === "default")
+
+            while (select.firstChild)
+                select.removeChild(select.firstChild)
+
+            collz
+                .map(coll => {
+                    if (coll.name === 'default')
                         def = coll.id
-                    return jqEl("option")
-                        .text(coll.name)
-                        .attr("value", coll.id)
-                    })
-                ).val(querystring.c || def)
+                    return el('option', {value:coll.id}, [coll.name])
+                })
+                .forEach(option => select.appendChild(option))
+            select.value = querystring.c || def
+
             if (!querystring.e)
-                selectCollection(querystring.c || def)
+                return selectCollection(querystring.c || def)
         }).catch(err => {
             selectCollection(undefined)
         })
     }
-    updateCollectionList()
 
     //booleans to limit number of error messages
     var researchComplaint=false;
@@ -63,16 +73,17 @@ $(document).ready(function() {
 
     // load the requested entry if we have one
     var currentEntry = undefined
-    if (querystring.e) {
-        var eurl = window.api.host + "/v1/entry/" + querystring.e
-        var entry = undefined
+    function loadLinkedEntry(entryId) {
+        if (!entryId) return
         
-        api.v1.entry.collection(querystring.e)
+        return api.v1.entry.collection(entryId)
         .then(collection => {
             return selectCollection(collection.id)
         }).catch(err => {
-            var msg = "You are not a member of the collection this entry belongs to and cannot edit this entry." +
-                "\nSelect a collection and click 'submit' to submit this entry to your own collection instead."
+            var msg = "You are not a member of the collection this entry " +
+                      "belongs to and cannot edit this entry." +
+                      "\n\nSelect a collection and click 'submit' to add " +
+                      "this entry to your own collection instead."
             flashErrorMessage(msg)
             var collections = document.querySelectorAll('#collection > option')
             var i = 0
@@ -83,10 +94,10 @@ $(document).ready(function() {
             return selectCollection(parseInt(collections[i].value))
         }).then(() => {
             return Promise.all([
-                api.ajax("GET", eurl),
-                api.v1.entry.taxonomy(querystring.e)
+                api.v1.getEntry(entryId),
+                api.v1.entry.taxonomy(entryId)
             ]).then(promise => {
-                entry = promise[0]
+                var entry = promise[0]
                 entry.entryType = entry.type
                 entry.serpClassification = promise[1]
                 currentEntry = entry
@@ -96,23 +107,29 @@ $(document).ready(function() {
         })
     }
 
-    // clear all checkboxes upon refreshing the page
-    $('input:checkbox').removeAttr('checked');
+    /* LAUNCH! */
+    updateCollectionList()
+        .then(() => loadLinkedEntry(querystring.e))
 
-    // clear any cached data in the new collection field
+    /* Clear any browser-cached data */
+    $('input:checkbox').removeAttr('checked');
     $("#new-collection").val("");
 
     // stores all the queued entries
     var queuedEntries = [];
 
-    // fill each key with an array of strings for which to autocomplete on
-    // current data is for illustration purposes
+    /**
+     * Map facet to entities:
+     * {
+     *     'PLANNING': ['someday maybe', 'tuesday afternoon']
+     * }
+     */
     var autocompleteMap = {};
     function getFacetEntities(facet) {
         return autocompleteMap[facet] || []
     }
 
-    // load taxonomy for autocomplete purposes only
+    /* Load the above map; will succeed iff user is member of collection */
     function reloadAutocomplete(collectionId) {
         if (!collectionId) return
 
@@ -126,12 +143,12 @@ $(document).ready(function() {
             })
     }
 
+    /* Sort the generated classification using this function */
     function byNbrOfChildren (a, b) {
         return a.children.length - b.children.length
     }
 
-    /* Generate a classification setup a la submit page */
-    function classification_remove_row(evt) {
+    function removeParent(evt) {
         var sample = this.parentNode
         sample.parentNode.removeChild(sample)
     }
@@ -139,7 +156,7 @@ $(document).ready(function() {
     /* when user clicks the [+] of a facet */
     function classification_add_row(evt) {
         var remove = el("div.remove", ["✖"])
-        remove.addEventListener('click', classification_remove_row)
+        remove.addEventListener('click', removeParent)
 
         var input = el('input')
         var row = el('div.entity-sample', [
@@ -217,9 +234,6 @@ $(document).ready(function() {
         div.appendChild(clazz)
     }
 
-    // the various categories that make up the effect facet
-    var effectSubfacets = ["solving", "adapting", "assessing", "improving"];
-
     // show the corresponding input boxes depending on the previously set entry type
     var currentType = $(".circular-checkbox input:checked").val();
     if (currentType === "research") {
@@ -266,7 +280,7 @@ $(document).ready(function() {
         // iterate over each checkbox that has been checked
         $(".header > input:checked").each(function() {
             this.checked = false
-            classification_checkbox_click.bind(this).call({})
+            classification_checkbox_click.apply(this, [])
         });
     }
 
@@ -277,69 +291,54 @@ $(document).ready(function() {
         $("#description").val("");
     }
 
-    // creates a table row with the data contained in entry
+    /* User clicked row in queued entries table => edit entry */
+    function editQueuedEntry(evt) {
+        var row = this
+        
+        var table = document.getElementById('queue-table')
+        var rows = table.querySelectorAll('tr')
+        for (var i = 0; i < rows.length; i++)
+            rows[i].classList.remove('in-edit')
+        
+        row.classList.add('in-edit')
+        
+        var entryNumber = parseInt(row.dataset.entryNumber)
+        var entry = queuedEntries[entryNumber]
+        
+        /* Maybe warn user if another row was active */
+        document.getElementById("submit-btn").dataset.currentEntry = entryNumber
+        discardEntryChanges()
+        fillAccordingToEntry(entry)
+    }
+
+    /* Either add or replace a row in the table: position decides */
     function insertIntoTable(entry, position) {
-        var classification = entry["serpClassification"];
+        var table = document.getElementById('queue-table')
+        var classification = entry.serpClassification
+        var entryNumber = position != null ? position : queuedEntries.length - 1
 
-        // let's build the table row for this entry
-        var $row = jqEl("tr");
+        var row = el('tr', {'data-entry-number': entryNumber }, [
+            el('td', [
+                el('div.scroll-wrapper', [
+                        entry.description || entry.reference
+                ])
+            ]),
+            collectionTaxonomy.tree().map(function build(node) {
+                if (!node.isTreeLeaf())
+                    return node.map(build)
+                var classified = classification[node.short] ? '.filled-cell' : ''
+                return el('td' + classified)
+            })
+        ])
 
-        // choose as the row descriptor either the description (for challenges)
-        if (entry.entryType === "challenge") {
-            var entryTitle = entry["description"];
-        // or the reference (for research results)
+        if (position != null) {
+            var existing = table.querySelector('tbody').childNodes[position]
+            existing.parentNode.replaceChild(row, existing)
         } else {
-            var entryTitle = entry["reference"];
+            table.querySelector('tbody').appendChild(row)
         }
 
-        var entryNumber = position ? position : queuedEntries.length - 1;
-        var scrollDiv = jqEl("div").text(entryTitle || entry["description"] || entry["reference"]);
-        scrollDiv.addClass("table-cell-div")
-        var wrapper = jqEl("div")
-        wrapper.addClass("scroll-wrapper")
-        wrapper.append(scrollDiv)
-        var titleCell = jqEl("td")
-        titleCell.append(wrapper)
-        titleCell.data("entry-number", entryNumber);
-
-        $row.append(titleCell);
-
-        collectionTaxonomy.tree().map(function create(node, i) {
-            if (!node.isTreeLeaf())
-                node.map(create)
-            else
-                createCell(node.short)
-        })
-
-        // position + 2 rationale: nth-child(1) === table head
-        // => we need to offset with 1
-        // insert the updated row
-        if (position!=null) {
-            $("#queue-table tr:nth-child(" + (position + 2 /* to account for table header */) + ")").replaceWith($row);
-        } else {
-            // append row to the end of the table
-            $("#queue-table tr:last").after($row);
-        }
-
-        // refresh on click listeners for all entries in first column;
-        // this click initiates an inspection and possibly change of the entry
-        // contents
-        $("td:first-child").on("click", function(evt) {
-            $("td:first-child").removeClass("selected-entry-in-queue");
-            var entryNumber = $(this).data("entry-number");
-            $("#submit-btn").data("currentEntry", entryNumber);
-            var entry = queuedEntries[entryNumber];
-            $(this).addClass("selected-entry-in-queue");
-            discardEntryChanges();
-            fillAccordingToEntry(entry);
-        });
-
-        function createCell(subfacet, alternating) {
-            var $td = jqEl("td");
-            classification[subfacet] ? $td.addClass("filled-cell") : "";
-            alternating ? $td.addClass("alternating-group") : "";
-            $row.append($td);
-        }
+        row.addEventListener('click', editQueuedEntry, false)
     }
 
     function getEntry() {
@@ -391,9 +390,8 @@ $(document).ready(function() {
 
     function fillAccordingToEntry(entry, noswap) {
         // fill in the input fields
-        for (var key in entry) {
-            $("#" + key).val(entry[key]);
-        }
+        var fields = ['reference', 'doi', 'description']
+        fields.forEach(key => document.getElementById(key).value = entry[key])
 
         // toggle the correct radio button
         $("#" + entry["entryType"] + "-button").trigger("click");
@@ -402,14 +400,14 @@ $(document).ready(function() {
         // fill in the correct checkboxes
         for (var key in classification) {
             var header = document.querySelector(`[data-facet-id="${key}"]`)
-            if (header === null) {
-                // The entry contains facets the current taxonomy either has subclassed or doesn't have
-                continue
-            }
+
+            // The entry contains facets the current taxonomy either has 
+            // subclassed or doesn't have (yet). Either way we can't proceed.
+            if (!header) continue
 
             var checkbox = header.querySelector('input')
             checkbox.checked = true
-            classification_checkbox_click.bind(checkbox).call({})
+            classification_checkbox_click.apply(checkbox, [])
 
             var leaf = header.parentNode
             var addData = leaf.querySelector('.additional-data')
@@ -420,7 +418,7 @@ $(document).ready(function() {
 
             // fill in the additional data that's been specified for the checkboxes
             for (var i = 0; i < entities.length; i++) {
-                var row = classification_add_row.bind(addData).call({})
+                var row = classification_add_row.apply(addData, [])
                 row.querySelector('input').value = entities[i]
             }
         }
@@ -432,12 +430,14 @@ $(document).ready(function() {
     function swapButtons() {
         $("#queue-btn").text("cancel");
         $("#submit-btn").text("save");
+        $('#load-btn').hide()
         $("#remove-btn").show();
     }
 
     function restoreButtons() {
         $("#queue-btn").text("queue");
         $("#submit-btn").text("submit");
+        $('#load-btn').show()
         $("#remove-btn").hide();
     }
 
@@ -448,19 +448,21 @@ $(document).ready(function() {
     }
 
     function removeEntry(entryNumber) {
-        // remove the entry from the table
-        var position = Number(entryNumber) + 2;
-        $("#queue-table tr:nth-child(" + position + ")").remove();
-        // remove from our internal array
-        queuedEntries.splice(entryNumber, 1);
-        // update data attribute of the table cells after the removed entry
-        var $cells = $("td:first-child");
-        $cells.splice(0, entryNumber);
-        $cells.each(function(cell) {
-            var $cell = $($cells[cell]);
-            var oldEntryNumber = Number($cell.data("entryNumber"));
-            $cell.data("entryNumber", oldEntryNumber - 1);
-        });
+        var table = document.getElementById('queue-table')
+        var tbody = table.querySelector('tbody')
+
+        console.log('removing', entryNumber, tbody.childNodes[entryNumber])
+        
+        queuedEntries.splice(entryNumber, 1)
+
+        /* Update position references before removing the node itself
+           to avoid waiting for DOM update when reading childNodes. */
+        for (var i = entryNumber + 1; i < tbody.childElementCount; i++) {
+            tbody.childNodes[i].dataset.entryNumber = i - 1
+        }
+
+        tbody.removeChild(tbody.childNodes[entryNumber])
+        
         // clear the input boxes
         discardEntryChanges();
     }
@@ -468,7 +470,7 @@ $(document).ready(function() {
       function discardEntryChanges() {
         clearPageState();
         // clear data on submit-btn
-        jQuery.removeData($("#submit-btn"), "currentEntry");
+        //delete document.getElementById('submit-btn').dataset.currentEntry
 
         // clear checkbox related stuff
         $('input:checkbox').removeAttr('checked');
@@ -479,13 +481,6 @@ $(document).ready(function() {
         $("#submit-create-collection").text("create a new collection");
     }
 
-    /* All interactive/clickable elements */
-    function getUIElements() {
-        return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
-                "#load-btn", "#collection",
-                "#submit-create-collection"
-        ]
-    }
     /* Wrapper for toggling buttons */
     function disableButton(btn) {
         btn.disabled = true
@@ -590,7 +585,7 @@ $(document).ready(function() {
                 })
         // acts as save button
         } else {
-            var entryNumber = $(this).data("currentEntry");
+            var entryNumber = parseInt(this.dataset.currentEntry)
             saveEntryChanges(entryNumber);
             clearPageState();
             restoreButtons();
@@ -631,7 +626,7 @@ $(document).ready(function() {
             pushEntry(getEntry());
         // used as the cancel button
         } else {
-            $("td:first-child").removeClass("selected-entry-in-queue");
+            $("tr").removeClass("in-edit");
             restoreButtons();
             discardEntryChanges();
         }
@@ -650,7 +645,7 @@ $(document).ready(function() {
 
     $("#remove-btn").on("click", function(evt) {
         // data's stored in the submit button
-        var entryNumber = $("#submit-btn").data("currentEntry");
+        var entryNumber = parseInt(document.getElementById('submit-btn').dataset.currentEntry)
         removeEntry(entryNumber);
         restoreButtons();
     });
@@ -677,6 +672,7 @@ $(document).ready(function() {
         clearComplaints();
     });
 
+    /* This will rebuild the overview table based on the given taxonomy */
     function generateOverviewTable(taxonomy) {
         var div = document.getElementById('queue-table')
         while (div.firstChild)
@@ -734,10 +730,6 @@ $(document).ready(function() {
     // basically an alias for document.createElement - returns a jquery element
     function jqEl(elementType) {
         return $(document.createElement(elementType));
-    }
-
-    function scrollDown(target){
-        $("html, body").animate({ scrollTop: target }, 300);
     }
 
 });

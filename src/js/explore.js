@@ -99,7 +99,7 @@ $(function() {
 	api.v1.taxonomy()
 		.then(data => new Taxonomy(data.taxonomy))
 		.then(taxonomy => serpTaxonomy = taxonomy)
-		.then(() => window.user.collections())
+		.then(() => api.v1.account.collections())
 		.done(collz => {
 			var selector = $$('#dataset')
 

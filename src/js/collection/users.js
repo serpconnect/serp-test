@@ -36,60 +36,19 @@ $(function () {
 						$('<span>').addClass('').text(member.email),
 				])
 			}))
-	}	
+	}
 
    	function inviteUser(evt) {
-	    var inviteModal = {
-	        desc: "Invite user to " + collectionName,
-	        message: "",
-	        input: [["input0", "email", "user@email.com"]],
-	        btnText: "invite"
-	    }
-        modals.optionsModal(inviteModal, function (email) {
-            api.v1.collection.invite(email, cID)
-                .done(ok => {
-                    modals.clearAll()
-                    refresh()
-                })
-                .fail(xhr => alert(xhr.responseText))
-        })
-		new Awesomplete('#input0', { 
-				list: friends, 
-				filter: ausomplete.autocompleteFilter, 
-				replace: ausomplete.autocompleteUpdate
-		})
+   		window.components.inviteUserModal(cID, friends).then(refresh)
     }
 
 	function kickUser(evt) {
-		api.v1.collection.members(cID, "all").done(members => {
-			var emails = members.map(user => user.email)
-			emails.splice(emails.indexOf(userEmail), 1)
-
-			var kickUserModal = {
-				desc: "Kick user from " + collectionName,
-				message: "",
-				list: emails,
-				input: [['input0', 'email', 'user email']],
-				btnText: "Kick"
-			}
-
-			//fix alternatives so only people in the collection shows up
-			window.modals.fuzzyModal(kickUserModal, function (email) {
-				window.modals.confirmKickPopUp(`Are you sure you want to kick ${email}?`, () => {
-					api.v1.collection.kick(email, id)
-						.done(ok => cleanup(this.modal))
-						.fail(xhr => complain(xhr.responseText))
-				})
-
-			})
-
-
-			new Awesomplete('#input0', {
-				list: emails,
-				filter: ausomplete.autocompleteFilter,
-				replace: ausomplete.autocompleteUpdate
-			})
-		})
+		api.v1.collection.members(cID, "all")
+			.then(members => members.map(user => user.email))
+			.then(emails => emails.filter(email => email !== userEmail))
+			.then(emails => {
+				return window.components.fuzzyKickUserModal(cID, emails)
+			}).then(what => what.then ? what.then(refresh) : refresh())
 	}
 
     window.api.v1.account.self()

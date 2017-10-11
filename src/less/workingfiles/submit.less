@@ -1,52 +1,12 @@
 
-.disabled-subfacet {
-    color: @light-gray;
-}
-.disabled-checkbox {
-    opacity:0.32;
-    filter:alpha(opacity=32);
-    &:hover {
-        background: none !important;
-    }
-}
 .submit-view-area-wrapper {
     margin: 0 auto;
     width: 560px;
     max-width: 80%;
 }
 
-#submit-form{
+#submit-form {
     margin-left: 6%;
-}
-
-#serp-structure-fig {
-    display: block;
-    margin: 0 auto;
-
-    margin-top: -20px;
-    margin-bottom: 15px;
-}
-
-.submit-facet-title {
-    padding-right: 5px;
-    vertical-align: top;
-    font-size: @facet-title-size;
-    margin-top: 10px;
-    -webkit-transition: color 0.2s ease;
-    -moz-transition: color 0.2s ease;
-    -o-transition: color 0.2s ease;
-    -ms-transition: color 0.2s ease;
-    transition: color 0.2s ease;
-
-  width: 256px;
-    &:hover {
-        -webkit-transition: color 0.2s ease;
-        -moz-transition: color 0.2s ease;
-        -o-transition: color 0.2s ease;
-        -ms-transition: color 0.2s ease;
-        transition: color 0.2s ease;
-        color: (@font-color + #555);
-    }
 }
 
 // styling radio buttons for selecting entry type
@@ -114,74 +74,6 @@ input[type="radio"] {display:none;}
     width: 250px;
 }
 
-.import-taxonomy-heading {
-    vertical-align: top;
-    font-size: @facet-title-size;
-    color: black;
-    text-align: center;
-    width: 455px;
-    margin-top: 5px;
-}
-
-.import-checkbox-heading {
-    vertical-align: top;
-    font-size: @facet-title-size;
-    color: red;
-    width: 115px;
-    display: inline-block;
-}
-
-.import-all-selects-wrapper {
-    margin-bottom: 2px;
-    display: flex;
-}
-
-.import-extra-headings {
-    max-width: 345px;
-}
-
-.import-checkbox-and-select {
-    height: 23px;
-    display: inline-block;
-}
-
-.import-select-first-box-wrapper {
-    margin-bottom: 1px;
-    display: flex;
-    justify-content: space-between;
-    width: 100%;
-    max-width: 340px;
-}
-
-.import-div-delimiter {
-    display: inline-block;
-    max-width: 350px;
-    width: 100%;
-}
-
-.import-select-delimiter {
-    float: right;
-}
-
-.import-node-selection {
-    max-height: 22px;
-}
-
-.import-select {
-    max-width: 95px;
-}
-
-input.import-checkbox.extra[type=checkbox]:before {
-    content:"\2795";
-    display:inline-block;
-    width:12px;
-    height:12px;
-    background: @bg-color
-}
-input.import-checkbox.extra[type=checkbox]:checked:before {
-    content: "\2796";
-}
-
 .queue-button-wrapper {
     text-align: center;
     padding: 20px;
@@ -218,9 +110,6 @@ input.import-checkbox.extra[type=checkbox]:checked:before {
     margin-left: 140px;
     display: none;
 }
-.disabled-dropdown {
-    .disabled-checkbox();
-}
 
 #submit-create-collection {
     margin-top: -4px;
@@ -252,16 +141,9 @@ input.import-checkbox.extra[type=checkbox]:checked:before {
     }
 }
 
-td {
-    text-align: center;
-    border-right: 1px solid @table-white;
-    border-bottom: 1px solid @table-white;
-    padding: 0;
-    margin: 0;
-}
-
 .queue-table-container {
     overflow-x: auto;
+    padding: 1em;
 }
 
 #queue-table {
@@ -269,9 +151,28 @@ td {
     font-size: 10pt;
     border-collapse: collapse;
 
-    & th {
+    th {
         border: none;
+
+        &:first-child {
+            width: 12em;
+        }
     }
+
+    > tbody > tr {
+        &:hover {
+            cursor: pointer;
+            background-color: #e0e0e0;
+        }
+    }
+}
+
+
+.scroll-wrapper{ 
+    max-height: 5em;
+    width: 12em;
+    overflow-y: auto;
+    word-break: break-all;
 }
 
 .queue-area {
@@ -291,56 +192,12 @@ td {
     background-color: @super-light-gray;
 }
 
-
-#queue-table th:first-child {
-
+.in-edit {
+    background-color: #d0d0d0;
 }
-
-div .table-cell-div{
-    overflow: scroll;
-    max-height: 7rem;
-    padding-right:2rem;
-    width: 15.5rem;
-}// sets height of first cell of queue table
-
-.scroll-wrapper{ //wraps ^div so that scroll bar is hidden but table cell is scrollable
-    width: 16rem;
-    overflow: hidden;
-}
-
-
-td {
-    &:first-child {
-        max-width: 150px;
-        width: 25%;
-        z-index: 1;
-        border-right: none;
-        border-bottom: none;
-
-        cursor: pointer;
-
-        -webkit-transition: color 0.3s ease;
-        -moz-transition: color 0.3s ease;
-        -o-transition: color 0.3s ease;
-        -ms-transition: color 0.3s ease;
-        transition: color 0.3s ease;
-    }
-}
-
-#queue-table th:first-child {
-    border: none;
-}
-
 
 .filled-cell {
     background-color: @middling-gray;
-}
-
-th {
-    border-right: 1px solid white;
-    border-bottom: 1px solid white;
-    padding-right: 13px;
-    padding-left: 10px;
 }
 
 .additional-data {
