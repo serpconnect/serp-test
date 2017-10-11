@@ -448,19 +448,21 @@ $(document).ready(function() {
     }
 
     function removeEntry(entryNumber) {
-        // remove the entry from the table
-        var position = Number(entryNumber) + 2;
-        $("#queue-table tr:nth-child(" + position + ")").remove();
-        // remove from our internal array
-        queuedEntries.splice(entryNumber, 1);
-        // update data attribute of the table cells after the removed entry
-        var $cells = $("td:first-child");
-        $cells.splice(0, entryNumber);
-        $cells.each(function(cell) {
-            var $cell = $($cells[cell]);
-            var oldEntryNumber = Number($cell.data("entryNumber"));
-            $cell.data("entryNumber", oldEntryNumber - 1);
-        });
+        var table = document.getElementById('queue-table')
+        var tbody = table.querySelector('tbody')
+
+        console.log('removing', entryNumber, tbody.childNodes[entryNumber])
+        
+        queuedEntries.splice(entryNumber, 1)
+
+        /* Update position references before removing the node itself
+           to avoid waiting for DOM update when reading childNodes. */
+        for (var i = entryNumber + 1; i < tbody.childElementCount; i++) {
+            tbody.childNodes[i].dataset.entryNumber = i - 1
+        }
+
+        tbody.removeChild(tbody.childNodes[entryNumber])
+        
         // clear the input boxes
         discardEntryChanges();
     }
@@ -468,7 +470,7 @@ $(document).ready(function() {
       function discardEntryChanges() {
         clearPageState();
         // clear data on submit-btn
-        jQuery.removeData($("#submit-btn"), "currentEntry");
+        //delete document.getElementById('submit-btn').dataset.currentEntry
 
         // clear checkbox related stuff
         $('input:checkbox').removeAttr('checked');
@@ -583,8 +585,7 @@ $(document).ready(function() {
                 })
         // acts as save button
         } else {
-            var entryNumber = $(this).data("currentEntry");
-
+            var entryNumber = parseInt(this.dataset.currentEntry)
             saveEntryChanges(entryNumber);
             clearPageState();
             restoreButtons();
@@ -644,7 +645,7 @@ $(document).ready(function() {
 
     $("#remove-btn").on("click", function(evt) {
         // data's stored in the submit button
-        var entryNumber = $("#submit-btn").data("currentEntry");
+        var entryNumber = parseInt(document.getElementById('submit-btn').dataset.currentEntry)
         removeEntry(entryNumber);
         restoreButtons();
     });
