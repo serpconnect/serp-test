@@ -166,13 +166,8 @@ $(document).ready(function() {
 				subFac.taxonomy.filter(e => e.parent === FACET)
 								.map(e => el("option", {value: e.id}, [e.name]))
 
-<<<<<<< HEAD
-					])
-
-=======
 			])
 			
->>>>>>> master
 			newEntryDropDown.addEventListener('change', evt => {
 				var row = $(evt.target).parent().attr('id');
 				var moveTo = evt.target.value+"-entry-container";
