@@ -29,44 +29,18 @@ $(function () {
 			elEntries.removeChild(elEntries.firstChild)
 
 		entries.forEach(entry => {
-			var elEntry = el('div.collection-option-li', {
+			var elEntry = el('div.collection-option-li.collection-entry', {
 				'data-entry-id': entry.id
-			}, [entry.description || entry.reference || entry.DOI])
+			}, [
+				`(#${entry.id}) ` +
+				(entry.description || entry.reference || entry.DOI)
+			])
 
 			elEntry.addEventListener('click', inspectEntry, false)
 
 			elEntries.appendChild(elEntry)
 		})
 	}
-
-	var reverseMap = {
-    	"adapting": "Effect",
-        "solving": "Effect",
-        "assessing": "Effect",
-        "improving": "Effect",
-        "planning": "Scope",
-        "design": "Scope",
-        "execution": "Scope",
-        "analysis": "Scope",
-        "people": "Context",
-        "information": "Context",
-        "sut" : "Context",
-        "other": "Context"
-    }
-    var shorthandMap = {
-        "adapting": "Adapt testing",
-        "solving": "Solve new problem",
-        "assessing": "Assess testing",
-        "improving": "Improve testing",
-        "planning": "Test planning",
-        "design": "Test design",
-        "execution": "Test execution",
-        "analysis": "Test analysis",
-        "people": "People related constraints",
-        "information": "Availability of information",
-        "sut" : "Properties of SUT",
-        "other": "Other"
-    }
 
 	function inspectEntry(evt) {
 		var id = this.dataset.entryId

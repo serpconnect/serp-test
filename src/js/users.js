@@ -16,7 +16,7 @@ $(document).ready(function() {
     // Load descriptions from the html page (easy editing)
     var descriptions = Array.from(document.querySelectorAll('.description-field'))
         .map(el => {
-            var lvl =  el.querySelector('.level').textContent
+            var lvl =  el.querySelector('.level').textContent.trim()
             var dsc = el.querySelector('.description').textContent
             return { [lvl]: dsc }
         })
@@ -97,11 +97,11 @@ $(document).ready(function() {
     }
     function createDeleteButton(user) {
         var btn = el("button.dangerous", ['✖'])
-        
+
         btn.addEventListener("click", evt => {
             showDeleteAccountModal(user)
         }, false)
-        
+
         return btn
     }
 

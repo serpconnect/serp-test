@@ -1,4 +1,4 @@
-(function() {
+$(function() {
 	function $$(id) {
 		return document.querySelector(id)
 	}
@@ -10,7 +10,7 @@
 				e.style.display = 'none'
 			else
 				e.style.display = 'block'
-			
+
 			this.classList.toggle('down')
 		}
 	}
@@ -84,70 +84,66 @@
 			var extended = new Taxonomy([])
 			extended.tree(serpTaxonomy.tree())
 			extended.extend(taxonomy)
-		} 
+		}
 		explore(serpTaxonomy, extended, set, $$('#graph'))
 	}
 
-	window.onload = function() {
-		$$('#explore').classList.add('current-view')
-		$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
-		$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
+	$$('#explore').classList.add('current-view')
+	$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
+	$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
 
-		var hasCollection = window.location.hash.length > 0
-		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
-		var found = false
+	var hasCollection = window.location.hash.length > 0
+	var collectionId = hasCollection ? window.location.hash.substring(1) : ""
+	var found = false
 
-		api.v1.taxonomy()
-			.then(data => new Taxonomy(data.taxonomy))
-			.then(taxonomy => serpTaxonomy = taxonomy)
-			.then(() => window.user.collections())
-			.done(collz => {
-				var selector = $$('#dataset')
+	api.v1.taxonomy()
+		.then(data => new Taxonomy(data.taxonomy))
+		.then(taxonomy => serpTaxonomy = taxonomy)
+		.then(() => window.user.collections())
+		.done(collz => {
+			var selector = $$('#dataset')
 
-				collz.forEach(coll => {
-					var opt = document.createElement('option')
-					opt.setAttribute('value', coll.id)
-					opt.text = coll.name
-					selector.appendChild(opt)
-					if (coll.id === Number(collectionId))
-						found = true
-				})
-
-			})
-			.always(xhr => {
-				if (!found && hasCollection) {
-					var opt = document.createElement('option')
-					opt.setAttribute('value', collectionId)
-					opt.text = "#" + collectionId
-					$$('#dataset').appendChild(opt)
-				}
-
-				if (hasCollection) {
-					$$('#dataset').value = collectionId
-					Dataset.loadCollection(collectionId, exploreSet)
-				} else
-					Dataset.loadDefault(exploreSet)
+			collz.forEach(coll => {
+				var opt = document.createElement('option')
+				opt.setAttribute('value', coll.id)
+				opt.text = coll.name
+				selector.appendChild(opt)
+				if (coll.id === Number(collectionId))
+					found = true
 			})
 
-		$$('#dataset').addEventListener('change', function (evt) {
-			if (this.value === "main") {
-                window.location.hash = ""
+		})
+		.always(xhr => {
+			if (!found && hasCollection) {
+				var opt = document.createElement('option')
+				opt.setAttribute('value', collectionId)
+				opt.text = "#" + collectionId
+				$$('#dataset').appendChild(opt)
+			}
+
+			if (hasCollection) {
+				$$('#dataset').value = collectionId
+				Dataset.loadCollection(collectionId, exploreSet)
+			} else
 				Dataset.loadDefault(exploreSet)
-            } else {
-                window.location.hash = '#' + this.value
-				Dataset.loadCollection(this.value, exploreSet)
-            }
 		})
 
-		// Some browsers do not support the css calc(), or it doesn't work.
-		// Detect failure and do what css should've done, 2em = 32px
-		var computedHeight = window.getComputedStyle($$('#graph')).height
-		if (computedHeight === '0px') {
-			var height = `${window.innerHeight - 87 - 35 - 15 - 32}px`
-			$$('#graph').style.height = height
-			$$('#listing').style.height = height
-		}
+	$$('#dataset').addEventListener('change', function (evt) {
+		if (this.value === "main") {
+            window.location.hash = ""
+			Dataset.loadDefault(exploreSet)
+        } else {
+            window.location.hash = '#' + this.value
+			Dataset.loadCollection(this.value, exploreSet)
+        }
+	})
 
+	// Some browsers do not support the css calc(), or it doesn't work.
+	// Detect failure and do what css should've done, 2em = 32px
+	var computedHeight = window.getComputedStyle($$('#graph')).height
+	if (computedHeight === '0px') {
+		var height = `${window.innerHeight - 87 - 35 - 15 - 32}px`
+		$$('#graph').style.height = height
+		$$('#listing').style.height = height
 	}
-	
-})();
+})

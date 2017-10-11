@@ -56,7 +56,7 @@ Dataset.loadCollection = function(id, cb) {
 
 		if (window.Taxonomy)
 			taxonomy = promise[1].taxonomy
-		
+
 		cb(dataset, taxonomy)
 	})
 }
@@ -67,7 +67,7 @@ Dataset.loadDefault = function(cb) {
 	}
 
 	$.getJSON(window.api.host + "/v1/entry")
-	 .success(function (data) {
+	 .then(function (data) {
 	 	Dataset.default = new Dataset(data)
 	 	cb(Dataset.default)
 	 })

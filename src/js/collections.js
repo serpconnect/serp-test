@@ -151,15 +151,6 @@ $(function() {
     }
 
     function appendCollection(self, coll, isCollectionOwner,mine) {
-        var ownerActions = el('div.collection-row', [
-             collectionOption('add user', invite),
-             collectionOption('kick user', kick)
-        ])
-        var myActions = el('div.collection-row', [
-            collectionOption('manage', manage),
-            collectionOption('add entry', submit),
-        ])
-
         var adminActions = el('div.collection-row', [
           collectionOption('delete', deleteColl),
         ])
@@ -178,8 +169,6 @@ $(function() {
                     collectionOption('search', search),
                     collectionOption('explore', explore),
                 ]),
-                mine ? myActions : undefined,
-                isCollectionOwner ? ownerActions : undefined,
                 adminActions
             ])
 		])
@@ -198,7 +187,7 @@ $(function() {
     function update(self) {
         $(".user-email").text(`${self.email} (${self.trust})`)
         $("div.collection-wrapper").remove()
-        document.querySelector(".collections-container").appendChild(el('div.my-collections-container'))
+
         self.collections.forEach(coll => {
             api.v1.collection.stats(coll.id).then(data => {
                 coll.members = data.members
@@ -211,6 +200,15 @@ $(function() {
         })
 
         api.v1.account.friends(self.email).done(data => friends = data)
+    }
+
+    function updateStats(showing) {
+        var ncoll = $(".collection-wrapper").length
+        if (showing === -1)
+            showing = ncoll
+
+        var stats = ` (Showing ${showing}/${ncoll})`
+        document.getElementById('stats').textContent = stats
     }
 
     $("#collections-search").on("input", function(evt) {
@@ -226,20 +224,21 @@ $(function() {
                     $(collectionsMappings[matchingCollection]).show();
                 }
             }
+            updateStats(results.length)
         } else {
             $(".collection-wrapper").show();
+            updateStats(-1)
         }
     });
 
     function setup(self) {
-        if(self.trust != "Admin"){
+
+        if (self.trust !== "Admin") {
             window.location = "/profile.html"
         }
 
         update(self)
-        var div = document.querySelector('.profile-area-wrapper')
-        var divall = document.querySelector('.collections-container')
-        divall.appendChild(el('div.all-collections-container'))
+
         window.api.ajax("GET", window.api.host + "/v1/admin/collections").done(collections =>{
           collections.forEach(coll => {
               api.v1.collection.stats(coll.id).then(data => {
@@ -249,6 +248,7 @@ $(function() {
                   return api.v1.admin.isCollectionOwner(coll.id)
               }).then(owner => {
                   appendCollection(self, coll, owner,false)
+                  updateStats(-1)
               })
           })
         })
@@ -256,8 +256,6 @@ $(function() {
         collectionsFuzzy = new Fuse(collections, {
             threshold: 0.5
         });
-
-
     }
 
     // Load logged in user and proceed to setup otherwise redirect to login

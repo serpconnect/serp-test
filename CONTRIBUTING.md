@@ -3,11 +3,13 @@ Contributing
 
 Licensing
 ---------
-connect is licensed under the BSD 2-clause license. By contributing code agree point 1 and 3 from the [github cla](https://cla.github.com/agreement).
+connect is licensed under the BSD 2-clause license. By contributing code you agree to point 1 and 3 from the [github cla](https://cla.github.com/agreement).
 
 Documentation
 -------------
 Both backend and frontend documentation is available at [rtd](http://serpconnect.readthedocs.io).
+
+Join our [slack](https://serp-group.slack.com) channel for questions and other stuff!
 
 Depedencies
 -----------
@@ -46,8 +48,8 @@ Landing the PR
  - It is recommended (but not *required*) to rebase your commits into a clean flow (to simplify review)
  - Mention @emenlu when your PR is ready and she will assign someone to poke at it 
 
-Tips
-----
- * Issues with `easy-pick` tags are recommended for new contributors
+Students @ LTH
+--------------
+For students at LTH, Lunds University there exists a public Trello board [here](https://trello.com/b/5h2wb7wz/connect-open-tasks). Tasks from this board can give you some $$$ when completed.
 
 Thanks for the interest, we hope to see you soon!
