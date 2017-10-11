@@ -26,14 +26,14 @@ $(function (){
 	user.getTaxonomyEntry = window.api.v1.getTaxonomyEntry
 
 	// Logout user when logout button is clicked
-    function logout() {
+    function logout(evt) {
+		evt.preventDefault()
         api.v1.account.logout().done(ok => window.location = "/")
     }
-
-    $("#logout").click(logout)
-
-
+	
     function loggedIn() {
+		$("#logout").click(logout)
+
         $("#logout").text("logout").attr("href", "/")
         $("#profile").text("profile").attr("href", "/profile.html")
     }
