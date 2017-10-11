@@ -52,10 +52,7 @@ Dataset.loadCollection = function(id, cb) {
 		api.v1.collection.taxonomy(id)
 	]).then(promise => {
 		var dataset = new Dataset(promise[0])
-		var taxonomy = undefined
-
-		if (window.Taxonomy)
-			taxonomy = promise[1].taxonomy
+		var taxonomy = promise[1].taxonomy
 
 		cb(dataset, taxonomy)
 	})
