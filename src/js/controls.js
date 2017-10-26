@@ -45,6 +45,18 @@
 				this.select(evt.data.node)
 		})
 
+		instance.bind("rightClickNode", evt => {
+			if (evt.data.node.category !== CATEGORY_FACET)
+				return
+			this._fire('collapse', evt.data.node.label)
+		})
+
+		instance.bind("doubleClickNode", evt => {
+			if (evt.data.node.category !== CATEGORY_FACET)
+				return
+			this._fire('expand', evt.data.node.label)
+		})
+
 		this.evtid = $$('#reset')
 			.addEventListener('click', evt => this.reset(), false)
 	}
@@ -60,12 +72,12 @@
 	}
 
 	/* sneaky api, _ = might change so don't depend on it */
-	controls.prototype._fire = function(evt) {
+	controls.prototype._fire = function(evt, data) {
 		var ln = this._listeners.length
 		while (ln--) {
 			var k = this._listeners[ln]
 			if (k.on === '*' || k.on === evt)
-				k.do.call()
+				k.do.call({}, data)
 		}
 	}
 
@@ -133,6 +145,8 @@
 			this.filter.nodesBy((n) => {
 				/* early bail for facets b/c we always want to show them */
 				if (n.category === CATEGORY_FACET) return true
+
+				/* we also want to show the node itself */
 				if (node === n) return true
 
 				var rec = new SERP()

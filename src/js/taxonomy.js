@@ -75,6 +75,25 @@
     }
 
     /**
+     * Breadth-first search for parent of node with id.
+     */
+    Node.prototype.parentOf = function (id) {
+        var bfs = [this]
+        
+        id = id.toLowerCase()
+        while (bfs.length > 0) {
+            var node = bfs.shift()
+            for (var j = 0; j < node.tree.length; j++)
+                if (node.tree[j].id().toLowerCase() === id)
+                    return node
+                else
+                    bfs.push(node.tree[j])
+        }
+
+        return undefined
+    }
+
+    /**
      * A tree representation of a taxonomy.
      */
     function Taxonomy(backend_repr) {   
@@ -82,7 +101,8 @@
         this.short2long = {}
 
         this.root = new Node("root", "root", [])
-        this.extend(backend_repr)   
+        if (backend_repr)
+            this.extend(backend_repr)   
     }
 
     /**

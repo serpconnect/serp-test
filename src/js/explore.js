@@ -3,30 +3,70 @@ $(function() {
 		return document.querySelector(id)
 	}
 
-	function toggleDiv(sel) {
-		var e = $$(sel)
-		 return function() {
-			if (e.style.display === 'block')
-				e.style.display = 'none'
-			else
-				e.style.display = 'block'
-
-			this.classList.toggle('down')
-		}
+	/* RIP */
+	function showHelpModal() {
+		var modal = el('div#modal.modal.appear', [
+			el('div.helpbox', [
+				el('p', [
+					'The visualisation shows ',
+					el('span.chl', ['challenges']),
+					' (left) and ',
+					el('span.res', ['research']),
+					' (right) as nodes with their classifications',
+					' according to the taxonomy (center) as edges.'
+				]),
+				el('p', ['Interact with the visualisation by clicking on nodes:']),
+				el('ul', [
+					el('li', [el('span.chl', ['challenge']), ' - show matching ', el('span.res', ['research'])]),
+					el('li', [el('span.res', ['research']), ' - show matching ', el('span.chl', ['challenge'])]),
+					el('li', ['taxonomy - filter ', el('span.chl', ['challenge']), ' and ', el('span.res', ['research'])])
+				]),
+				el('p', [
+					'Only one ', el('span.chl', ['challenge']),
+					' or ', el('span.res', ['research']),
+					' node can be active at a given time.'
+				]),
+				el('p', ['Click on nodes to remove the selection.']),
+				el('p', [
+					'In the matches list, the color indicates entry type: ',
+					el('span.chl', ['challenge']), ' or ', 
+					el('span.res', ['research']),
+				]),
+				el('p', [
+					'When filtering by ',
+					el('span.chl', ['challenge']), ' or ', 
+					el('span.res', ['research']),
+					' there are three cases of matching:',
+				]),
+				el('ul', [
+					el('li', ['Effect', el('i', [' and ']), 'Scope -- complete match, node retains color']),
+					el('li', ['Effect', el('i', [' or ']), 'Scope -- ',
+						el('span.inc', ['incomplete']), 
+						' match, node changes color'
+					]),
+					el('li', ['No match -- node is hidden'])
+				]),
+				el('p', ['Click', el('button', ['Reset']), 'to remove all filters.']),
+				el('p', ['Login to explore your own collections.'])
+			])
+		])
+		
+		document.body.appendChild(modal)
 	}
 
-	function resetAll(div, btn){
-		var e = $$(div)
-		var button = $$(btn)
-		if (e.style.display === 'block'){
-			button.click()
-		}
+	function stopMenu(evt) {
+		evt.preventDefault()
+		return false
 	}
 
 	var instance = undefined,
 		ctrl = undefined,
 		list = undefined,
-		serpTaxonomy = undefined
+		serpTaxonomy = undefined,
+		serpExtension = undefined,
+		currentDataset = undefined,
+		currentTaxonomy = new Taxonomy([]),
+		currentExtension = undefined
 
 	function explore(taxonomy, extended, dataset, into) {
 		var graph = window.graph(taxonomy, extended, dataset, window.explore_conf)
@@ -46,51 +86,110 @@ $(function() {
 				settings: {
 					// edge color = facet color
 					edgeColor: 'target',
-					// no scroll zoom, breaks zoomTo
-					zoomingRatio: 1.0,
 					// disable double-click-to-zoom
-					doubleClickEnabled: false
+					doubleClickEnabled: false,
+					labelThreshold: 4
 				}
 			})
 
 			ctrl = new window.controls(instance)
+			ctrl.bind('collapse', collapseTaxnonomyFacet)
+			ctrl.bind('expand', expandTaxnonomyFacet)
 			list = new window.listing($$('#listing'), instance, dataset)
 			list.registerEvents(ctrl)
 
-			ctrl.bind('reset', function(){
-				resetAll('#listing','#matches')
-				resetAll('#helpbox', '#help')
-			})//resets other buttons if active.
-
-			$$('#matches').addEventListener('click', () => {
-				var showView = $$('#matches').classList.contains('down')
-				instance.graph.nodes().forEach(n => {
-					if (n.category !== CATEGORY_FACET)
-						n.showLabel = showView
-				})
-				if (showView)
-					into.style.width = '75%'
-				else
-					into.style.width = '100%'
-				instance.renderers[0].resize()
-				instance.refresh()
-			}, false)
+			into.querySelector('.sigma-mouse').addEventListener('contextmenu', stopMenu, false)
+			into.querySelector('.sigma-scene').addEventListener('contextmenu', stopMenu, false)
+			into.addEventListener('contextmenu', stopMenu, false)
 		}
+	}
+
+	function collapseTaxnonomyFacet(facet) {
+		console.log('collapsing', facet)
+
+		// Modify copies so that we don't mess up original versions
+		var base = currentTaxonomy
+		var extended = (currentExtension || serpTaxonomy).tree()
+		
+		/* Everything in the currentTaxonomy is shown as facets, so
+		we can move this facet to the extended set directly. */
+		var parent = base.root.parentOf(facet)
+		var parentOfParent = base.root.parentOf(parent.id())
+
+		/* should never happen(tm) */
+		if (!parentOfParent) {
+			return
+		}
+		
+		var children = parent.tree
+		parent.tree = []
+
+		var exists = extended.dfs(parent.id())
+		if (!exists) {
+			var extParent = extended.dfs(parent.id())
+			while (children.length)
+				extParent.addNode(children.pop())
+		}
+
+		currentExtension = new Taxonomy()
+		currentExtension.tree(extended)
+		
+		refreshGraph()
+	}
+
+	function expandTaxnonomyFacet(facet) {
+		console.log('collapsing', facet)
+
+		// Modify copies so that we don't mess up original versions
+		var base = currentTaxonomy
+		var extended = (currentExtension || serpTaxonomy).tree()
+		
+		/* Everything in the currentTaxonomy is shown as facets, so
+		we can move this facet to the extended set directly. */
+		var parent = base.root.parentOf(facet)
+		var parentOfParent = base.root.parentOf(parent.id())
+
+		/* should never happen(tm) */
+		if (!parentOfParent) {
+			return
+		}
+		
+		var children = parent.tree
+		parent.tree = []
+
+		var exists = extended.dfs(parent.id())
+		if (!exists) {
+			var extParent = extended.dfs(parent.id())
+			while (children.length)
+				extParent.addNode(children.pop())
+		}
+
+		currentExtension = new Taxonomy()
+		currentExtension.tree(extended)
+		
+		refreshGraph()
 	}
 
 	function exploreSet(set, taxonomy) {
 		var extended = undefined
+		currentDataset = set
+		serpExtension = currentExtension = undefined
 		if (taxonomy) {
 			var extended = new Taxonomy([])
 			extended.tree(serpTaxonomy.tree())
 			extended.extend(taxonomy)
+			serpExtension = currentExtension = extended
 		}
+		currentTaxonomy.tree(serpTaxonomy.tree())
 		explore(serpTaxonomy, extended, set, $$('#graph'))
 	}
 
+	function refreshGraph() {
+		explore(currentTaxonomy, currentExtension, currentDataset, $$('#graph'))
+	}
+
 	$$('#explore').classList.add('current-view')
-	$$('#help').addEventListener('click', toggleDiv('#helpbox'), false)
-	$$('#matches').addEventListener('click', toggleDiv('#listing'), false)
+	$$('#help').addEventListener('click', showHelpModal, false)
 
 	var hasCollection = window.location.hash.length > 0
 	var collectionId = hasCollection ? window.location.hash.substring(1) : ""
@@ -138,12 +237,4 @@ $(function() {
         }
 	})
 
-	// Some browsers do not support the css calc(), or it doesn't work.
-	// Detect failure and do what css should've done, 2em = 32px
-	var computedHeight = window.getComputedStyle($$('#graph')).height
-	if (computedHeight === '0px') {
-		var height = `${window.innerHeight - 87 - 35 - 15 - 32}px`
-		$$('#graph').style.height = height
-		$$('#listing').style.height = height
-	}
 })

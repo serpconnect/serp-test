@@ -17,7 +17,7 @@
 			var colors = Array.from(arguments)
 			var threshold = 1.0 / colors.length
 			return function (p) {
-				p = Math.min(p, 1)
+				p = Math.min(p || 0, 1)
 				/* guard against p=1.0 case where p / threshold = colors.length */
 				return colors[Math.min(Math.floor(p / threshold), colors.length - 1)]
 			}
@@ -45,7 +45,8 @@
 			if (map.hasOwnProperty(facet))
 				return scheme[map[facet]]
 
-			throw "No such facet: '" + facet + "'"
+			console.warn("No such facet: '" + facet + "'")
+			return scheme[0]
 		}
 
 		return color

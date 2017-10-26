@@ -29,52 +29,18 @@ block view-specific-scripts
 	script(src="js/explore.js")
 
 block content
-	div#helpbox
-		p.
-			The visualisation shows #[span.chl challenges] (left)
-			and #[span.res research] (right) as nodes with their
-			classification according to the taxonomy (center) as
-			edges.
-
-		p Interact with the visualisation by clicking on nodes:
-
-		ul
-			li #[span.chl challenge] - show matching #[span.res research]
-			li #[span.res research] - show matching #[span.chl challenges]
-			li taxonomy - filter #[span.chl challenges] and #[span.res research]
-
-		p. 
-			Only one #[span.chl challenge] or #[span.res research] 
-			node can be active at a given time.
-
-		p Click on selected nodes to remove the selection.
-
-		p.
-			In the Matches list, the coloring indicates entry type:
-			#[span.res research] or #[span.chl challenge]
-
-		p When filtering by #[span.res research] or #[span.chl challenges] there are three cases:
-		ul
-			li Effect #[i and] scope -- complete match, node retains color
-			li Effect #[i or] scope -- #[span.inc incomplete] match, node changes color
-			li No match -- node is hidden
-
-		p Click #[button Reset] to remove all filters.
-
-		p Click #[button Matches] to toggle list view of matched entries
-
-		p Login to explore your collections.
-
+	div.explore-controls
+		span
+			label Dataset:
+			select#dataset
+				option(value="main" selected) main
+		div
+			button#reset.control-btn Reset
+			button#help.control-btn Help
 	div#container
 		div#graph
 		div#listing
-	span
-		select#dataset
-			option(value="main" selected) main
 	span#legend
-		span.chl challenge
-		span.res research
-		span.inc incomplete
-	button#help.control-btn Help
-	button#reset.control-btn Reset
-	button#matches.control-btn Matches
+			span.chl challenge
+			span.res research
+			span.inc incomplete

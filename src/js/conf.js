@@ -9,14 +9,14 @@
 
 	var conf = {}
 
-	/* x axis: either 0.1 or 0.9 */
+	/* x axis */
 	var baseX = d3.scale.ordinal()
 		.domain(["challenge", "research"])
-		.range([0.10, 0.90])
+		.range([0.05, 0.90])
 
-	/* y axis: linear from 0.05 to 0.95 */
+	/* y axi */
 	var baseY = d3.scale.linear()
-		.range([0.05, 0.95])
+		.range([0.01, 0.99])
 
 	conf.x = (c, p) => baseX(c)
 	conf.y = (c, p) => baseY(p)
@@ -41,6 +41,7 @@
 				counter: 0
 			}
 		}
+
 		name2id[c] = nameMap[f].name + nameMap[f].counter
 		nameMap[f].counter += 1
 	})
