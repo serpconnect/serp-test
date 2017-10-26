@@ -16,10 +16,6 @@
  */
 (function (scope) {
 
-	function $$(id) {
-		return document.querySelector(id)
-	}
-
 	// Add a method to the graph model that returns an
 	// object with every neighbors of a node inside:
 	sigma.classes.graph.addMethod('neighbors', function(nodeId) {
@@ -56,9 +52,6 @@
 				return
 			this._fire('expand', evt.data.node.label)
 		})
-
-		this.evtid = $$('#reset')
-			.addEventListener('click', evt => this.reset(), false)
 	}
 
 	controls.prototype.reset = function() {

@@ -3,6 +3,7 @@
 	function unique_edges() {
 		var edges = {}
 		return function(edge) {
+			if (!edge) return false
 			var id = `${edge.source}--${edge.type}--${edge.target}`
 			if (edges[id])
 				return false
@@ -34,7 +35,7 @@
 			function dfs(parent, node, search) {
 				if (node.id().toLowerCase() === search.toLowerCase())
 					return parent
-				
+
 				for (var i = 0; i < node.tree.length; i++) {
 					var found = dfs(node, node.tree[i], search)
 					if (found)
@@ -55,7 +56,7 @@
 						break;
 					}
 				}
-				
+
 				if (!parent)
 					return undefined
 
@@ -111,7 +112,7 @@
 			if (!node.isTreeLeaf())
 				node.mapP(count)
 			else {
-				name2id[node.short.toLowerCase()] = nameMap[parent.short].name + 
+				name2id[node.short.toLowerCase()] = nameMap[parent.short].name +
 													nameMap[parent.short].counter
 				nameMap[parent.short].counter += 1
 			}
@@ -126,7 +127,7 @@
 
 		while (to_search.length) {
 			var node = to_search.pop()
-			
+
 			var found = nodes.indexOf(node.short.toLowerCase()) != -1
 			if (!found) {
 				for (var i = 0; i < node.tree.length; i++) {
@@ -157,7 +158,7 @@
 				parent: parent
 			}
 		})
-		
+
 		var root = new Taxonomy([])
 		root.tree(taxonomy.tree())
 		root.extend(format)
@@ -167,12 +168,12 @@
 	function compute_weight(node, facets) {
 		var facet = facets[node.short.toLowerCase()]
 		if (facet.weight) return facet.weight
-		
+
 		var sum = 0
 		for (var i = 0; i < node.tree.length; i++) {
 			sum += compute_weight(node.tree[i], facets)
 		}
-		
+
 		sum = Math.max(sum, 1)
 		for (var i = 0; i < node.tree.length; i++) {
 			var child = facets[node.tree[i].short.toLowerCase()]
@@ -185,7 +186,7 @@
 	function compute_segment_size(node, facets, segment) {
 		var facet = facets[node.short.toLowerCase()]
 		facet.segmentSize = facet.weight * segment * 0.8
-		for (var i = 0; i < node.tree.length; i++) {	
+		for (var i = 0; i < node.tree.length; i++) {
 			compute_segment_size(node.tree[i], facets, facet.segmentSize)
 		}
 	}
@@ -202,12 +203,12 @@
 	}
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
-		
+
 		var name2id = create_name_map(taxonomy)
 
 		var edges = data.edges()
-			.filter(unique_edges())
 			.map(rewrite(taxonomy, extendedTaxonomy))
+			.filter(unique_edges())
 			.filter(e => e && e.target && e.source && e.type)
 			.map(e => process_edge(e, name2id))
 
@@ -245,7 +246,7 @@
 				offset: 0
 			}
 		}
-		
+
 		taxonomy.tree().mapP(function initWeight(parent, node, i) {
 			facets[node.short.toLowerCase()] = {
 				segmentSize: 0,
@@ -253,7 +254,7 @@
 			}
 			node.mapP(initWeight)
 		})
-		
+
 		compute_weight(taxonomy.root, facets)
 		/* tighten the segment sizes so that facets appear clustered */
 		facets.root.weight = 1/0.8

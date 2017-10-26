@@ -29,19 +29,19 @@ $(function() {
 				el('p', ['Click on nodes to remove the selection.']),
 				el('p', [
 					'In the matches list, the color indicates entry type: ',
-					el('span.chl', ['challenge']), ' or ', 
+					el('span.chl', ['challenge']), ' or ',
 					el('span.res', ['research']),
 				]),
 				el('p', [
 					'When filtering by ',
-					el('span.chl', ['challenge']), ' or ', 
+					el('span.chl', ['challenge']), ' or ',
 					el('span.res', ['research']),
 					' there are three cases of matching:',
 				]),
 				el('ul', [
 					el('li', ['Effect', el('i', [' and ']), 'Scope -- complete match, node retains color']),
 					el('li', ['Effect', el('i', [' or ']), 'Scope -- ',
-						el('span.inc', ['incomplete']), 
+						el('span.inc', ['incomplete']),
 						' match, node changes color'
 					]),
 					el('li', ['No match -- node is hidden'])
@@ -50,7 +50,7 @@ $(function() {
 				el('p', ['Login to explore your own collections.'])
 			])
 		])
-		
+
 		document.body.appendChild(modal)
 	}
 
@@ -98,19 +98,31 @@ $(function() {
 			list = new window.listing($$('#listing'), instance, dataset)
 			list.registerEvents(ctrl)
 
+			document.getElementById('reset')
+				.addEventListener('click', evt => resetTaxonomy(), false)
+
 			into.querySelector('.sigma-mouse').addEventListener('contextmenu', stopMenu, false)
 			into.querySelector('.sigma-scene').addEventListener('contextmenu', stopMenu, false)
 			into.addEventListener('contextmenu', stopMenu, false)
 		}
 	}
 
-	function collapseTaxnonomyFacet(facet) {
-		console.log('collapsing', facet)
+	function resetTaxonomy() {
+		currentTaxonomy = new Taxonomy([])
+		if (serpTaxonomy)
+			currentTaxonomy.tree(serpTaxonomy.tree())
 
-		// Modify copies so that we don't mess up original versions
+		currentExtension = new Taxonomy([])
+		if (serpExtension)
+			currentExtension.tree(serpExtension.tree())
+
+		refreshGraph()
+	}
+
+	function collapseTaxnonomyFacet(facet) {
 		var base = currentTaxonomy
 		var extended = (currentExtension || serpTaxonomy).tree()
-		
+
 		/* Everything in the currentTaxonomy is shown as facets, so
 		we can move this facet to the extended set directly. */
 		var parent = base.root.parentOf(facet)
@@ -120,53 +132,51 @@ $(function() {
 		if (!parentOfParent) {
 			return
 		}
-		
-		var children = parent.tree
-		parent.tree = []
 
 		var exists = extended.dfs(parent.id())
-		if (!exists) {
+		if (exists) {
 			var extParent = extended.dfs(parent.id())
-			while (children.length)
-				extParent.addNode(children.pop())
+			for (var i = 0; i < parent.tree.length; i++) {
+				var child = parent.tree[i]
+				if (!extParent.dfs(child.id()))
+					extParent.addChild(child)
+			}
 		}
+		parent.tree = []
 
 		currentExtension = new Taxonomy()
 		currentExtension.tree(extended)
-		
+
 		refreshGraph()
 	}
 
 	function expandTaxnonomyFacet(facet) {
-		console.log('collapsing', facet)
-
-		// Modify copies so that we don't mess up original versions
 		var base = currentTaxonomy
 		var extended = (currentExtension || serpTaxonomy).tree()
-		
-		/* Everything in the currentTaxonomy is shown as facets, so
-		we can move this facet to the extended set directly. */
-		var parent = base.root.parentOf(facet)
-		var parentOfParent = base.root.parentOf(parent.id())
+
+		var node = base.root.dfs(facet)
 
 		/* should never happen(tm) */
-		if (!parentOfParent) {
+		if (!node) {
 			return
 		}
-		
-		var children = parent.tree
-		parent.tree = []
 
-		var exists = extended.dfs(parent.id())
-		if (!exists) {
-			var extParent = extended.dfs(parent.id())
-			while (children.length)
-				extParent.addNode(children.pop())
+		var children = node.tree
+
+		var nodex = extended.dfs(facet)
+		if (nodex) {
+			for (var i = 0; i < nodex.tree.length; i++) {
+				var child = nodex.tree[i]
+				if (!node.dfs(child.id())) {
+					var copy = new FacetNode(child.id(), child.name(), [])
+					node.addChild(copy)
+				}
+			}
 		}
 
 		currentExtension = new Taxonomy()
 		currentExtension.tree(extended)
-		
+
 		refreshGraph()
 	}
 
@@ -175,7 +185,7 @@ $(function() {
 		currentDataset = set
 		serpExtension = currentExtension = undefined
 		if (taxonomy) {
-			var extended = new Taxonomy([])
+			extended = new Taxonomy([])
 			extended.tree(serpTaxonomy.tree())
 			extended.extend(taxonomy)
 			serpExtension = currentExtension = extended
