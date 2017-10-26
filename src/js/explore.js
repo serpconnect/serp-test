@@ -19,7 +19,9 @@ $(function() {
 				el('ul', [
 					el('li', [el('span.chl', ['challenge']), ' - show matching ', el('span.res', ['research'])]),
 					el('li', [el('span.res', ['research']), ' - show matching ', el('span.chl', ['challenge'])]),
-					el('li', ['taxonomy - filter ', el('span.chl', ['challenge']), ' and ', el('span.res', ['research'])])
+					el('li', ['taxonomy - filter ', el('span.chl', ['challenge']), ' and ', el('span.res', ['research'])]),
+					el('li', ['taxonomy - double click: show sub facets']),
+					el('li', ['taxonomy - right click: hide this level'])
 				]),
 				el('p', [
 					'Only one ', el('span.chl', ['challenge']),
