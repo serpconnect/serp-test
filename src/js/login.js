@@ -14,6 +14,10 @@ $(document).ready(function() {
         $(".complaint").remove()
     }
 
+    function toProfile(){
+        window.location = "profile.html"
+    }
+
     function complainSomeMore(where, what) {
         $(where).append(el("div").addClass("complaint").text(what));
     }
@@ -44,12 +48,15 @@ $(document).ready(function() {
             enableButtons()
             $("#password").val("")
         })
-    }
+    }   
 
     function register(email, passw) {
         var req = window.user.register(email, passw)
 
-        req.done(xhr => window.location = "profile.html")
+        notice = "To get full functionality from this website you need to verify your account. An email has been sent to your registered address, please follow the included instructions to complete the process."        
+        req.done(xhr => {
+            window.modals.noticeModal("Almost done...", notice, toProfile)
+        })
 
         req.fail(xhr => {
             enableButtons()

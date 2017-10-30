@@ -696,6 +696,7 @@ $(document).ready(function() {
      * with modal as context and input values are arguments.
      *
      **/
+
     modals.optionsModal = function(obj, onConfirm, onCancel) {
         var message = [el("div.modal-sub-item", [obj.message])]
 
@@ -776,6 +777,34 @@ $(document).ready(function() {
 
 		document.body.appendChild(modal)
 	}
+
+	//simple modal with text, that user has to click continue to proceed.
+     modals.noticeModal = function(title, desc, method) {
+ 	      var confirmBtn = el('button#continue.btn', ['continue'])
+ 	      var modal = el('div#modalNotice.modal.notice', [
+ 	              	el('div.{overflow-x: visible};', [
+ 	                el("div.modal-header-title", [title]),
+ 	                el("div#bottom-divider.modal-divider"),
+ 	                el("div", [desc]),
+ 	                confirmBtn
+ 	            ])
+ 	          ])
+
+ 	    //removes escape event listeners so user can only press continue to proceed.
+ 	   	var old_el = document.body
+		var new_el= old_el.cloneNode(true);
+		old_el.parentNode.replaceChild(new_el, old_el);
+
+		confirmBtn.addEventListener('click', (evt) => {
+	        method.apply({modal})
+	    })
+
+		setTimeout(function() {
+			modal.classList.add('appear');
+		}, modalAnimation)
+
+ 	      document.body.appendChild(modal)
+ 		}
 
 	/* Create simple modal */
 	modals.confirmPopUp = function(desc, onConfirm) {
@@ -895,7 +924,7 @@ window.addEventListener('load', () => {
 	}, false)
 
 	// Remove active modals when pressing ESC
-	document.addEventListener('keydown', (evt) => {
+	document.body.addEventListener('keydown', (evt) => {
 		if (evt.keyCode !== 27)
 			return
 
