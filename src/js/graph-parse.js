@@ -224,8 +224,8 @@
 			return process_entry(node, c, m, links.length, conf)
 		})
 
-		var colors = window.util.colorScheme()
-		var usage = window.util.computeUsage(data)
+		var colors = window.util.colorScheme(extendedTaxonomy || taxonomy)
+		var usage = window.util.computeUsage(data, extendedTaxonomy || taxonomy)
 
 		var add_facet_node = function(name, y) {
 			nodes.push({

@@ -158,9 +158,8 @@
 			 * matches, see: https://trello.com/c/HcpPVQoK
 			 */
 
-			/* We want to use the serp.is*Match() functions, so figure out which
-			 * facets this node connects to. Maybe add an alternative ctor to
-			 * SERP for constructing objects from subfacets.
+			/* Match effect and scope facets from node to all other nodes
+			 * in order to determine matching: COMPLETE, INCOMPLETE or NONE.
 			 */
 			var facets = Object.keys(this.sigma.graph.neighbors(node.id))
 			var EFFECT = this.taxonomy.dfs('EFFECT')

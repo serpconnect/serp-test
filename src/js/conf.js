@@ -31,22 +31,6 @@
 		.domain(["challenge", "research"])
 		.range(["#BAF", "#FAB"])
 
-	/* map facet name to node id: <facet><number> */
-	var name2id = {}
-	var nameMap = {}
-	SERP.forEach((f, c) => {
-		if (!nameMap[f]) {
-			nameMap[f] = {
-				name: f.toLowerCase(),
-				counter: 0
-			}
-		}
-
-		name2id[c] = nameMap[f].name + nameMap[f].counter
-		nameMap[f].counter += 1
-	})
-	conf.id_lookup = (name) => name2id[name]
-
 	/* export */
 	scope.explore_conf = conf
 

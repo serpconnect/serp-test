@@ -9,9 +9,10 @@
 		'intervention': ['#756bb1'],
 		'serp': ['#FDFDFD']
 	}
+	var facets = Object.keys(colors)
 
 	/* HX color codes */
-	function color_scheme () {
+	function color_scheme (taxonomy) {
 		/* return function that selects color based on percentage, i.e usage */
 		var make_table = function () {
 			var colors = Array.from(arguments)
@@ -32,18 +33,22 @@
 
 		/* map facet to color table function */
 		var map = {}
-		SERP.forEach((f, c) => {
-			if (map[f] >= 0)
-				map[c] = map[f]
-			else
-				map[c] = map[f] = generate_facet(f)
-		})
+		facets.forEach(facet => map[facet] = generate_facet(facet))
 
-		map.serp = generate_facet('serp')
+		function findParent (facet, taxonomy) {
+			for (var i = 0; i < facets.length; i++) {
+				var found = taxonomy.root.dfs(facets[i]).dfs(facet)
+				if (found) return facets[i]
+			}
+			return false
+		}
 
 		var color = function (facet) {
 			if (map.hasOwnProperty(facet))
 				return scheme[map[facet]]
+
+			if (taxonomy)
+				return scheme[map[findParent(facet, taxonomy)]]
 
 			console.warn("No such facet: '" + facet + "'")
 			return scheme[0]
