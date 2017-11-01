@@ -60,7 +60,6 @@ function renderView(page) {
 
 app.get("/", renderView('index'));
 app.get("/about", renderView("about"));
-app.get("/taxonomy", renderView("taxonomy"));
 app.get("/profile", renderView("profile"))
 app.get("/invitations", renderView("invitations"));
 app.get("/users", renderView("users"))
@@ -85,7 +84,7 @@ server.listen(app.get("port"), function(){
     console.log("Views, Styles and Javascript files will be updated on each page reload")
     console.log("Remember to modify `app.js` if you add new views")
     console.log("Remember to modify `all.less` if you add new less files")
-    
+
     if (env === "production") {
         console.log("===[ LIVE MODE ]===")
         console.log("You are connected to the live backend server. Be careful.")
