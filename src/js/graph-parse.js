@@ -120,50 +120,6 @@
 		return name2id
 	}
 
-	function kill_nodes(root, nodes) {
-		var parents = {}
-		var to_search = [root]
-
-		while (to_search.length) {
-			var node = to_search.pop()
-
-			var found = nodes.indexOf(node.short.toLowerCase()) != -1
-			if (!found) {
-				for (var i = 0; i < node.tree.length; i++) {
-					parents[node.tree[i].short] = node
-					to_search.push(node.tree[i])
-				}
-			} else {
-				var parent = parents[node.short]
-				for (var i = 0; i < parent.tree.length; i++) {
-					if (parent.tree[i].short === node.short) {
-						parent.tree.splice(i, 1)
-						break
-					}
-				}
-			}
-		}
-
-		var taxonomy = new Taxonomy([])
-		taxonomy.tree(root)
-		return taxonomy
-	}
-
-	function add_nodes(taxonomy, parent, facets) {
-		var format = facets.map(facet => {
-			return {
-				id: facet,
-				name: facet,
-				parent: parent
-			}
-		})
-
-		var root = new Taxonomy([])
-		root.tree(taxonomy.tree())
-		root.extend(format)
-		return root
-	}
-
 	function compute_weight(node, facets) {
 		var facet = facets[node.short.toLowerCase()]
 		if (facet.weight) return facet.weight
@@ -202,7 +158,6 @@
 	}
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
-
 		var name2id = create_name_map(taxonomy)
 
 		var edges = data.edges()
