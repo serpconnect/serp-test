@@ -16,10 +16,6 @@
  */
 (function (scope) {
 
-	function $$(id) {
-		return document.querySelector(id)
-	}
-
 	// Add a method to the graph model that returns an
 	// object with every neighbors of a node inside:
 	sigma.classes.graph.addMethod('neighbors', function(nodeId) {
@@ -32,40 +28,66 @@
 		return neighbors
 	})
 
-	function controls (instance) {
+	function controls(instance) {
 		this.filter = new sigma.plugins.filter(instance)
 		this.sigma = instance
 		this._listeners = []
 		this._node = undefined
+		this._active = []
+		this._timeout = Date.now()
+		this.taxonomy = undefined
 
 		instance.bind("clickNode", evt => {
+			if (Date.now() - this._timeout <= 50) return
 			if (evt.data.node.selected)
 				this.deselect(evt.data.node)
 			else
 				this.select(evt.data.node)
 		})
 
-		this.evtid = $$('#reset')
-			.addEventListener('click', evt => this.reset(), false)
+		instance.bind("rightClickNode", evt => {
+			if (evt.data.node.category !== CATEGORY_FACET)
+				return
+			this._fire('collapse', evt.data.node.label)
+		})
+
+		instance.bind("doubleClickNode", evt => {
+			if (evt.data.node.category !== CATEGORY_FACET)
+				return
+
+			var node = evt.data.node
+			if (node.selected)
+				this.deselect(node)
+			this._fire('expand', node.label)
+		})
 	}
 
-	controls.prototype.reset = function() {
+	controls.prototype.useTaxonomy = function(taxonomy) {
+		this.taxonomy = taxonomy.tree().clone(/*deep=*/true)
+	}
+
+	controls.prototype.reset = function(resetSelected) {
+		this._timeout = Date.now()
 		this.sigma.graph.nodes().forEach((n) => {
 			n.selected = false
 			if (n._color)
 				n.color = n._color
 		})
+
 		this.filter.undo().apply()
+		if (resetSelected)
+			this._active = []
+
 		this._fire('reset')
 	}
 
 	/* sneaky api, _ = might change so don't depend on it */
-	controls.prototype._fire = function(evt) {
+	controls.prototype._fire = function(evt, data) {
 		var ln = this._listeners.length
 		while (ln--) {
 			var k = this._listeners[ln]
 			if (k.on === '*' || k.on === evt)
-				k.do.call()
+				k.do.call({}, data)
 		}
 	}
 
@@ -77,10 +99,12 @@
 
 		node.previouslySelected = node.selected
 		node.selected = false
+
 		if (node.category === CATEGORY_FACET)
 			this.filter.undo(`facet-${node.id}-filter`)
 		else
 			this.filter.undo(`node-${node.id}-filter`)
+		this._active.splice(this._active.indexOf(node.id), 1)
 
 		/* Colors for nodes that were gray must be restored, but instead of
 		 * checking if some other filter exists that forces the node to retain
@@ -96,6 +120,21 @@
 		this._fire('deselect')
 	}
 
+	controls.prototype.reapply = function () {
+		var nodes = this.sigma.graph.nodes()
+		var history = this._active
+		this._active = []
+		for (var i = 0; i < history.length; i++) {
+			var id = history[i]
+			for (var j = 0; j < nodes.length; j++) {
+				if (nodes[j].id === id) {
+					this.select(nodes[j])
+					break
+				}
+			}
+		}
+	}
+
 	controls.prototype.select = function (node) {
 		if (this._node && node.category !== CATEGORY_FACET)
 			this.deselect(this._node)
@@ -103,6 +142,7 @@
 		if (node.category !== CATEGORY_FACET)
 			this._node = node
 
+		this._active.push(node.id)
 		node.previouslySelected = node.selected
 		node.selected = true
 
@@ -118,37 +158,46 @@
 			 * matches, see: https://trello.com/c/HcpPVQoK
 			 */
 
-			/* We want to use the serp.is*Match() functions, so figure out which
-			 * facets this node connects to. Maybe add an alternative ctor to
-			 * SERP for constructing objects from subfacets.
+			/* Match effect and scope facets from node to all other nodes
+			 * in order to determine matching: COMPLETE, INCOMPLETE or NONE.
 			 */
-			var facets = this.sigma.graph.neighbors(node.id)
-			var ref = new SERP()
-			SERP.forEach((f, k) => {
-				/* nodes are keyed by their graph ids, so lookup subfacet id */
-				if (facets[window.explore_conf.id_lookup(k)])
-					ref.set(f, k, true)
-			})
+			var facets = Object.keys(this.sigma.graph.neighbors(node.id))
+			var EFFECT = this.taxonomy.dfs('EFFECT')
+			var SCOPE  = this.taxonomy.dfs('SCOPE')
 
 			this.filter.nodesBy((n) => {
 				/* early bail for facets b/c we always want to show them */
 				if (n.category === CATEGORY_FACET) return true
+
+				/* we also want to show the node itself */
 				if (node === n) return true
 
-				var rec = new SERP()
-				var has = this.sigma.graph.neighbors(n.id)
+				/* since n is an entry, neighbors are facets */
+				var has = Object.keys(this.sigma.graph.neighbors(n.id))
+				var matching = has.length ? 2 : 0
 
-				SERP.forEach((f, k) => {
-					if (has[window.explore_conf.id_lookup(k)])
-						rec.set(f, k, true)
-				})
+				for (var i = 0; i < has.length; i++) {
+					var in_ref = facets.indexOf(has[i]) >= 0
 
-				var complete = ref.isCompleteMatch(rec)
-				if (complete)
+					var effect = has[i] === "EFFECT" || EFFECT.dfs(has[i])
+					if (effect && !in_ref) {
+						matching = 1
+						break
+					}
+
+					var scope = has[i] === "SCOPE" || SCOPE.dfs(has[i])
+					if (scope && !in_ref) {
+						matching = 1
+						break
+					}
+				}
+
+				/* complete matching */
+				if (matching === 2)
 					return true
 
-				var incomplete = ref.isIncompleteMatch(rec)
-				if (incomplete) {
+				/* incomplete matching */
+				if (matching === 1) {
 					// TODO Make
 					if (!n._color)
 						n._color = n.color

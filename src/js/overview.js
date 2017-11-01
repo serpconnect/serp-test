@@ -8,8 +8,7 @@ $(function () {
 	var nbrPercent = d3.format("%") // e.g 53%
 	var nbrSI = d3.format("s") // e.g 5.1k
 
-	/* colorScheme is defined in util/color.js */
-	var color = window.util.colorScheme()
+
 
 	/* adjust font size on a per-label granularity */
 	var labelScale = (label) => {
@@ -78,21 +77,17 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 
-	function renderGraph(nodeId, dataset) {
-		var usage = window.util.computeUsage(dataset)
-		var serp = new SERP()
+	function renderGraph(nodeId, dataset, taxonomy) {
+		var usage = window.util.computeUsage(dataset, taxonomy)
+		var color = window.util.colorScheme(taxonomy)
+		var serp = taxonomy.tree()
 
 		/* Ensure that all facets and sub facets have an object that contains the
 		 * 'usage' key, which is parsed during treeify and added to the new node.
 		 */
-		SERP.forEach((f, k) => {
-			var obj = serp.get(f, k)
-			if (obj)
-				obj.usage = usage[k]
-			else
-				serp.set(f, k, { usage: usage[k] })
-
-			serp.get(f, null).usage = usage[f]
+		serp.map(function init(node) {
+			node.usage = usage[node.id().toLowerCase()]
+			node.map(init)
 		})
 
 		var partition = d3.layout.partition()
@@ -132,6 +127,9 @@ $(function () {
 	}
 
 	Dataset.loadDefault(data => {
-		renderGraph('#taxonomy', data)
+		api.v1.taxonomy().then(serp => {
+			var taxonomy = new window.Taxonomy(serp.taxonomy)
+			renderGraph('#taxonomy', data, taxonomy)
+		})
 	})
 })

@@ -1,6 +1,6 @@
 (function (scope) {
 	/* Returns a flattened SERP object where each key points to its usage */
-	function computeUsage(dataset) {
+	function computeUsage(dataset, taxonomy) {
 		var facets = {}
 		var unique_facets = {}
 
@@ -26,19 +26,19 @@
 		})
 
 
-		// Make sure we have entries for all keys
-		SERP.forEach((f, k) => {
-			if (k)
-				if (!facets[k])
-					facets[k] = 0
+		taxonomy.tree().map(function calc(node) {
+			var id = node.id().toLowerCase()
 
-			if (!facets[f])
-				facets[f] = 0
+			if (node.tree.length === 0 || facets[id] > 0)
+				return facets[id]
 
-			if (!k)
-				return
+			var sum = 0
+			for (var i = 0; i < node.tree.length; i++) {
+				sum += calc(node.tree[i])
+			}
 
-			facets[f] = Math.max(facets[f], facets[k])
+			facets[id] = sum
+			return sum
 		})
 
 		return facets

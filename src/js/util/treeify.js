@@ -3,42 +3,35 @@
 	 * graph partitions end up equally large. Do this by propagating the current
 	 * size and divide it up amongst the children, recursively.
 	 */
-	function treeify(rootNode, len) {
+	function treeify(root, len) {
 		return {
 			name: 'serp',
 			size: 1.0,
 			usage: len,
-			children: recurseTree(rootNode, 1.0)
+			children: recurseTree(root, 1.0)
 		}
 	}
 	function recurseTree(parentNode, parentSize) {
-		if (!parentNode) return []
+		var children = []
 
-		var keyset = Object.keys(parentNode).filter(n => n !== 'usage')
-		var kids = []
-
-		/* Divide up the parent size equally amongst the children */
-		var size = parentSize / keyset.length
-
-		for (var i = 0; i < keyset.length; i++) {
-			var facet = parentNode[keyset[i]]
+		var size = parentSize / parentNode.tree.length
+		for (var i = 0; i < parentNode.tree.length; i++) {
+			var node = parentNode.tree[i]
 
 			var entry = {
-				name: keyset[i],
+				name: node.id().toLowerCase(),
 				size: size,
-				usage: facet.usage
+				usage: node.usage
 			}
 
-			var kidz = recurseTree(facet, size)
+			var subtree = recurseTree(node, size)
+			if (subtree)
+				entry.children = subtree
 
-			/* A D3 parition layout leaf node doesn't have children key */
-			if (kidz.length > 0)
-				entry.children = kidz
-
-			kids.push(entry)
+			children.push(entry)
 		}
 
-		return kids
+		return children
 	}
 	scope.treeify = treeify
 })((window.util = window.util || {}))
