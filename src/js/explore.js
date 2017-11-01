@@ -70,13 +70,20 @@ $(function() {
 		currentTaxonomy = new Taxonomy([]),
 		currentExtension = undefined
 
-	function explore(taxonomy, extended, dataset, into) {
+	function explore(taxonomy, extended, dataset, into, options) {
 		var graph = window.graph(taxonomy, extended, dataset, window.explore_conf)
 		if (instance) {
 			list.changeDataset(dataset)
 			instance.graph.clear()
 			instance.graph.read(graph)
-			ctrl.reset()
+
+			var reapplyFilter = options && options.reapplyFilters
+			ctrl.reset(!reapplyFilter)
+			ctrl.useTaxonomy(serpExtension || serpTaxonomy)
+
+			if (reapplyFilter)
+				ctrl.reapply()
+
 			instance.refresh()
 		} else {
 			instance = new sigma({
@@ -95,6 +102,7 @@ $(function() {
 			})
 
 			ctrl = new window.controls(instance)
+			ctrl.useTaxonomy(serpTaxonomy)
 			ctrl.bind('collapse', collapseTaxnonomyFacet)
 			ctrl.bind('expand', expandTaxnonomyFacet)
 			list = new window.listing($$('#listing'), instance, dataset)
@@ -163,8 +171,6 @@ $(function() {
 			return
 		}
 
-		var children = node.tree
-
 		var nodex = extended.dfs(facet)
 		if (nodex) {
 			for (var i = 0; i < nodex.tree.length; i++) {
@@ -197,7 +203,12 @@ $(function() {
 	}
 
 	function refreshGraph() {
-		explore(currentTaxonomy, currentExtension, currentDataset, $$('#graph'))
+		explore(currentTaxonomy,
+				currentExtension,
+				currentDataset,
+				$$('#graph'), {
+					reapplyFilters: true
+				})
 	}
 
 	$$('#explore').classList.add('current-view')

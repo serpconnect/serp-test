@@ -112,8 +112,7 @@
 			if (!node.isTreeLeaf())
 				node.mapP(count)
 			else {
-				name2id[node.short.toLowerCase()] = nameMap[parent.short].name +
-													nameMap[parent.short].counter
+				name2id[node.short.toLowerCase()] = node.id()
 				nameMap[parent.short].counter += 1
 			}
 		}
