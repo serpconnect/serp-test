@@ -22,7 +22,7 @@
     Node.prototype.addChild = function(c) { this.tree.push(c) }
     Node.prototype.clone = function(deep) {
         var newNode = new Node(this.id(), this.name(), [])
-        
+
         for (var i = 0; deep & i < this.tree.length; i++) {
             newNode.addChild(this.tree[i].clone(deep))
         }
@@ -54,7 +54,7 @@
 
         if (this.isTreeLeaf())
             return undefined
-        
+
         return this
     }
 
@@ -64,7 +64,7 @@
     Node.prototype.dfs = function(id) {
         if (this.id().toLowerCase() === id.toLowerCase())
             return this
-        
+
         for (var i = 0; i < this.tree.length; i++) {
             var probe = this.tree[i].dfs(id)
             if (probe)
@@ -79,7 +79,7 @@
      */
     Node.prototype.parentOf = function (id) {
         var bfs = [this]
-        
+
         id = id.toLowerCase()
         while (bfs.length > 0) {
             var node = bfs.shift()
@@ -96,13 +96,10 @@
     /**
      * A tree representation of a taxonomy.
      */
-    function Taxonomy(backend_repr) {   
-        this.child2parent = {}
-        this.short2long = {}
-
+    function Taxonomy(backend_repr) {
         this.root = new Node("root", "root", [])
         if (backend_repr)
-            this.extend(backend_repr)   
+            this.extend(backend_repr)
     }
 
     /**
@@ -124,7 +121,7 @@
         while (flat.length) {
             var node = flat.shift()
             var parent = this.root.dfs(node.parent)
-            
+
             if (!parent) {
                 flat.push(node)
                 continue
@@ -135,7 +132,7 @@
     }
 
     /**
-     * Inserts a classification into a new tree. 
+     * Inserts a classification into a new tree.
      */
     Taxonomy.prototype.classify = function (classification) {
         var copy = this.tree()
@@ -144,7 +141,7 @@
             var key = list[i]
             var values = classification[key]
             var node = copy.dfs(key.toLowerCase())
-            
+
             if (!node) continue
             for (var j = 0; j < values.length; j++) {
                 var entity = values[j]
