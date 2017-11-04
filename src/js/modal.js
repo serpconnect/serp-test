@@ -14,6 +14,12 @@ $(document).ready(function() {
 	var modalAnimation = 121
 
 	modals.toggleButtonState = toggleButtonState
+	//slides modal onto screen
+	modals.appear = function(element){
+		setTimeout(function(){
+ 				  element.classList.add('appear');
+ 	      }, modalAnimation)
+	}
 
 	function insertAfter(referenceNode,newNode){
 		referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling)
@@ -778,34 +784,6 @@ $(document).ready(function() {
 		document.body.appendChild(modal)
 	}
 
-	//simple modal with text, that user has to click continue to proceed.
-     modals.noticeModal = function(title, desc, method) {
- 	      var confirmBtn = el('button#continue.btn', ['continue'])
- 	      var modal = el('div#modalNotice.modal.notice', [
- 	              	el('div.{overflow-x: visible};', [
- 	                el("div.modal-header-title", [title]),
- 	                el("div#bottom-divider.modal-divider"),
- 	                el("div", [desc]),
- 	                confirmBtn
- 	            ])
- 	          ])
-
- 	    //removes escape event listeners so user can only press continue to proceed.
- 	   	var old_el = document.body
-		var new_el= old_el.cloneNode(true);
-		old_el.parentNode.replaceChild(new_el, old_el);
-
-		confirmBtn.addEventListener('click', (evt) => {
-	        method.apply({modal})
-	    })
-
-		setTimeout(function() {
-			modal.classList.add('appear');
-		}, modalAnimation)
-
- 	      document.body.appendChild(modal)
- 		}
-
 	/* Create simple modal */
 	modals.confirmPopUp = function(desc, onConfirm) {
 		var modal = modals.optionsModal({
@@ -915,19 +893,31 @@ $(document).ready(function() {
 })
 
 window.addEventListener('load', () => {
-	document.body.addEventListener('click', (evt) => {
-		var remove = evt.target.classList.contains('modal') ||
-					 evt.target.classList.contains('confirm') ||
-					 evt.target.classList.contains('dyn-modal')
-		if (remove)
-			document.body.removeChild(evt.target)
-	}, false)
 
-	// Remove active modals when pressing ESC
-	document.body.addEventListener('keydown', (evt) => {
+	var modalsEvt = window.modalsEvt = {}
+
+	function escapeModal(evt){
 		if (evt.keyCode !== 27)
 			return
-
 		window.modals.clearAll()
-	}, false)
+	}
+
+	function clickOffModal(evt){
+		var remove = evt.target.classList.contains('modal') ||
+					 evt.target.classList.contains('confirm') ||
+					 evt.target.classList.contains('dyn-modal') 
+		if (remove)
+			document.body.removeChild(evt.target)
+	}
+
+	modalsEvt.pardonEvents = function(){
+		document.body.removeEventListener('keydown', escapeModal, false )
+		document.body.removeEventListener('click', clickOffModal, false )
+	}
+
+	// Remove active modals when pressing ESC
+	document.body.addEventListener('keydown', escapeModal, false )
+	//Remove active modals when clicking outside modal
+	document.body.addEventListener('click', clickOffModal, false )
+	
 }, false)
