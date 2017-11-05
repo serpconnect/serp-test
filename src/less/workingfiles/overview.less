@@ -1,14 +1,17 @@
 svg path {
 	stroke: #1D1D1D;
 	stroke-width: 2px;
+	cursor: pointer; 
 }
 svg tspan {
 	fill: #1D1D1D;
+	cursor: pointer; 
 }
 .overview-container {
 	display: flex;
 	justify-content: space-between;
 }
+
 .inner-content {
 	width: 80%;
 	margin: 0 auto;
@@ -27,8 +30,35 @@ p { line-height: 1.5; }
 	padding: 0.25em;
 	margin-top: 0.25em;
 
-	h3 { margin: 0; margin-bottom: 0.25em; }
+	h3 { margin: 0; margin-bottom: 0.25em;
+	  }
 	p { margin: 0; margin-top: 0.25em; }
+}
+.overview-explanation {
+	padding: 0.25em;
+	margin-top: 40%;
+
+	h3 { margin: 0; margin-bottom: 0.25em;}
+	p { 
+		margin: 0; margin-top: 0.25em;
+		font-style: italic;
+		color: @light-gray;
+	 }
+}
+
+.explanation-container {
+	display: inline-flex;
+
+}
+
+.square{
+	border-style: solid;
+	border-width: .05em;
+	border-color: black;
+	margin-right: .5em;
+	height:1.8em;
+	width: 1.8em;
+	background:white;
 }
 
 .new-section {
