@@ -8,7 +8,10 @@ $(function () {
 	var nbrPercent = d3.format("%") // e.g 53%
 	var nbrSI = d3.format("s") // e.g 5.1k
 
+	var divNode = d3.select("body").node();
 
+	/* colorScheme is defined in util/color.js */
+	var color = window.util.colorScheme()
 
 	/* adjust font size on a per-label granularity */
 	var labelScale = (label) => {
@@ -46,6 +49,13 @@ $(function () {
 		while (root.parent)
 			root = root.parent
 		return d.usage / Math.max(root.usage, 1)
+	}
+	
+	function getStartAngle(d) {
+		return Math.max(0, Math.min(2 * Math.PI, x(d.x)))
+	}
+	function getEndAngle(d) {
+		return Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx)))
 	}
 
 	/* sample x coord of arc for label positioning */
@@ -88,7 +98,6 @@ $(function () {
 		serp.map(function init(node) {
 			node.usage = usage[node.id().toLowerCase()]
 			node.map(init)
-		})
 
 		var partition = d3.layout.partition()
 			.value(d => d.size)
@@ -100,6 +109,75 @@ $(function () {
 				.attr("height", height)
 			.append("g")
 				.attr("transform", `translate(${width/2}, ${height/2})`)
+		
+		var defs = svg.append("defs");
+		var filter = defs.append("filter")
+            .attr("id", "drop-shadow")
+            .attr("height","130%");
+
+		filter.append("feGaussianBlur")
+	        .attr("in","SourceAlpha")
+	        .attr("stdDeviation", 3)
+	        .attr("result", "blur");
+
+		filter.append("feOffset")
+		    .attr("in", "blur")
+		    .attr("dx", 4)
+		    .attr("dy", 4)
+		    .attr("result", "offsetBlur");
+		    var feMerge = filter.append("feMerge");
+		 //todo: set dx,dy values respective to angle of arc 
+
+		feMerge.append("feMergeNode")
+		    .attr("in", "offsetBlur")
+		feMerge.append("feMergeNode")
+		    .attr("in", "SourceGraphic");
+
+	    function mouseMove(d) {
+			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
+		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
+		 	d3.select(text[0])
+		 		.attr('font-size', (d => labelScale(d.name) + (labelScale(d.name)/10)))
+		 		.style("text-shadow", "1px 1px 3px #fff")
+		 	d3.select(facet[0])
+	        	.style("filter", "url(#drop-shadow)");
+	        d3.select(facet[0])	
+				.transition()
+				.duration(500)
+				.ease('elastic')
+				.attr('transform',function(d){
+					var dist = 1;
+					var startAngle = getStartAngle(d)
+					var endAngle = getEndAngle(d)
+					var midAngle = ((endAngle - startAngle)/2) + startAngle;
+					var x = Math.sin(midAngle) * dist;
+					var y = Math.cos(midAngle) * dist;
+					return 'translate(' + x + ',' + y + ')';
+				});
+		}
+
+		function mouseOut(d){
+			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
+		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
+		 	d3.select(text[0])
+		 		.attr('font-size', (d => labelScale(d.name)))
+		 		.style("text-shadow", "none")
+			d3.select(facet[0])
+	      		.attr("stroke","none")
+	      		.style("filter","none");
+			d3.select(facet[0])
+				.transition()
+				.duration(500)
+				.ease('bounce')
+				.attr('transform','translate(0,0)');
+		}
+
+		function facetInfo(d){
+			var square  = document.getElementById('square')
+			var title = document.getElementById('facet-title').innerText=d.name
+			square.style.background = color(d.name)(relativeUse(d))
+			
+		}
 
 		/* setup the main graph */
 		svg.selectAll("path")
@@ -107,6 +185,9 @@ $(function () {
 			.append("path")
 				.attr("d", arc)
 				.style("fill", d => color(d.name)(relativeUse(d)))
+				.on("mousemove", mouseMove)
+				.on("mouseout", mouseOut)
+				.on("click", facetInfo)
 
 		/* add labels positioned at area center */
 		svg.selectAll("text")
@@ -123,7 +204,9 @@ $(function () {
 			/* svg doesn't support linebreaks, so we'll have to live with spans */
 			.append('tspan')
 				.text(d => d.name)
-
+				.on("mousemove", mouseMove)
+				.on("mouseout", mouseOut)
+				.on("click", facetInfo)
 	}
 
 	Dataset.loadDefault(data => {
