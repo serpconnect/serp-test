@@ -173,10 +173,26 @@ $(function () {
 		}
 
 		function facetInfo(d){
-			var square  = document.getElementById('square')
-			var title = document.getElementById('facet-title').innerText=d.name
+			var info = window.info.taxonomyInfo(d.name)
+			var explanation = document.getElementById('facet-explanation')
+			var facetTitle = document.getElementById('facet-title')
+			explanation.innerText=info[0]
+			var title = d.name
+			console.log(d.name)
+			if(d.name!='serp'){
+				explanation.style.fontStyle= "normal"
+				explanation.style.color = "black";
+			}
+			else{
+				explanation.style.fontStyle= "italic"
+				explanation.style.color = '';
+			}
+			if(info[1] != 0){
+				title = title +' ('+info[1]+')'
+			}
+			facetTitle.innerText = title
+			var square = document.getElementById('square')
 			square.style.background = color(d.name)(relativeUse(d))
-			
 		}
 
 		/* setup the main graph */

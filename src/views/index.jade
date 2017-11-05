@@ -10,6 +10,7 @@ block view-specific-scripts
     script(src="js/dataset.js")
     script(src="js/overview.js")
     script(src="js/index.js")
+    script(src="js/info.js")
 block content
     div.inner-content
         h1.text-title
@@ -27,18 +28,12 @@ block content
                 span#taxonomy
                 div.center The SERP-Test taxonomy
             div.width-40.column-spaced
-                div.facet-explanation
-                    h3 Intervention
-                    p Characteristics of possible solutions.
-                div.facet-explanation
-                    h3 Effect
-                    p Effect targets, or measured effects of an intervention.
-                div.facet-explanation
-                    h3 Scope
-                    p Scope of an effect or an effect target.
-                div.facet-explanation
-                    h3 Context
-                    p Factors in the context affecting the applicability of an intervention.
+                div.overview-explanation
+                    div.explanation-container
+                        a#square.square
+                        h3#facet-title Serp
+                    p#facet-explanation Click the tables on the left to get more information about the facets
+                    div.entry-count
 
         h4.text-title.center.new-section
             | Features
