@@ -33,6 +33,38 @@ $(function () {
 		}
 	}
 
+	//used to set text size depending on 'zoom' level
+	var tier =1;
+
+	//sets tier level, 
+	var tierScale = (name) => {
+		switch (name) {
+		case 'serp':
+			return (tier-1)
+		case 'scope':
+		case 'context':
+		case 'effect':
+		case 'intervention':
+			return 2
+		default:
+			return 3
+		}
+	}
+
+	//returns scalar for text respective of zoom depth
+	var textScale = (tier) => {
+			switch (tier) {
+		case 1:
+			return 1
+		case 2:
+			return 1.5
+		case 3:
+			return 2.5
+		default:
+			return 1
+		}
+	}
+
 	/* x-axis should map to a full circle, otherwise strange chart */
 	var x = d3.scale.linear().range([0, 2 * Math.PI])
 
@@ -140,8 +172,9 @@ $(function () {
 	    function mouseMove(d) {
 			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
 		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
+		 	let textSize = (labelScale(d.name) * (textScale(tier)))
 		 	d3.select(text[0])
-		 		.attr('font-size', (d => labelScale(d.name) + (labelScale(d.name)/10)))
+		 		.attr('font-size', textSize + ((textSize)/10)  )
 		 		.style("text-shadow", "1px 1px 3px #fff")
 		 	d3.select(facet[0])
 	        	.style("filter", "url(#drop-shadow)");
@@ -164,7 +197,7 @@ $(function () {
 			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
 		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
 		 	d3.select(text[0])
-		 		.attr('font-size', (d => labelScale(d.name)))
+				.attr('font-size', d => (labelScale(d.name) * (textScale(tier))) )
 		 		.style("text-shadow", "none")
 			d3.select(facet[0])
 	      		.attr("stroke","none")
@@ -182,7 +215,6 @@ $(function () {
 			var facetTitle = document.getElementById('facet-title')
 			explanation.innerText=info[0]
 			var title = d.name
-			console.log(d.name)
 			if(d.name!='serp'){
 				explanation.style.fontStyle= "normal"
 				explanation.style.color = "black";
@@ -199,6 +231,63 @@ $(function () {
 			square.style.background = color(d.name)(relativeUse(d))
 		}
 
+		function click(d){
+			facetInfo(d) 
+			function first(d) {
+				return new Promise(function(resolve, reject) {
+				        zoom(d)
+				        resolve("Stuff worked!");
+				})
+			}
+			//repositions text
+			setPos = function(){
+				setTimeout(function(){
+					svg.selectAll(".position").transition()
+						.attr('text-anchor', 'middle')
+						.attr('x', arcX)
+						.attr('y', arcY)
+					 svg.selectAll("text")
+						.attr('font-size', d => (labelScale(d.name) * (textScale(tier)) ))
+					}, 1200)
+			}
+			//resets all text class and sets font size
+			function switchOff() {
+				setTimeout(function(){
+				    svg.selectAll("text")
+				    	.classed("position",false)
+			    },2000)
+			}
+			first(d).then(setPos).then(switchOff)
+		}
+
+		function zoom(d) {
+			tier = tierScale(d.name)
+			let activeText = svg.selectAll("text").filter( text => window.info.parent(text.name)===d.name||text.name==d.name).pop()
+			let hiddenText = svg.selectAll("text").filter( text => window.info.parent(text.name)!==d.name && text.name!==d.name).pop()
+			activeText.forEach(active => {
+				active.classList.add("position");
+				active.classList.remove("hide");
+			})
+			hiddenText.forEach(hidden => {
+				hidden.classList.add("hide");
+			})
+		  	svg.transition()
+			    .duration(750)
+			    .tween("scale", function() {
+			    	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+		            yd = d3.interpolate(y.domain(), [d.y, 1]),
+		            yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+		        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+		      })
+		    .selectAll("path")
+		    	.attrTween("d", function(d) { return function() { return arc(d); }; });
+			if(d.name =="serp"){
+				 svg.selectAll("text")
+				 	.classed("position",true)
+				 	.classed("hide", false)
+			}
+		}
+
 		/* setup the main graph */
 		svg.selectAll("path")
 			.data(partition).enter()
@@ -207,7 +296,7 @@ $(function () {
 				.style("fill", d => color(d.name)(relativeUse(d)))
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
-				.on("click", facetInfo)
+				.on("click", click)
 
 		/* add labels positioned at area center */
 		svg.selectAll("text")
@@ -226,7 +315,7 @@ $(function () {
 				.text(d => d.name)
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
-				.on("click", facetInfo)
+				.on("click", click)
 	}
 
 	Dataset.loadDefault(data => {
