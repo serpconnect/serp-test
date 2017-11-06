@@ -36,4 +36,38 @@ $(document).ready(function() {
 		}
 	}
 
+	info.parent = function(label){
+		switch (label) {
+		/* root node */
+		case 'serp':
+			return 'root'
+		case 'intervention':
+			return 'serp'
+		case 'scope':	
+			return 'serp'
+		case 'planning':
+		case 'design':
+		case 'execution':
+		case 'analysis':
+			return 'scope'
+		case 'context':
+			return 'serp'
+		case 'other':
+		case 'sut':
+		case 'information':
+		case 'people':
+			return 'context'
+		case 'effect':
+			return 'serp'
+		case 'adapting':
+		case 'solving':
+		case 'assessing':
+		case 'improving':
+			return 'effect'
+		
+		default:
+			return 
+		}
+	}
+
 })
