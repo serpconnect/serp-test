@@ -138,7 +138,7 @@ $(function() {
 
     function update(self) {
         userData = self
-
+        
         $(".user-email").text(`${self.email} (${self.trust})`)
 
         $("div.collection-wrapper").remove()
