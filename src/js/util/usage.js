@@ -29,14 +29,14 @@
 		taxonomy.tree().map(function calc(node) {
 			var id = node.id().toLowerCase()
 
-			if (node.tree.length === 0 || facets[id] > 0)
-				return facets[id]
+			if (node.tree.length === 0 || facets[id] > 0) {
+				return facets[id] || 0
+			}
 
 			var sum = 0
 			for (var i = 0; i < node.tree.length; i++) {
 				sum += calc(node.tree[i])
 			}
-
 			facets[id] = sum
 			return sum
 		})
