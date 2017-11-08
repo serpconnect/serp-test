@@ -151,6 +151,17 @@ $(document).ready(function() {
 
 	 /* Inspect facets modal with taxonomy extension for collection */
 	modals.dynamicInfoModal = function(facet, newClass, subFac, dynEntries, CID, serpTaxonomy) {
+		window.components.extendTaxonomyModal(facet, newClass, subFac, dynEntries, CID, serpTaxonomy)
+		return
+
+		console.log(
+			'facet =', facet,
+			'newClass =', newClass,
+			'subFac =', subFac,
+			'dynEntries =', dynEntries,
+			'CID =', CID,
+			'serpTaxonomy =', serpTaxonomy
+		)
         var FACET = facet.toUpperCase()
 
 		//implement dynamic loading.
@@ -260,14 +271,14 @@ $(document).ready(function() {
 		}
 
 		function generate_textBox(){
-	      window.modals.addTextBox( function (newid,newname) {
-	      	if(newIDisValid(newid)) {
-                newid = newid.toUpperCase()
-				var option = $("<option></option>")
-                    .attr("value",newid)
-                    .text(newname);
-				$(".dropDowns").append(option);
-	      		var newNode = new window.taxFunc.Node(newid,newname,facet)
+			window.modals.addTextBox( function (newid,newname) {
+	      		if(newIDisValid(newid)) {
+                	newid = newid.toUpperCase()
+					var option = $("<option></option>")
+                    	.attr("value", newid)
+                    	.text(newname);
+					$(".dropDowns").append(option);
+				var newNode = new FacetNode(newid, newname, [], facet)
 	      		//removes facet and appends current entries to root facet
 	      		var facets = document.getElementsByClassName('facet-container')
 	      		for(var i=0; i < facets.length;i++){
@@ -441,6 +452,7 @@ $(document).ready(function() {
 		confirmBtn.addEventListener('click', (evt)=> {
 			// document.body.removeChild(modal)
 			var args = inputboxes.map(input => input.value)
+			console.log('calling', method, 'with', args, '...')
             method.apply(modal, args)
 		})
 

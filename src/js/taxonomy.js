@@ -2,13 +2,15 @@
 (function (win) {
 
     /* Data structure of the tree */
-    function Node(short, long, children) {
+    function Node(short, long, children, parent) {
         this.short = short
         this.long = long
         this.tree = children
+        this.parent = parent
     }
     Node.prototype.name = function() { return this.long }
     Node.prototype.id = function() { return this.short }
+    Node.prototype.parentId = function() { return this.parent }
     /**
      * We have two types of leaf nodes:
      *   - nodes that have no children
@@ -19,9 +21,12 @@
     Node.prototype.isTreeLeaf = function () { return this.tree.length === 0 }
     Node.prototype.isEntityLeaf = function() { return this.id() === "leaf" }
     Node.prototype.isRoot = function() { return this.id() === "root" }
-    Node.prototype.addChild = function(c) { this.tree.push(c) }
+    Node.prototype.addChild = function(c) { 
+        c.parent = this.id()
+        this.tree.push(c) 
+    }
     Node.prototype.clone = function(deep) {
-        var newNode = new Node(this.id(), this.name(), [])
+        var newNode = new Node(this.id(), this.name(), [], this.parentId())
 
         for (var i = 0; deep & i < this.tree.length; i++) {
             newNode.addChild(this.tree[i].clone(deep))
@@ -62,6 +67,8 @@
      * Depth-first search for node with id.
      */
     Node.prototype.dfs = function(id) {
+        if (this.id() === undefined)
+            console.log(this)
         if (this.id().toLowerCase() === id.toLowerCase())
             return this
 
@@ -75,22 +82,14 @@
     }
 
     /**
-     * Breadth-first search for parent of node with id.
+     * Return a flattened graph of this subtree.
      */
-    Node.prototype.parentOf = function (id) {
-        var bfs = [this]
-
-        id = id.toLowerCase()
-        while (bfs.length > 0) {
-            var node = bfs.shift()
-            for (var j = 0; j < node.tree.length; j++)
-                if (node.tree[j].id().toLowerCase() === id)
-                    return node
-                else
-                    bfs.push(node.tree[j])
+    Node.prototype.flatten = function () {
+        var graph = [{ id: this.id(), name: this.name(), parent: this.parentId() }]
+        for (var i = 0; i < this.tree.length; i++) {
+            graph = graph.concat(this.tree[i].flatten())
         }
-
-        return undefined
+        return graph
     }
 
     /**
@@ -127,7 +126,7 @@
                 continue
             }
 
-            parent.addChild(new FacetNode(node.id, node.name, []))
+            parent.addChild(new FacetNode(node.id, node.name, [], node.parent))
         }
     }
 
@@ -145,7 +144,7 @@
             if (!node) continue
             for (var j = 0; j < values.length; j++) {
                 var entity = values[j]
-                node.addChild(new Node("leaf", entity, []))
+                node.addChild(new Node("leaf", entity, [], node.id()))
             }
         }
         return copy

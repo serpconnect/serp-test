@@ -119,7 +119,7 @@ $(function() {
 
 	function resetTaxonomy() {
 		currentTaxonomy = new Taxonomy([])
-		if (serpTaxonomy)
+		if (serpTaxonomy)``
 			currentTaxonomy.tree(serpTaxonomy.tree())
 
 		currentExtension = new Taxonomy([])
@@ -135,8 +135,8 @@ $(function() {
 
 		/* Everything in the currentTaxonomy is shown as facets, so
 		we can move this facet to the extended set directly. */
-		var parent = base.root.parentOf(facet)
-		var parentOfParent = base.root.parentOf(parent.id())
+		var parent = base.root.dfs(base.root.dfs(facet).parentId())
+		var parentOfParent = base.root.dfs(parent.parentId())
 
 		/* should never happen(tm) */
 		if (!parentOfParent) {
