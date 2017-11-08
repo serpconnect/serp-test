@@ -13,7 +13,7 @@
 	}
 
 	/* Connect an entry node with a facet node */
-	function process_edge(edge, lookup) {
+	function process_edge(edge) {
 		return {
 			id: `${edge.source}--${edge.type}--${edge.target}`,
 			source: edge.source + "",
@@ -98,28 +98,6 @@
 		}
 	}
 
-	function create_name_map(taxonomy) {
-		/* map facet name to node id: <facet><number> */
-		var name2id = {}
-		var nameMap = {
-			root: { name: 'root', counter: 0 },
-		}
-		taxonomy.tree().map(function init(node, i) {
-			node.map(init)
-			nameMap[node.short] = { name: node.short.toLowerCase(), counter: 0 }
-		})
-		function count(parent, node) {
-			if (!node.isTreeLeaf())
-				node.mapP(count)
-			else {
-				name2id[node.short.toLowerCase()] = node.id()
-				nameMap[parent.short].counter += 1
-			}
-		}
-		taxonomy.tree().mapP(count)
-		return name2id
-	}
-
 	function compute_weight(node, facets) {
 		var facet = facets[node.short.toLowerCase()]
 		if (!facet) { return 0 }
@@ -164,13 +142,11 @@
 	}
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
-		var name2id = {}// create_name_map(taxonomy)
-
 		var edges = data.edges()
 			.map(rewrite(taxonomy, extendedTaxonomy))
 			.filter(unique_edges())
 			.filter(e => e && e.target && e.source && e.type)
-			.map(e => process_edge(e, name2id))
+			.map(e => process_edge(e))
 
 		var rc = 0, cc = 0,
 			maxr = data.research().length,
