@@ -53,9 +53,9 @@ $(document).ready(function() {
     function register(email, passw) {
         var req = window.user.register(email, passw)
 
-        notice = "To get full functionality from this website you need to verify your account. An email has been sent to your registered address, please follow the included instructions to complete the process."        
+        var notice = "To get full functionality from this website you need to verify your account. An email has been sent to your registered address, please follow the included instructions to complete the process."        
         req.done(xhr => {
-            window.components.noticeModal("Almost done...", notice, toProfile)
+            window.components.noticeModal("Almost done...", notice).then(toProfile)
         })
 
         req.fail(xhr => {

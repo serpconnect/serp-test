@@ -125,10 +125,8 @@ $(document).ready(function() {
 		    submitToCollection($('#exportSelect').val())
 	    })
 
-		setTimeout(function(){
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
         document.body.appendChild(modal)
+		modals.appear(modal)
 	}
 
 	/* Inspect facets modal */
@@ -148,9 +146,7 @@ $(document).ready(function() {
 		])
 
         document.body.appendChild(modal)
-        setTimeout(function(){
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+        modals.appear(modal)
 	 }
 
 	 /* Inspect facets modal with taxonomy extension for collection */
@@ -394,9 +390,7 @@ $(document).ready(function() {
         });
 
         document.body.appendChild(modal)
-        setTimeout(function(){
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+        modals.appear(modal)
 
         //start from 1 as root already created
 
@@ -452,75 +446,7 @@ $(document).ready(function() {
 
 		document.body.appendChild(modal)
 	}
-
-/**
-	 * Create a modal that displays allows extension of a taxonomy for a given collection
-     * div.classification
-     *     div.node
-     *         span "Effect"
-     *         div.leaf
-     *             div.header
-     *                 label "Solve new problem"
-     *                 input "[x]"
-     *             div.additional-data "click to add description +"
-     *             div.entity-sample
-     *                 input
-     *                 div.remove "x"
-	 * */
-	modals.taxonomyModal = function(cID, name) {
-       	var saveBtn = el('button#saveBtn.btn', ['save'])
-   	    var taxonomy = new Taxonomy([])
-   	    // var name = el('span', [name])
-	    var cxx = el('div.classification#classification', taxonomy.tree().map(
-	        function build(node, i) {
-	            if (node.isTreeLeaf()) {
-	                return el("div.leaf", [
-	                    el("div.header", [
-	                        el("label", [node.name()]),
-	                      	 window.taxFunc.generate_button()
-	                    ])
-	                ])
-	            } else {
-	                return el("div.node", [
-	                    el("span", [node.name()]),
-	                    node.map(build).sort(window.taxFunc.byNbrOfChildren)
-	                ])
-	            }
-	        }).sort(window.taxFunc.byNbrOfChildren)
-	    )
-	     var divider = el("div", [
-	     	el("div.divider-wrapper", [
-		        el("div.queued-divider", [""]),
-		        el("div.divider-title", ["Extend Taxonomy for Collection " + name]),
-		        el("div.queued-divider", [""])
-		    ])
-    	])
-		var modal = el('div#modal.modal', [
-
-			el('div',[
-				divider,
-				el('div.modal-entry-type'),
-				el("div.modal-divider"),
-				cxx,
-				closeButton(),
-				el('div.modal-header-title'),// [`collection #${cID}`]),
-				el("div.modal-divider"),
-				el("div"),
-				saveBtn, cancelButton()
-			])
-		])
-
-		saveBtn.addEventListener("click", function(evt) {
-			taxFunc.save_taxonomy(cID)
-			//To Do - change list to only save new nodes
-        });
-
-	    document.body.appendChild(modal)
-        setTimeout(function(){
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
-	 }
-
+	
 	/**
 	 * Create a modal that displays contents of an entry & an edit button.
 	 *
@@ -599,9 +525,7 @@ $(document).ready(function() {
             });
 
             document.body.appendChild(modal)
-            setTimeout(function(){
-                document.getElementById('modal').classList.add('appear');
-            }, modalAnimation)
+            modals.appear(modal)
         })
     }
 
@@ -665,9 +589,7 @@ $(document).ready(function() {
 		if (obj.input.length > 0) {
 				inputboxes[0].focus()
 		}
-		setTimeout(function() {
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+		modals.appear(modal)
 
 		$("#input0").on("input", function(evt) {
 			var searchString = $(this).val();
@@ -745,9 +667,7 @@ $(document).ready(function() {
 		})
 
         document.body.appendChild(modal)
-		setTimeout(function() {
-			modal.classList.add('appear');
-		}, modalAnimation)
+		modals.appear(modal)
 
         // Focus on first input element
         if (obj.input && obj.input.length) {
@@ -795,34 +715,26 @@ $(document).ready(function() {
         modal.classList.add('confirm')
 	}
 
-		 /* Create simple modal with unique id */
- 	    modals.confirmKickPopUp = function(desc, method) {
- 	      var confirmBtn = el('button#confirm.btn', ['confirm'])
- 	      var modal = el('div#modalConf.modal.confirm', [
- 	              	el('div', [
- 	                closeButton(),
- 	                el("div.modal-header-title", [desc]),
- 	                //name of modal
- 	                el("div#bottom-divider.modal-divider"),
- 	                confirmBtn, cancelButton()
- 	            ])
- 	          ])
+	/* Create simple modal with unique id */
+	modals.confirmKickPopUp = function(desc, method) {
+		var confirmBtn = el('button#confirm.btn', ['confirm'])
+		var modal = el('div#modalConf.modal.confirm', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [desc]),
+				//name of modal
+				el("div#bottom-divider.modal-divider"),
+				confirmBtn, cancelButton()
+			])
+		])
 
- 	        confirmBtn.addEventListener('click', (evt) => {
- 	            method.apply({modal})
- 	        })
+		confirmBtn.addEventListener('click', (evt) => {
+			method.apply({modal})
+		})
 
- 	      setTimeout(function(){
- 				  document.getElementById('modalConf').classList.add('appear');
- 				  document.getElementById('modalConf').classList.add('confirm');
- 					//document.getElementsByClassName("modal confirm appear").style.zIndex = "1051";
-
-
- 				//	alert($(this).data('id'))
- 	      }, modalAnimation)
-
- 	      document.body.appendChild(modal)
- 		 }
+		modals.appear(modal)
+		document.body.appendChild(modal)
+	}
 
 	modals.clearAll = function() {
 		var modal = document.querySelector('.modal')
@@ -886,33 +798,36 @@ $(document).ready(function() {
 		])
 
 		document.body.appendChild(modal)
-		setTimeout(function() {
-			document.getElementById('modal').classList.add('appear');
-		}, modalAnimation)
+		modals.appear(modal)
 	}
 })
 
 window.addEventListener('load', () => {
 
-	var modalsEvt = window.modalsEvt = {}
-
 	function escapeModal(evt){
 		if (evt.keyCode !== 27)
 			return
-		window.modals.clearAll()
+		
+		/* Notice modal must be clicked to disappear */
+		var noticeModal = document.querySelector('.modal.notice')
+		if (!noticeModal)
+			window.modals.clearAll()
 	}
 
 	function clickOffModal(evt){
 		var remove = evt.target.classList.contains('modal') ||
 					 evt.target.classList.contains('confirm') ||
-					 evt.target.classList.contains('dyn-modal') 
+					 evt.target.classList.contains('dyn-modal')
+
+		/* Notice modal must be clicked to disappear */
+		var isNoticeModal = evt.target.classList.contains('modal') &&
+							evt.target.classList.contains('notice')
+		
+		if (isNoticeModal)
+			return
+
 		if (remove)
 			document.body.removeChild(evt.target)
-	}
-
-	modalsEvt.pardonEvents = function(){
-		document.body.removeEventListener('keydown', escapeModal, false )
-		document.body.removeEventListener('click', clickOffModal, false )
 	}
 
 	// Remove active modals when pressing ESC
