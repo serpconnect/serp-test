@@ -17,7 +17,7 @@
 		return {
 			id: `${edge.source}--${edge.type}--${edge.target}`,
 			source: edge.source + "",
-			target: lookup[edge.type.toLowerCase()],
+			target: edge.type,
 			type: 'curve'
 		}
 	}
@@ -122,6 +122,7 @@
 
 	function compute_weight(node, facets) {
 		var facet = facets[node.short.toLowerCase()]
+		if (!facet) { return 0 }
 		if (facet.weight) return facet.weight
 
 		var sum = 0
@@ -132,6 +133,7 @@
 		sum = Math.max(sum, 1)
 		for (var i = 0; i < node.tree.length; i++) {
 			var child = facets[node.tree[i].short.toLowerCase()]
+			if (!child) continue
 			child.weight = child.weight / sum
 		}
 
@@ -140,6 +142,7 @@
 	}
 	function compute_segment_size(node, facets, segment) {
 		var facet = facets[node.short.toLowerCase()]
+		if (!facet) return
 		facet.segmentSize = facet.weight * segment * 0.8
 		for (var i = 0; i < node.tree.length; i++) {
 			compute_segment_size(node.tree[i], facets, facet.segmentSize)
@@ -147,18 +150,21 @@
 	}
 	function compute_offset(node, facets, offset) {
 		var facet = facets[node.short.toLowerCase()]
+		if (!facet) return
 		facet.offset = offset
 
 		offset = offset
 		for (var i = 0; i < node.tree.length; i++) {
-			var size = facets[node.tree[i].short.toLowerCase()].weight * facet.segmentSize
+			var child = facets[node.tree[i].short.toLowerCase()]
+			if (!child) continue
+			var size = child.weight * facet.segmentSize
 			compute_offset(node.tree[i], facets, offset)
 			offset += size
 		}
 	}
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
-		var name2id = create_name_map(taxonomy)
+		var name2id = {}// create_name_map(taxonomy)
 
 		var edges = data.edges()
 			.map(rewrite(taxonomy, extendedTaxonomy))
@@ -184,13 +190,14 @@
 
 		var add_facet_node = function(name, y) {
 			nodes.push({
-				id: name2id[name],
+				id: name.toUpperCase(),
 				x: 0.5,
 				y: y,
 				size: 8,
 				label: name,
 				color: colors(name)((usage[name]+0.0) / data.nodes().length),
-				category: 0
+				category: 0,
+				//children: (extendedTaxonomy.root.dfs(name).tree.length > 0
 			})
 		}
 
@@ -209,6 +216,13 @@
 			node.mapP(initWeight)
 		})
 
+		taxonomy.root.mapP(function remove_unused(parent, node, i) {
+			if (!usage[node.id().toLowerCase()]) {
+				delete facets[node.id().toLowerCase()]
+			}
+			node.mapP(remove_unused)
+		})
+
 		compute_weight(taxonomy.root, facets)
 		/* tighten the segment sizes so that facets appear clustered */
 		facets.root.weight = 1/0.8
@@ -220,7 +234,8 @@
 				return node.mapP(add)
 
 			var facet = facets[node.short.toLowerCase()]
-			add_facet_node(node.short.toLowerCase(), facet.offset)
+			if (facet)
+				add_facet_node(node.short.toLowerCase(), facet.offset)
 		})
 
 		return {
