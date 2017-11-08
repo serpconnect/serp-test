@@ -78,7 +78,8 @@ $(document).ready(function () {
             function showTaxonomyModal() {
                 Promise.all([
                     window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/entities"),
-                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/taxonomy")
+                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/taxonomy"),
+                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/classification")
                 ]).then(promise => {
                     var entities = promise[0]
                     var dynamicTaxonomy = promise[1]
@@ -91,25 +92,23 @@ $(document).ready(function () {
                         if (x.parent.toLowerCase() === facet.toLowerCase())
                             Facets.push(x.id)
                     }
-                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/classification").done(classification => {
-                        var newClass = []
+                    var newClass = []
 
-                        Facets.forEach(function (current) {
-                            var classif = JSON.parse(JSON.stringify(classification))
-                            while (classif.length != 0) {
-                                var x = classif.shift()
-                                if (x.facetId === current.toUpperCase()) {
-                                    newClass.push(x)
-                                }
+                    Facets.forEach(function (current) {
+                        var classif = JSON.parse(JSON.stringify(promise[2]))
+                        while (classif.length != 0) {
+                            var x = classif.shift()
+                            if (x.facetId === current.toUpperCase()) {
+                                newClass.push(x)
                             }
-
-                        })
-                        // 
-                        if (newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()) {
-                            newClass.unshift({ facetId: facet, text: [] });
                         }
-                        window.modals.dynamicInfoModal(facet, newClass, dynamicTaxonomy, entities, CID, serpTaxonomy)
+
                     })
+                    // 
+                    if (newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()) {
+                        newClass.unshift({ facetId: facet, text: [] });
+                    }
+                    window.components.extendTaxonomyModal(facet, newClass, dynamicTaxonomy, entities, CID, serpTaxonomy)
                 }).catch(console.error)
             }
         }
