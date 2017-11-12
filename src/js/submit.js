@@ -16,7 +16,7 @@ $(document).ready(function() {
 
     /* Set by selectCollection() when loading a collection */
     var collectionTaxonomy = undefined
-    
+
      /* All interactive/clickable elements */
      function getUIElements() {
         return ["#submit-queue-btn", "#submit-btn", "#queue-btn",
@@ -24,7 +24,7 @@ $(document).ready(function() {
                 "#submit-create-collection"
         ]
     }
-    
+
     var querystring = {}
     /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
     if (window.location.search) {
@@ -75,7 +75,7 @@ $(document).ready(function() {
     var currentEntry = undefined
     function loadLinkedEntry(entryId) {
         if (!entryId) return
-        
+
         return api.v1.entry.collection(entryId)
         .then(collection => {
             return selectCollection(collection.id)
@@ -90,7 +90,7 @@ $(document).ready(function() {
             for (i = 0; i < collections.length; i++)
                 if (collections[i].textContent === "default")
                     break
-            
+
             return selectCollection(parseInt(collections[i].value))
         }).then(() => {
             return Promise.all([
@@ -264,7 +264,10 @@ $(document).ready(function() {
                 parentNode.querySelectorAll(".entity-sample input"))
                 .map(sample => sample.value)
 
-            classification[facet] = samples || ['unspecified']
+            if (samples && samples.length > 0)
+                classification[facet] = samples
+            else
+                classification[facet] = ['unspecified']
         });
 
         return classification;
@@ -294,17 +297,17 @@ $(document).ready(function() {
     /* User clicked row in queued entries table => edit entry */
     function editQueuedEntry(evt) {
         var row = this
-        
+
         var table = document.getElementById('queue-table')
         var rows = table.querySelectorAll('tr')
         for (var i = 0; i < rows.length; i++)
             rows[i].classList.remove('in-edit')
-        
+
         row.classList.add('in-edit')
-        
+
         var entryNumber = parseInt(row.dataset.entryNumber)
         var entry = queuedEntries[entryNumber]
-        
+
         /* Maybe warn user if another row was active */
         document.getElementById("submit-btn").dataset.currentEntry = entryNumber
         discardEntryChanges()
@@ -401,7 +404,7 @@ $(document).ready(function() {
         for (var key in classification) {
             var header = document.querySelector(`[data-facet-id="${key}"]`)
 
-            // The entry contains facets the current taxonomy either has 
+            // The entry contains facets the current taxonomy either has
             // subclassed or doesn't have (yet). Either way we can't proceed.
             if (!header) continue
 
@@ -452,7 +455,7 @@ $(document).ready(function() {
         var tbody = table.querySelector('tbody')
 
         console.log('removing', entryNumber, tbody.childNodes[entryNumber])
-        
+
         queuedEntries.splice(entryNumber, 1)
 
         /* Update position references before removing the node itself
@@ -462,7 +465,7 @@ $(document).ready(function() {
         }
 
         tbody.removeChild(tbody.childNodes[entryNumber])
-        
+
         // clear the input boxes
         discardEntryChanges();
     }
