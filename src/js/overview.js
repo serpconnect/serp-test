@@ -39,6 +39,11 @@ $(function () {
 
 	//used to set text size depending on 'zoom' level
 	var tier =1;
+	//used for back btn referencing 
+	var currentTier = tier;
+	//used to set angle of depth when 'hover over'
+	var relativeAngleX = 4;
+	var relativeAngleY = 4;
 
 	//sets tier level, 
 	var tierScale = (name) => {
@@ -111,6 +116,50 @@ $(function () {
 		return Math.sin(angle - 0.5 * Math.PI) * radius
 	}
 
+	function updateFilter(d){
+		if(d.x >= 0 && d.x < 0.25){
+			return relativeAngleX = -4, relativeAngleY = 4
+		}
+		else if(d.x >= 0.25 && d.x < 0.5){
+			return relativeAngleX = -4, relativeAngleY = -4
+		}
+		else if(d.x >= 0.5 && d.x < 0.75){
+			return relativeAngleX = 4, relativeAngleY = -4
+		}
+		else{
+			return relativeAngleX = 4, relativeAngleY = 4
+		}
+	}
+	//allows angles etc to be updated.
+	function setFilter(filter){
+		filter.append("feGaussianBlur")
+	        .attr("in","SourceAlpha")
+	        .attr("stdDeviation", 3)
+	        .attr("result", "blur");
+
+		filter.append("feOffset")
+		    .attr("in", "blur")
+		    .attr("dx", relativeAngleX)
+		    .attr("dy", relativeAngleY)
+		    .attr("result", "offsetBlur");
+		    var feMerge = filter.append("feMerge");
+
+		feMerge.append("feMergeNode")
+		    .attr("in", "offsetBlur")
+		feMerge.append("feMergeNode")
+		    .attr("in", "SourceGraphic");
+	}
+
+	function isBackButton(name){
+		if(currentTier==3 && window.info.parent(name)=="serp"){
+			return true
+		}
+		else if(name =="serp"){
+			return true
+		}
+		return false
+	}
+
 	/* Idea is to map the flat tree into an arc tree using the computed
 	 * extents (d.dx, d.dy). A partition layout normally looks something
 	 * like this: http://codepen.io/anon/pen/Bfpmg
@@ -162,25 +211,34 @@ $(function () {
             .attr("id", "drop-shadow")
             .attr("height","130%");
 
-		filter.append("feGaussianBlur")
-	        .attr("in","SourceAlpha")
-	        .attr("stdDeviation", 3)
-	        .attr("result", "blur");
+        setFilter(filter)
 
-		filter.append("feOffset")
-		    .attr("in", "blur")
-		    .attr("dx", 4)
-		    .attr("dy", 4)
-		    .attr("result", "offsetBlur");
-		    var feMerge = filter.append("feMerge");
-		 //todo: set dx,dy values respective to angle of arc 
-
-		feMerge.append("feMergeNode")
-		    .attr("in", "offsetBlur")
-		feMerge.append("feMergeNode")
-		    .attr("in", "SourceGraphic");
+        //temporarily disables Mouse Events for a given time length 
+        function toggleMouseEvents(delay,d){
+        	mouseOut(d)
+	     	svg.selectAll("path")
+					.on("mousemove", null)
+					.on("mouseout", null)
+					.on("click",null)
+			svg.selectAll("tspan")
+				.on("mousemove", null)
+				.on("mouseout", null)
+				.on("click",null)
+			setTimeout( function(){
+				svg.selectAll("path")
+					.on("mousemove", mouseMove)
+					.on("mouseout", mouseOut)
+					.on("click",click)
+				svg.selectAll("tspan")
+					.on("mousemove", mouseMove)
+					.on("mouseout", mouseOut)
+					.on("click",click)
+			}, delay)
+        }
 
 	    function mouseMove(d) {
+	    	updateFilter(d)
+	    	setFilter(filter)
 			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
 		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
 		 	let textSize = (labelScale(d.name) * (textScale(tier)))
@@ -242,36 +300,84 @@ $(function () {
 			square.style.background = color(d.name)(relativeUse(d))
 		}
 
+		//when user clicks 'serp'/'back' on sundial
+		function backBtn(){
+			if(currentTier==3){
+				svg.selectAll("text")
+					.classed("position",true).transition()
+					.duration(300)
+					.attr('font-size', d => (labelScale(d.name) * (textScale(tier)) ))
+				svg.selectAll('.position')
+					.attr('opacity',0)
+				svg.selectAll('.position').transition()
+	   				.delay(300)
+	    			.attr('opacity', 1);
+
+			}
+			else if(currentTier ==2){
+				svg.selectAll('tspan')
+					.attr('opacity',0)
+				svg.selectAll("text")
+					.classed("position",true)
+				 	.classed("hide", false)
+				svg.selectAll('tspan').transition()
+	   				.delay(300)
+	    			.attr('opacity', 1)
+	    		svg.selectAll("path")
+    				.classed("disappear",false)
+			}
+			else{
+				svg.selectAll("text")
+					.classed("position",true)
+				 	.classed("hide", false)
+				 svg.selectAll("path")
+    				.classed("disappear",false)
+			}
+		}
+
+		//takes care of the transitions of text and facets
+		function pathWindUp(d){
+			svg.selectAll("text").transition()
+				.duration(750)
+				.attr('font-size', d => (labelScale(d.name) * (textScale(tier)) ))
+		  	svg.transition()
+			    .duration(750)
+			    .tween("scale", function() {
+			    	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx] ),
+		           		yd = d3.interpolate(y.domain(), [d.y, 1]),
+		            	yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+		        	return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
+		      	})
+		    .selectAll("path")
+		    	.attrTween("d", function(d) {
+		    		return function() { 
+		    			svg.selectAll(".position")
+							.attr('text-anchor', 'middle')
+							.attr('x', arcX)
+							.attr('y', arcY)
+		    			return arc(d);
+		    		};
+		    	});
+		}
+
 		function click(d){
-			facetInfo(d) 
+			facetInfo(d)
 			function first(d) {
-				return new Promise(function(resolve, reject) {
-				        zoom(d)
-				        resolve("Stuff worked!");
-				})
-			}
-			//repositions text
-			setPos = function(){
-				setTimeout(function(){
-					svg.selectAll(".position").transition()
-						.attr('text-anchor', 'middle')
-						.attr('x', arcX)
-						.attr('y', arcY)
-					 svg.selectAll("text")
-						.attr('font-size', d => (labelScale(d.name) * (textScale(tier)) ))
-					}, 1200)
-			}
-			//resets all text class and sets font size
+				return new Promise(function (R, F) {
+	       			zoom(d)
+	     			setTimeout(R, 750)
+   				})
+   			}
 			function switchOff() {
-				setTimeout(function(){
-				    svg.selectAll("text")
-				    	.classed("position",false)
-			    },2000)
+				svg.selectAll("text")
+				    .classed("position",false)
 			}
-			first(d).then(setPos).then(switchOff)
+			first(d).then(switchOff)
 		}
 
 		function zoom(d) {
+			toggleMouseEvents(750, d)
+			currentTier = tier
 			tier = tierScale(d.name)
 			let activeText = svg.selectAll("text").filter( text => window.info.parent(text.name)===d.name||text.name==d.name).pop()
 			let hiddenText = svg.selectAll("text").filter( text => window.info.parent(text.name)!==d.name && text.name!==d.name).pop()
@@ -282,21 +388,22 @@ $(function () {
 			hiddenText.forEach(hidden => {
 				hidden.classList.add("hide");
 			})
-		  	svg.transition()
-			    .duration(750)
-			    .tween("scale", function() {
-			    	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
-		            yd = d3.interpolate(y.domain(), [d.y, 1]),
-		            yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-		        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-		      })
-		    .selectAll("path")
-		    	.attrTween("d", function(d) { return function() { return arc(d); }; });
-			if(d.name =="serp"){
-				 svg.selectAll("text")
-				 	.classed("position",true)
-				 	.classed("hide", false)
-			}
+			let activeFacet = svg.selectAll("path").filter( path => window.info.parent(path.name)===d.name||path.name==d.name).pop()
+			let hiddenFacet = svg.selectAll("path").filter( path => window.info.parent(path.name)!==d.name && path.name!==d.name).pop()
+			activeFacet.forEach(active => {
+				active.classList.remove("disappear");
+			})
+			hiddenFacet.forEach(hidden => {
+				if(isBackButton(hidden.id)){
+					return
+				}
+				hidden.classList.add("disappear");
+			})
+			pathWindUp(d)
+
+		    if(isBackButton(d.name)){
+		    	backBtn()
+		    }
 		}
 
 		/* setup the main graph */
@@ -304,6 +411,7 @@ $(function () {
 			.data(partition).enter()
 			.append("path")
 				.attr("d", arc)
+				.attr("id", d=> d.name)
 				.style("fill", d => color(d.name)(relativeUse(d)))
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)

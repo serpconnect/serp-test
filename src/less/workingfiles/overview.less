@@ -5,7 +5,7 @@ svg path {
 }
 svg tspan {
 	fill: #1D1D1D;
-	cursor: pointer; 
+	cursor: pointer;
 }
 .overview-container {
 	display: flex;
@@ -24,6 +24,11 @@ svg tspan {
 	flex-direction: column;
 	justify-content: space-between;
 }
+.disappear{
+	opacity: 0;
+    transition: opacity 1s cubic-bezier(.05,.91,.94,.03);
+ 	-webkit-transition: opacity 1s cubic-bezier(.63,.25,.91,1.93);
+} 
 .position{
 }
 
