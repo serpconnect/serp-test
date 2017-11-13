@@ -8,14 +8,10 @@ $(function () {
 	var nbrPercent = d3.format("%") // e.g 53%
 	var nbrSI = d3.format("s") // e.g 5.1k
 
-<<<<<<< HEAD
-
-=======
 	var divNode = d3.select("body").node();
 
 	/* colorScheme is defined in util/color.js */
 	var color = window.util.colorScheme()
->>>>>>> phase1
 
 	/* adjust font size on a per-label granularity */
 	var labelScale = (label) => {
@@ -38,26 +34,34 @@ $(function () {
 	}
 
 	//used to set text size depending on 'zoom' level
-	var tier =1;
+	var tier =0;
 	//used for back btn referencing 
 	var currentTier = tier;
 	//used to set angle of depth when 'hover over'
 	var relativeAngleX = 4;
 	var relativeAngleY = 4;
 
-	//sets tier level, 
-	var tierScale = (name) => {
-		switch (name) {
-		case 'serp':
-			return (tier-1)
-		case 'scope':
-		case 'context':
-		case 'effect':
-		case 'intervention':
-			return 2
-		default:
-			return 3
-		}
+	var tierScale = function (taxonomy, facet) {
+	    var nodes = [taxonomy.tree()]
+	    var swap = [] /* add to this, then swap when done */
+	    var dTier = 1
+	    facet = facet.toLowerCase()
+	    while (nodes.length > 0) {
+	        var node = nodes.shift()
+        	if(node.short.toLowerCase() === facet){
+            	return dTier
+       		 }
+	        for(var i = 0; i < node.tree.length; i++){
+	            swap.push(node.tree[i])
+	        }
+	        if (nodes.length === 0) {
+	            nodes = swap
+	            swap = []
+	            dTier += 1
+	        }
+	    }
+	    //skips first so that if facet = "serp" it returns tier-1
+	    return tier-1
 	}
 
 	//returns scalar for text respective of zoom depth
@@ -130,6 +134,7 @@ $(function () {
 			return relativeAngleX = 4, relativeAngleY = 4
 		}
 	}
+
 	//allows angles etc to be updated.
 	function setFilter(filter){
 		filter.append("feGaussianBlur")
@@ -148,16 +153,6 @@ $(function () {
 		    .attr("in", "offsetBlur")
 		feMerge.append("feMergeNode")
 		    .attr("in", "SourceGraphic");
-	}
-
-	function isBackButton(name){
-		if(currentTier==3 && window.info.parent(name)=="serp"){
-			return true
-		}
-		else if(name =="serp"){
-			return true
-		}
-		return false
 	}
 
 	/* Idea is to map the flat tree into an arc tree using the computed
@@ -180,19 +175,9 @@ $(function () {
 		/* Ensure that all facets and sub facets have an object that contains the
 		 * 'usage' key, which is parsed during treeify and added to the new node.
 		 */
-<<<<<<< HEAD
 		serp.map(function init(node) {
 			node.usage = usage[node.id().toLowerCase()]
 			node.map(init)
-=======
-		SERP.forEach((f, k) => {
-			var obj = serp.get(f, k)
-			if (obj)
-				obj.usage = usage[k]
-			else
-				serp.set(f, k, { usage: usage[k] })
-			serp.get(f, null).usage = usage[f]
->>>>>>> phase1
 		})
 
 		var partition = d3.layout.partition()
@@ -212,6 +197,15 @@ $(function () {
             .attr("height","130%");
 
         setFilter(filter)
+
+       function getParent(label){
+			if(label == 'serp'){
+				return 'root'
+			}
+			else{
+				return serp.dfs(label).parentId().toLowerCase()
+			}
+		}
 
         //temporarily disables Mouse Events for a given time length 
         function toggleMouseEvents(delay,d){
@@ -300,6 +294,16 @@ $(function () {
 			square.style.background = color(d.name)(relativeUse(d))
 		}
 
+		function isBackButton(name){
+		if(currentTier==3 && getParent(name)=="root"){
+			return true
+		}
+		else if(name =="serp"){
+			return true
+		}
+			return false
+		}
+
 		//when user clicks 'serp'/'back' on sundial
 		function backBtn(){
 			if(currentTier==3){
@@ -312,7 +316,6 @@ $(function () {
 				svg.selectAll('.position').transition()
 	   				.delay(300)
 	    			.attr('opacity', 1);
-
 			}
 			else if(currentTier ==2){
 				svg.selectAll('tspan')
@@ -356,8 +359,8 @@ $(function () {
 							.attr('x', arcX)
 							.attr('y', arcY)
 		    			return arc(d);
-		    		};
-		    	});
+		    		}
+		    	})
 		}
 
 		function click(d){
@@ -378,22 +381,23 @@ $(function () {
 		function zoom(d) {
 			toggleMouseEvents(750, d)
 			currentTier = tier
-			tier = tierScale(d.name)
-			let activeText = svg.selectAll("text").filter( text => window.info.parent(text.name)===d.name||text.name==d.name).pop()
-			let hiddenText = svg.selectAll("text").filter( text => window.info.parent(text.name)!==d.name && text.name!==d.name).pop()
+			tier = tierScale(taxonomy, d.name)
+			let activeText = svg.selectAll("text").filter( text => getParent(text.name)===d.name||text.name==d.name).pop()
+			let hiddenText = svg.selectAll("text").filter( text => getParent(text.name)!==d.name && text.name!==d.name).pop()
 			activeText.forEach(active => {
-				active.classList.add("position");
-				active.classList.remove("hide");
+				active.classList.add("position")
+				active.classList.remove("hide")
 			})
 			hiddenText.forEach(hidden => {
 				hidden.classList.add("hide");
 			})
-			let activeFacet = svg.selectAll("path").filter( path => window.info.parent(path.name)===d.name||path.name==d.name).pop()
-			let hiddenFacet = svg.selectAll("path").filter( path => window.info.parent(path.name)!==d.name && path.name!==d.name).pop()
+			let activeFacet = svg.selectAll("path").filter( path => getParent(path.name)===d.name||path.name==d.name).pop()
+			let hiddenFacet = svg.selectAll("path").filter( path => getParent(path.name)!==d.name && path.name!==d.name).pop()
 			activeFacet.forEach(active => {
 				active.classList.remove("disappear");
 			})
 			hiddenFacet.forEach(hidden => {
+				//keeps centre btn on show
 				if(isBackButton(hidden.id)){
 					return
 				}
@@ -402,6 +406,7 @@ $(function () {
 			pathWindUp(d)
 
 		    if(isBackButton(d.name)){
+		    	console.log('ere')
 		    	backBtn()
 		    }
 		}
