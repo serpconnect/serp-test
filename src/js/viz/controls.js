@@ -164,6 +164,22 @@
 			var facets = Object.keys(this.sigma.graph.neighbors(node.id))
 			var EFFECT = this.taxonomy.dfs('EFFECT')
 			var SCOPE  = this.taxonomy.dfs('SCOPE')
+			
+			var effectFacets = []
+			var scopeFacets = []
+			for (var i = 0; i < facets.length; i++) {
+				var effect = facets[i] === "EFFECT" || EFFECT.dfs(facets[i])
+				if (effect) {
+					effectFacets.push(facets[i])
+					continue
+				}
+				
+				var scope = facets[i] === "SCOPE" || SCOPE.dfs(facets[i])
+				if (scope) {
+					scopeFacets.push(facets[i])
+					continue
+				}
+			}
 
 			this.filter.nodesBy((n) => {
 				/* early bail for facets b/c we always want to show them */
@@ -174,31 +190,25 @@
 
 				/* since n is an entry, neighbors are facets */
 				var has = Object.keys(this.sigma.graph.neighbors(n.id))
-				var matching = has.length ? 2 : 0
+				var matchEffect = effectFacets.length && true
+				var matchScope = scopeFacets.length && true
+				
+				for (var i = 0; i < effectFacets.length && matchEffect; i++) {
+					if (has.indexOf(effectFacets[i]) === -1)
+						matchEffect = false
+				}
 
-				for (var i = 0; i < has.length; i++) {
-					var in_ref = facets.indexOf(has[i]) >= 0
-
-					var effect = has[i] === "EFFECT" || EFFECT.dfs(has[i])
-					if (effect && !in_ref) {
-						matching = 1
-						break
-					}
-
-					var scope = has[i] === "SCOPE" || SCOPE.dfs(has[i])
-					if (scope && !in_ref) {
-						matching = 1
-						break
-					}
+				for (var i = 0; i < scopeFacets.length && matchScope; i++) {
+					if (has.indexOf(scopeFacets[i]) === -1)
+						matchScope = false
 				}
 
 				/* complete matching */
-				if (matching === 2)
+				if (matchEffect && matchScope)
 					return true
 
 				/* incomplete matching */
-				if (matching === 1) {
-					// TODO Make
+				if (matchEffect || matchScope) {
 					if (!n._color)
 						n._color = n.color
 					n.color = '#AAA'
