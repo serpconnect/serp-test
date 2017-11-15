@@ -7,12 +7,24 @@ $(function() {
     user.invites().done(showInvites)
     function showInvites(invites) {
         if (invites.length > 0) {
-            var div = el('div.invitationsContainer', [
+            var div = el('div.invitationContainer', [
                 el('div.newInvitation', {
                     href: '/invitations.html'
                 }, [invites.length.toString()])
             ])
             document.querySelector("[href='/invitations.html']").appendChild(div)
+         }
+    }
+
+    // Display a small banner if user has pending invitations.
+    function showPendingEntries(entries) {
+        if (entries.length > 0) {
+            var div = el('div.invitationContainer', [
+                el('div.newInvitation', {
+                    href: '/entries.html'
+                }, [entries.length.toString()])
+            ])
+            document.querySelector("[href='/entries.html']").appendChild(div)
          }
     }
 
@@ -158,6 +170,7 @@ $(function() {
             div.insertBefore(a, div.lastChild)
             div.insertBefore(b, div.lastChild)
             div.insertBefore(c, div.lastChild)
+            api.v1.admin.pending().done(showPendingEntries)
         }
         update(self)
     }

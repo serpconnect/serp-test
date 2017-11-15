@@ -16,6 +16,17 @@ $(function() {
             document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
          }
     }
+    api.v1.admin.pending().done(showPendingEntries)    
+    function showPendingEntries(entries) {
+        if (entries.length > 0) {
+            var div = el('div.invitationContainer', [
+                el('div.newInvitation', {
+                    href: '/entries.html'
+                }, [entries.length.toString()])
+            ])
+            document.querySelector("[href='/entries.html']").appendChild(div)
+         }
+    }
 
     /* Add red text after the cancel button on a modal */
     function complain(text) {

@@ -15,6 +15,7 @@ $(document).ready(function() {
         div.insertBefore(a, div.lastChild)
         div.insertBefore(b, div.lastChild)
         div.insertBefore(c, div.lastChild)
+        api.v1.admin.pending().done(showPendingEntries)        
     })
 
     //check if invites exist and display number above invitations tab on profile page
@@ -24,6 +25,16 @@ $(document).ready(function() {
             var new_Invitations = el('a.newInvitation', {href : "/invitations.html"},invites.length + " " )
             invitationsContainer.appendChild(new_Invitations)
             document.querySelector("[href='/invitations.html']").appendChild(invitationsContainer)
+         }
+    }
+    function showPendingEntries(entries) {
+        if (entries.length > 0) {
+            var div = el('div.invitationContainer', [
+                el('div.newInvitation', {
+                    href: '/entries.html'
+                }, [entries.length.toString()])
+            ])
+            document.querySelector("[href='/entries.html']").appendChild(div)
          }
     }
     function decreaseInviteCounter() {
