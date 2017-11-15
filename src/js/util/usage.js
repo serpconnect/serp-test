@@ -3,11 +3,12 @@
 	function computeUsage(dataset, taxonomy) {
 		var facets = {}
 		var unique_facets = {}
+		var edges = dataset.edges ? dataset.edges() : dataset
 
 		/* Accumulate edges for each facet, but only count edges/facet once per
 		 * node, i.e count multiple context edges for the same node as 1 edge.
 		 */
-		dataset.edges().forEach(edge => {
+		edges.forEach(edge => {
 			var type = edge.type.toLowerCase()
 			var node = edge.source
 

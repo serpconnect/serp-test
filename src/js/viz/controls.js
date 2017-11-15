@@ -48,7 +48,7 @@
 		instance.bind("rightClickNode", evt => {
 			if (evt.data.node.category !== CATEGORY_FACET)
 				return
-			this._fire('collapse', evt.data.node.label)
+			this._fire('collapse', evt.data.node.id)
 		})
 
 		instance.bind("doubleClickNode", evt => {
@@ -58,7 +58,7 @@
 			var node = evt.data.node
 			if (node.selected)
 				this.deselect(node)
-			this._fire('expand', node.label)
+			this._fire('expand', node.id)
 		})
 	}
 
