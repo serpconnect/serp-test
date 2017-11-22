@@ -161,22 +161,37 @@
 			/* Match effect and scope facets from node to all other nodes
 			 * in order to determine matching: COMPLETE, INCOMPLETE or NONE.
 			 */
-			var facets = Object.keys(this.sigma.graph.neighbors(node.id))
-			var EFFECT = this.taxonomy.dfs('EFFECT')
-			var SCOPE  = this.taxonomy.dfs('SCOPE')
+			var facets  = Object.keys(this.sigma.graph.neighbors(node.id))
+			var EFFECT  = this.taxonomy.dfs('EFFECT')
+			var SCOPE   = this.taxonomy.dfs('SCOPE')
+			var CONTEXT = this.taxonomy.dfs('CONTEXT')
+			var incompleteThreshold = 0.50
 			
-			var effectFacets = []
-			var scopeFacets = []
+			var effectFacets  = []
+			var scopeFacets   = []
+			var contextFacets = []
+			var totalFacets   = 0
 			for (var i = 0; i < facets.length; i++) {
-				var effect = facets[i] === "EFFECT" || EFFECT.dfs(facets[i])
+				var facet = facets[i]
+
+				var effect = facet === "EFFECT" || EFFECT.dfs(facet)
 				if (effect) {
-					effectFacets.push(facets[i])
+					effectFacets.push(facet)
+					totalFacets++
 					continue
 				}
 				
-				var scope = facets[i] === "SCOPE" || SCOPE.dfs(facets[i])
+				var scope = facet === "SCOPE" || SCOPE.dfs(facet)
 				if (scope) {
-					scopeFacets.push(facets[i])
+					scopeFacets.push(facet)
+					totalFacets++
+					continue
+				}
+
+				var context = facet === "CONTEXT" || CONTEXT.dfs(facet)
+				if (context) {
+					contextFacets.push(facet)
+					totalFacets++
 					continue
 				}
 			}
@@ -190,25 +205,36 @@
 
 				/* since n is an entry, neighbors are facets */
 				var has = Object.keys(this.sigma.graph.neighbors(n.id))
-				var matchEffect = effectFacets.length && true
-				var matchScope = scopeFacets.length && true
+				var effectMatches  = 0
+				var scopeMatches   = 0
+				var contextMatches = 0
 				
-				for (var i = 0; i < effectFacets.length && matchEffect; i++) {
-					if (has.indexOf(effectFacets[i]) === -1)
-						matchEffect = false
+				for (var i = 0; i < effectFacets.length; i++) {
+					if (has.indexOf(effectFacets[i]) >= 0)
+						effectMatches+= 1
 				}
 
-				for (var i = 0; i < scopeFacets.length && matchScope; i++) {
-					if (has.indexOf(scopeFacets[i]) === -1)
-						matchScope = false
+				for (var i = 0; i < scopeFacets.length; i++) {
+					if (has.indexOf(scopeFacets[i]) >= 0)
+						scopeMatches+= 1
+				}
+
+				for (var i = 0; i < contextFacets.length; i++) {
+					if (has.indexOf(contextFacets[i]) >= 0)
+						contextMatches += 1
 				}
 
 				/* complete matching */
-				if (matchEffect && matchScope)
+				if (effectMatches > 1 && 
+					contextMatches === contextFacets.length &&
+					scopeMatches === scopeFacets.length) {
 					return true
+				}
 
 				/* incomplete matching */
-				if (matchEffect || matchScope) {
+				var totalMatches = effectMatches + scopeMatches + contextMatches
+				var matchScore   = totalMatches / totalFacets
+				if (matchScore > incompleteThreshold) {
 					if (!n._color)
 						n._color = n.color
 					n.color = '#AAA'

@@ -21,11 +21,6 @@
 	conf.x = (c, p) => baseX(c)
 	conf.y = (c, p) => baseY(p)
 
-	/* node radius: power scale */
-	conf.size = d3.scale.pow()
-		.domain([1, 12])
-		.range([4, 8])
-
 	/* node color: either yellowish or gray */
 	conf.color = d3.scale.ordinal()
 		.domain(["challenge", "research"])
