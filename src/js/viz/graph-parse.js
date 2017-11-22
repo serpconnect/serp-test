@@ -91,7 +91,7 @@
 			label: String(node.id),
 			x: conf.x(node.type, current / Math.max(max - 1, 1)),
 			y: conf.y(node.type, current / Math.max(max - 1, 1)),
-			size: conf.size(links),
+			size: 4,
 			color: conf.color(node.type),
 			category: node.type === "challenge" ?
 				CATEGORY_CHALLENGE : CATEGORY_RESEARCH
