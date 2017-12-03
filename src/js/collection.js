@@ -21,13 +21,16 @@ $(function () {
         		return collection.id === Number(cID)
       		}).pop()
     }).then(collection => {
+		if (!collection) throw new Error("You are not a member of this collection")
 		setupName(collection)
 		return api.v1.collection.isOwner(collection.id)
     }).then(owner =>{
 		isOwner=owner;
 		$('#owner').text(owner ? " (owner)" : "")
 		$('#leave').text(owner ? "delete collection" : "leave collection")
-    }).fail()//toProfilePage)
+    }).fail(reason => {
+		window.alert(reason)
+	})
 
 	window.api.v1.collection.stats(cID)
 		.done(setupStats)

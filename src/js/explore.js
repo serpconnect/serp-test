@@ -97,7 +97,8 @@ $(function() {
 					edgeColor: 'target',
 					// disable double-click-to-zoom
 					doubleClickEnabled: false,
-					labelThreshold: 4
+					labelThreshold: 4,
+					zoomingRatio: 1.2
 				}
 			})
 
@@ -105,11 +106,13 @@ $(function() {
 			ctrl.useTaxonomy(serpTaxonomy)
 			ctrl.bind('collapse', collapseTaxnonomyFacet)
 			ctrl.bind('expand', expandTaxnonomyFacet)
+			ctrl.bind('select', updateEntryPosition)
+			ctrl.bind('deselect', updateEntryPosition)
 			list = new window.listing($$('#listing'), instance, dataset)
 			list.registerEvents(ctrl)
 
 			document.getElementById('reset')
-				.addEventListener('click', evt => resetTaxonomy(), false)
+				.addEventListener('click', resetTaxonomy, false)
 
 			into.querySelector('.sigma-mouse').addEventListener('contextmenu', stopMenu, false)
 			into.querySelector('.sigma-scene').addEventListener('contextmenu', stopMenu, false)
@@ -117,16 +120,57 @@ $(function() {
 		}
 	}
 
-	function resetTaxonomy() {
+	function updateEntryPosition() {
+		var challenges = []
+		var research = []
+		var nodes = instance.graph.nodes()
+
+		for (var i = 0; i < nodes.length; i++) {
+			var node = nodes[i]
+			if (node.hidden) continue
+			if (node.category === CATEGORY_RESEARCH)
+				research.push(node)
+			else if (node.category === CATEGORY_CHALLENGE)
+				challenges.push(node)
+		}
+		
+		var conf = window.explore_conf
+		var current = 0
+		var max = Math.max(1, research.length - 1)
+		for (var i = 0; i < research.length; i++) {
+			var node = research[i]
+			node.x = conf.x("research", 0)
+			node.y = conf.y("", current / max)
+			current += 1
+		}
+
+		current = 0
+		max = Math.max(1, challenges.length-1)
+		for (var i = 0; i < challenges.length; i++) {
+			var node = challenges[i]
+			node.x = conf.x("challenge", 0)
+			node.y = conf.y("", current / max)
+			current += 1
+		}
+
+		instance.refresh()
+	}
+
+	function resetTaxonomy(evt) {
 		currentTaxonomy = new Taxonomy([])
-		if (serpTaxonomy)``
+		if (serpTaxonomy)
 			currentTaxonomy.tree(serpTaxonomy.tree())
 
 		currentExtension = new Taxonomy([])
 		if (serpExtension)
 			currentExtension.tree(serpExtension.tree())
 
-		refreshGraph()
+		explore(currentTaxonomy,
+				currentExtension,
+				currentDataset,
+				$$('#graph'), {
+					reapplyFilters: false
+				})
 	}
 
 	function collapseTaxnonomyFacet(facet) {

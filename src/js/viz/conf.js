@@ -16,7 +16,7 @@
 
 	/* y axi */
 	var baseY = d3.scale.linear()
-		.range([0.01, 0.99])
+		.range([0, 1])
 
 	conf.x = (c, p) => baseX(c)
 	conf.y = (c, p) => baseY(p)

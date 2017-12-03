@@ -118,12 +118,13 @@
 		facet.weight = sum
 		return sum
 	}
-	function compute_segment_size(node, facets, segment) {
+	function compute_segment_size(node, facets, segment, depth) {
 		var facet = facets[node.short.toLowerCase()]
 		if (!facet) return
-		facet.segmentSize = facet.weight * segment * 0.8
+		var zoomFactor = depth > 0 ? 1 - Math.pow(0.2, depth) : 1
+		facet.segmentSize = facet.weight * segment * zoomFactor
 		for (var i = 0; i < node.tree.length; i++) {
-			compute_segment_size(node.tree[i], facets, facet.segmentSize)
+			compute_segment_size(node.tree[i], facets, facet.segmentSize, depth+1)
 		}
 	}
 	function compute_offset(node, facets, offset) {
@@ -135,18 +136,24 @@
 		for (var i = 0; i < node.tree.length; i++) {
 			var child = facets[node.tree[i].short.toLowerCase()]
 			if (!child) continue
-			var size = child.weight * facet.segmentSize
+			var size = child.segmentSize //child.weight * facet.segmentSize
 			compute_offset(node.tree[i], facets, offset)
 			offset += size
 		}
 	}
 
 	function graph(taxonomy, extendedTaxonomy, data, conf) {
-		var edges = data.edges()
+		var rewrittenEdges = data.edges()
 			.map(rewrite(taxonomy, extendedTaxonomy))
+			.filter(e => e)
+		var edges = rewrittenEdges
 			.filter(unique_edges())
-			.filter(e => e && e.target && e.source && e.type)
 			.map(e => process_edge(e))
+			.filter(e => e && e.target && e.source && e.type)
+			.filter(e => {
+				var node = taxonomy.root.dfs(e.target)
+				return node && node.isTreeLeaf()
+			})
 
 		var rc = 0, cc = 0,
 			maxr = data.research().length,
@@ -162,16 +169,16 @@
 		})
 
 		var colors = window.util.colorScheme(extendedTaxonomy || taxonomy)
-		var usage = window.util.computeUsage(data, extendedTaxonomy || taxonomy)
+		var usage = window.util.computeUsage(rewrittenEdges, extendedTaxonomy || taxonomy)
 
-		var add_facet_node = function(name, y) {
+		var add_facet_node = function(name, id, y) {
 			nodes.push({
-				id: name.toUpperCase(),
+				id: id.toUpperCase(),
 				x: 0.5,
 				y: y,
 				size: 8,
 				label: name,
-				color: colors(name)((usage[name]+0.0) / data.nodes().length),
+				color: colors(id)((usage[id]+0.0) / data.nodes().length),
 				category: 0,
 				//children: (extendedTaxonomy.root.dfs(name).tree.length > 0
 			})
@@ -184,34 +191,35 @@
 			}
 		}
 
-		taxonomy.tree().mapP(function initWeight(parent, node, i) {
-			facets[node.short.toLowerCase()] = {
+		taxonomy.tree().map(function initWeight(node, i) {
+			facets[node.id().toLowerCase()] = {
 				segmentSize: 0,
 				offset: 0
 			}
-			node.mapP(initWeight)
+			node.map(initWeight)
 		})
 
-		taxonomy.root.mapP(function remove_unused(parent, node, i) {
-			if (!usage[node.id().toLowerCase()]) {
+		taxonomy.root.map(function remove_unused(node, i) {
+			if (!usage[node.id().toLowerCase()] && node.isTreeLeaf())
 				delete facets[node.id().toLowerCase()]
-			}
-			node.mapP(remove_unused)
+			node.map(remove_unused)
 		})
 
 		compute_weight(taxonomy.root, facets)
 		/* tighten the segment sizes so that facets appear clustered */
-		facets.root.weight = 1/0.8
-		compute_segment_size(taxonomy.root, facets, 1)
+		facets.root.weight = 1
+		compute_segment_size(taxonomy.root, facets, 1.3, 0)
 		compute_offset(taxonomy.root, facets, 0)
 
 		taxonomy.tree().mapP(function add(parent, node, i) {
 			if (!node.isTreeLeaf())
 				return node.mapP(add)
 
-			var facet = facets[node.short.toLowerCase()]
+			var facet = facets[node.id().toLowerCase()]
 			if (facet)
-				add_facet_node(node.short.toLowerCase(), facet.offset)
+				add_facet_node(node.name(), 
+					node.id().toLowerCase(), 
+					facet.offset + facet.segmentSize * 0.5)
 		})
 
 		return {

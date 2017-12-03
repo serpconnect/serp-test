@@ -33,6 +33,18 @@ $(document).ready(function() {
          }
     }
 
+    api.v1.admin.pending().done(showPendingEntries)
+    function showPendingEntries(entries) {
+        if (entries.length > 0) {
+            var div = el('div.invitationContainer', [
+                el('div.newInvitation', {
+                    href: '/entries.html'
+                }, [entries.length.toString()])
+            ])
+            document.querySelector("[href='/entries.html']").appendChild(div)
+         }
+    }    
+
     var emails = [];
     var emailMappings = {};
     var emailsFuzzy = undefined;
