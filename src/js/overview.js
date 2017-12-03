@@ -1,70 +1,19 @@
 $(function () {
 	/* svg settings */
-	var width = 320
-	var height = 320
+	var width = 450
+	var height = 450
 
 	/* remove -10 to make svg fill the square from edge-to-edge */
 	var radius = (Math.min(width, height) / 2) - 10
 	var nbrPercent = d3.format("%") // e.g 53%
 	var nbrSI = d3.format("s") // e.g 5.1k
 
-	var divNode = d3.select("body").node();
-
 	/* colorScheme is defined in util/color.js */
 	var color = window.util.colorScheme()
-
-	/* adjust font size on a per-label granularity */
-	var labelScale = (label) => {
-		switch (label) {
-		/* root node */
-		case 'serp':
-			return 15
-		case 'intervention':
-		case 'people':
-		case 'planning':
-			return 10
-		case 'scope':
-		case 'context':
-		case 'effect':
-		case 'sut':
-			return 11
-		default:
-			return 9
-		}
-	}
-
 	//used to set text size depending on 'zoom' level
-	var tier =1;
-
-	//sets tier level, 
-	var tierScale = (name) => {
-		switch (name) {
-		case 'serp':
-			return (tier-1)
-		case 'scope':
-		case 'context':
-		case 'effect':
-		case 'intervention':
-			return 2
-		default:
-			return 3
-		}
-	}
-
-	//returns scalar for text respective of zoom depth
-	var textScale = (tier) => {
-			switch (tier) {
-		case 1:
-			return 1
-		case 2:
-			return 1.5
-		case 3:
-			return 2.5
-		default:
-			return 1
-		}
-	}
-
+	var tier =0;
+	//used for back btn referencing 
+	var currentTier = tier;
 	/* x-axis should map to a full circle, otherwise strange chart */
 	var x = d3.scale.linear().range([0, 2 * Math.PI])
 
@@ -76,7 +25,6 @@ $(function () {
 		/* root node has no parent, but its usage is known (100%) */
 		if (!d.parent)
 			return 1.0
-
 		var root = d.parent
 		while (root.parent)
 			root = root.parent
@@ -107,6 +55,9 @@ $(function () {
 		return Math.sin(angle - 0.5 * Math.PI) * radius
 	}
 
+	function computeTextRotation(d) {
+  		return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
+	}
 	/* Idea is to map the flat tree into an arc tree using the computed
 	 * extents (d.dx, d.dy). A partition layout normally looks something
 	 * like this: http://codepen.io/anon/pen/Bfpmg
@@ -130,6 +81,7 @@ $(function () {
 		serp.map(function init(node) {
 			node.usage = usage[node.id().toLowerCase()]
 			node.map(init)
+		})
 
 		var partition = d3.layout.partition()
 			.value(d => d.size)
@@ -139,47 +91,58 @@ $(function () {
 			.append("svg")
 				.attr("width", width)
 				.attr("height", height)
+				.attr('overflow','visible')
 			.append("g")
 				.attr("transform", `translate(${width/2}, ${height/2})`)
-		
-		var defs = svg.append("defs");
-		var filter = defs.append("filter")
-            .attr("id", "drop-shadow")
-            .attr("height","130%");
 
-		filter.append("feGaussianBlur")
-	        .attr("in","SourceAlpha")
-	        .attr("stdDeviation", 3)
-	        .attr("result", "blur");
+       function getParent(label){
+			if(label == 'serp'){
+				return 'serp'
+			}
+			else{
+				var parent = serp.dfs(label).parentId().toLowerCase()
+				if(parent =='root') parent='serp'
+				return parent
+			}
+		}
 
-		filter.append("feOffset")
-		    .attr("in", "blur")
-		    .attr("dx", 4)
-		    .attr("dy", 4)
-		    .attr("result", "offsetBlur");
-		    var feMerge = filter.append("feMerge");
-		 //todo: set dx,dy values respective to angle of arc 
-
-		feMerge.append("feMergeNode")
-		    .attr("in", "offsetBlur")
-		feMerge.append("feMergeNode")
-		    .attr("in", "SourceGraphic");
+        //temporarily disables Mouse Events for a given time length 
+        function toggleMouseEvents(delay,d){
+        	mouseOut(d)
+	     	svg.selectAll("path")
+					.on("mousemove", null)
+					.on("mouseout", null)
+					.on("click",null)
+			svg.selectAll("tspan")
+				.on("mousemove", null)
+				.on("mouseout", null)
+				.on("click",null)
+			setTimeout( function(){
+				svg.selectAll("path")
+					.on("mousemove", mouseMove)
+					.on("mouseout", mouseOut)
+					.on("click",click)
+				svg.selectAll("tspan")
+					.on("mousemove", mouseMove)
+					.on("mouseout", mouseOut)
+					.on("click",click)
+			}, delay)
+        }
 
 	    function mouseMove(d) {
-			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
-		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
-		 	let textSize = (labelScale(d.name) * (textScale(tier)))
-		 	d3.select(text[0])
-		 		.attr('font-size', textSize + ((textSize)/10)  )
-		 		.style("text-shadow", "1px 1px 3px #fff")
-		 	d3.select(facet[0])
-	        	.style("filter", "url(#drop-shadow)");
-	        d3.select(facet[0])	
+		 	svg.select('#text'+d.name)
+		 		.attr('font-size', d=>labelScale(d)+ (relativeDepth(d)*2))
+		 		.attr("transform", function() {return "rotate(0)"  })
+		 		.attr('text-anchor', 'middle')
+				.attr('x', arcX)
+				.attr('y', arcY)
+				.attr('dx',"0")
+	     	svg.select('#path'+d.name)
 				.transition()
 				.duration(500)
 				.ease('elastic')
 				.attr('transform',function(d){
-					var dist = 1;
+					var dist = -3
 					var startAngle = getStartAngle(d)
 					var endAngle = getEndAngle(d)
 					var midAngle = ((endAngle - startAngle)/2) + startAngle;
@@ -190,98 +153,173 @@ $(function () {
 		}
 
 		function mouseOut(d){
-			let text  = svg.selectAll("text").filter(text => text.name==d.name).pop()
-		 	let facet = svg.selectAll("path").filter(path => path.name==d.name).pop()
-		 	d3.select(text[0])
-				.attr('font-size', d => (labelScale(d.name) * (textScale(tier))) )
+			if(d.name=='serp')return
+		 	svg.select('#text'+d.name)
+				.attr('font-size', d => (labelScale(d)) )
+				.attr("x", function(d) { return y(d.y); })
+		    	.attr("dx",function(d){return "6"}) 
+		    	.attr("y", d.y)
+		    	.attr("transform", function() {return "rotate(" + computeTextRotation(d) + ")"})
+		    	.attr('text-anchor','none')
 		 		.style("text-shadow", "none")
-			d3.select(facet[0])
-	      		.attr("stroke","none")
-	      		.style("filter","none");
-			d3.select(facet[0])
+			svg.select('#path'+d.name)
 				.transition()
 				.duration(500)
 				.ease('bounce')
 				.attr('transform','translate(0,0)');
 		}
 
+		function labelScale(d){
+		 	var scale = Math.max(relativeDepth(d)+.5,1)
+			return 14/scale
+		}
+
+		function pathId(path){
+			return 'path'+path 
+		}
+		function textId(text){
+			return 'text'+text
+		}
+
 		function facetInfo(d){
-			var info = window.info.taxonomyInfo(d.name)
+			var info = window.info.getInfo(d.name)
 			var explanation = document.getElementById('facet-explanation')
 			var facetTitle = document.getElementById('facet-title')
-			explanation.innerText=info[0]
+			explanation.innerText=info.description
 			var title = d.name
 			if(d.name!='serp'){
 				explanation.style.fontStyle= "normal"
-				explanation.style.color = "black";
+				explanation.style.color = "black"
 			}
 			else{
 				explanation.style.fontStyle= "italic"
-				explanation.style.color = '';
+				explanation.style.color = ''
 			}
-			if(info[1] != 0){
-				title = title +' ('+info[1]+')'
+			if(getParent(d.name)!= 'root' || getParent(d.name)!= "serp"){
+				title = title +' ('+ getParent(d.name)+')'
 			}
 			facetTitle.innerText = title
 			var square = document.getElementById('square')
 			square.style.background = color(d.name)(relativeUse(d))
 		}
 
-		function click(d){
-			facetInfo(d) 
-			function first(d) {
-				return new Promise(function(resolve, reject) {
-				        zoom(d)
-				        resolve("Stuff worked!");
+		function relativeDepth(d){
+			return d.depth-tier
+		}
+
+      	function arcTween(d) {
+		  	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
+		     	yd = d3.interpolate(y.domain(), [d.y, 1]),
+		      	yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
+			return function(d, i) {
+		    	return i
+		        ? function(t) { return arc(d); }
+		        : function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); return arc(d); };
+		  };
+		}
+
+		function pathWindUp(d){
+			svg.selectAll('text').transition().attr("opacity", 0)
+				.attr('font-size', d => labelScale(d))
+		  	svg.selectAll("path").transition()
+		  		.duration(750)
+		  		.attrTween("d",arcTween(d))
+			    .each("end", function(e, i) {
+		        	// check if the animated element's data e lies within the visible angle span given in d
+		          	if (e.name!=='serp' && e.x >= d.x && e.x < (d.x + d.dx)) {
+			        // get a selection of the associated text element
+		            var arcText = d3.select("#text"+e.name);
+		            // fade in the text element and recalculate positions
+		            arcText.transition().duration(750)
+		              .attr("opacity", 1)
+		              .attr("transform", function() {return "rotate(" + computeTextRotation(e) + ")"  })
+		              .attr("x", function(d) { return y(d.y); });
+	        		}
+	        		else{
+			        	svg.select("#textserp")
+			        		.attr("transform", "rotate(0)")
+			        		.attr('dx',"0")
+			        		.attr("opacity", 1)
+							.attr('text-anchor', 'middle')
+							.attr('x', arcX)
+							.attr('y', arcY)
+			        }
+		    	})
+		}
+		//use to isolate direction of taxonomy exporer 
+		function getActiveList(d, list){
+			var children = d.children
+			if(typeof children!== 'undefined' && children.length >0){
+				children.forEach( child => {
+					if(typeof child.children !== 'undefined' && child.children.length >0){
+						getActiveList(child, list)
+					}
+					list.push(child)
 				})
 			}
-			//repositions text
-			setPos = function(){
-				setTimeout(function(){
-					svg.selectAll(".position").transition()
-						.attr('text-anchor', 'middle')
-						.attr('x', arcX)
-						.attr('y', arcY)
-					 svg.selectAll("text")
-						.attr('font-size', d => (labelScale(d.name) * (textScale(tier)) ))
-					}, 1200)
+			return
+		}
+
+		function getHiddenItems(reverseList, type){
+			var list = svg.selectAll(type).filter(function(item){
+  				return reverseList.indexOf(item) === -1;
+			}) 
+			return list
+		}
+		function getActiveItems (reverseList,type){
+			var list = svg.selectAll(type).filter(function(item){
+  				return reverseList.indexOf(item) != -1;
+			})
+			return list
+		} 
+
+		function click(d){
+			function first(d) {
+				return new Promise(function (R, F) {
+	       			zoom(d)
+	     			setTimeout(R, 800)
+   				})
+   			}
+			if(d.depth-tier!=0){
+				facetInfo(d)
+				first(d)
 			}
-			//resets all text class and sets font size
-			function switchOff() {
-				setTimeout(function(){
-				    svg.selectAll("text")
-				    	.classed("position",false)
-			    },2000)
-			}
-			first(d).then(setPos).then(switchOff)
 		}
 
 		function zoom(d) {
-			tier = tierScale(d.name)
-			let activeText = svg.selectAll("text").filter( text => window.info.parent(text.name)===d.name||text.name==d.name).pop()
-			let hiddenText = svg.selectAll("text").filter( text => window.info.parent(text.name)!==d.name && text.name!==d.name).pop()
-			activeText.forEach(active => {
-				active.classList.add("position");
-				active.classList.remove("hide");
+			var activeList =[]
+			toggleMouseEvents(800, d)
+			currentTier = tier
+			tier = d.depth
+			getActiveList(d, activeList)
+			activeList.push(d)		
+			var hiddenText = getHiddenItems(activeList,'text')
+			var activeText = getActiveItems(activeList,'text')
+			//add BackButton
+			svg.selectAll("path").filter( function(path){ 
+				if(path.name==getParent(d.name)) {
+				 	activeList.push(path)
+				}
 			})
-			hiddenText.forEach(hidden => {
+			var hiddenFacets = getHiddenItems(activeList,'path')
+			var activeFacets = getActiveItems(activeList,'path')
+			activeText[0].forEach(active => {
+				setTimeout(function(){
+					active.classList.remove("hide")
+				},300)
+			})
+			hiddenText[0].forEach(hidden => {
 				hidden.classList.add("hide");
 			})
-		  	svg.transition()
-			    .duration(750)
-			    .tween("scale", function() {
-			    	var xd = d3.interpolate(x.domain(), [d.x, d.x + d.dx]),
-		            yd = d3.interpolate(y.domain(), [d.y, 1]),
-		            yr = d3.interpolate(y.range(), [d.y ? 20 : 0, radius]);
-		        return function(t) { x.domain(xd(t)); y.domain(yd(t)).range(yr(t)); };
-		      })
-		    .selectAll("path")
-		    	.attrTween("d", function(d) { return function() { return arc(d); }; });
-			if(d.name =="serp"){
-				 svg.selectAll("text")
-				 	.classed("position",true)
-				 	.classed("hide", false)
-			}
+			activeFacets[0].forEach(active => {
+				active.classList.remove("disappear")
+				active.classList.remove("hide")
+			})
+			hiddenFacets[0].forEach(hidden => {
+				hidden.classList.add("disappear")
+				hidden.classList.add("hide")
+			})
+			pathWindUp(d)
 		}
 
 		/* setup the main graph */
@@ -289,7 +327,9 @@ $(function () {
 			.data(partition).enter()
 			.append("path")
 				.attr("d", arc)
+				.attr("id", d=> 'path'+d.name)
 				.style("fill", d => color(d.name)(relativeUse(d)))
+				.style("stroke", '#f2f2f2')
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
 				.on("click", click)
@@ -298,25 +338,39 @@ $(function () {
 		svg.selectAll("text")
 			.data(partition).enter()
 			.append('text')
+			.attr("id", d => 'text'+d.name)
 			.attr('font-family', 'Arial, sans-serif')
-			/* scale font-size to ensure that long names fit inside arc area */
-			.attr('font-size', d => labelScale(d.name))
-			/* align text around the calculated point */
-			.attr('text-anchor', 'middle')
-			/* alternative to x/y is to use textPath, but hard to make centered */
-			.attr('x', arcX)
-			.attr('y', arcY)
-			/* svg doesn't support linebreaks, so we'll have to live with spans */
-			.append('tspan')
-				.text(d => d.name)
-				.on("mousemove", mouseMove)
-				.on("mouseout", mouseOut)
-				.on("click", click)
-	}
+			.attr("transform", function(d) { if(d.name!='serp')return "rotate(" + computeTextRotation(d) + ")"  })
+		    .attr("x", function(d) { return y(d.y); })
+		    .attr("dx",function(d){ if(d.name!='serp') return "6"}) // margin
+		    .attr("dy", ".35em") // vertical-align
+		    .text(function(d) { return d.name; })
+			.on("mousemove", mouseMove)
+			.on("mouseout", mouseOut)
+			.on("click", click)
+			.attr('font-size', d => labelScale(d))
+			svg.select("#textserp")
+				.attr('text-anchor', 'middle')
+				.attr('x', arcX)
+				.attr('y', arcY)
 
-	Dataset.loadDefault(data => {
-		api.v1.taxonomy().then(serp => {
-			var taxonomy = new window.Taxonomy(serp.taxonomy)
+	}
+// 	Dataset.loadDefault(data => {
+// 		api.v1.taxonomy().then(serp => {
+// 			var taxonomy = new window.Taxonomy(serp.taxonomy)
+// 			renderGraph('#taxonomy', data, taxonomy)
+// 		})
+// 	})
+// })
+// // only works on live
+Dataset.loadDefault(data => {
+		Promise.all([
+			api.v1.taxonomy(),
+			api.v1.collection.taxonomy(682)
+		]).then(taxonomies => {
+			var taxonomy = new window.Taxonomy(taxonomies[0].taxonomy)
+			taxonomy.extend(taxonomies[1].taxonomy)
+			//taxonomy.extend(taxonomies[1].taxonomy)
 			renderGraph('#taxonomy', data, taxonomy)
 		})
 	})
