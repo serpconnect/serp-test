@@ -74,11 +74,16 @@
 				n.color = n._color
 		})
 
+		var edges = this.sigma.graph.edges()
+		for (var i = 0; i < edges.length; i++) {
+			edges[i].highlight = false
+		}
+
 		this.filter.undo().apply()
 		if (resetSelected)
 			this._active = []
-
-		this._fire('reset')
+		
+			this._fire('reset', resetSelected)
 	}
 
 	/* sneaky api, _ = might change so don't depend on it */
@@ -100,6 +105,13 @@
 		node.previouslySelected = node.selected
 		node.selected = false
 
+		var edges = this.sigma.graph.edges()
+		for (var i = 0; i < edges.length; i++) {
+			var edge = edges[i]
+			if (edge.source === node.id)
+				edge.highlight = false
+		}
+
 		if (node.category === CATEGORY_FACET)
 			this.filter.undo(`facet-${node.id}-filter`)
 		else
@@ -117,7 +129,7 @@
 		/* filter.apply() repaints the graph; so toggle back */
 		node.previouslySelected = node.selected
 
-		this._fire('deselect')
+		this._fire('deselect', node)
 	}
 
 	controls.prototype.reapply = function () {
@@ -154,9 +166,12 @@
 				return adjacent[n.id] || n.category === CATEGORY_FACET
 			}, `facet-${node.id}-filter`)
 		} else {
-			/* Clicked on node: do matching based on complete and incomplete
-			 * matches, see: https://trello.com/c/HcpPVQoK
-			 */
+			var edges = this.sigma.graph.edges()
+			for (var i = 0; i < edges.length; i++) {
+				var edge = edges[i]
+				if (edge.source === node.id)
+					edge.highlight = true
+			}
 
 			/* Match effect and scope facets from node to all other nodes
 			 * in order to determine matching: COMPLETE, INCOMPLETE or NONE.
@@ -246,7 +261,7 @@
 		}
 
 		this.filter.apply()
-		this._fire('select')
+		this._fire('select', node)
 		this.sigma.refresh()
 	}
 
