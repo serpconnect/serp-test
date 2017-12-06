@@ -58,6 +58,8 @@
 
     context.strokeStyle = color;
     context.lineWidth = edge[prefix + 'size'] || 1;
+    if (edge.highlight)
+      context.lineWidth = 3 * context.lineWidth
     context.beginPath();
     context.moveTo(sX, sY);
     if (source.id === target.id) {

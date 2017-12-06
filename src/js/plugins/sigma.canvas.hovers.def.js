@@ -84,7 +84,6 @@
     var nodeRenderer = sigma.canvas.nodes[node.type] || sigma.canvas.nodes.def;
     nodeRenderer(node, context, settings);
 
-    // smeets: don't show labels on selected nodes (they hide edges)
     // Display the label:
     if (typeof node.label === 'string') {
       context.fillStyle = (settings('labelHoverColor') === 'node') ?
