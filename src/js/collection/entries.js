@@ -15,30 +15,45 @@ $(function () {
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
 
 	function refresh() {
-		window.api.ajax("GET", window.api.host + "/v1/collection/" + cID + "/entries")
-			.done(setupEntries)
-			.fail(toProfilePage)
+		Promise.all([
+			window.api.v1.taxonomy(),
+			window.api.v1.collection.taxonomy(cID),
+			window.api.v1.collection.entries(cID)
+		]).then(data => {
+			var taxonomy = new Taxonomy(data[0].taxonomy)
+			taxonomy.extend(data[1].taxonomy)
+			var entries = data[2]
+
+			setupEntries(entries, taxonomy)
+		}).fail(toProfilePage)
 	}
 
 	refresh()
 
-	function setupEntries(entries) {
+	function setupEntries(entries, taxonomy) {
+		document.getElementById('num-entries').textContent = entries.length.toString()
 		var elEntries = document.getElementById('collection-entries')
 
 		while (elEntries.firstChild)
 			elEntries.removeChild(elEntries.firstChild)
 
 		entries.forEach(entry => {
-			var elEntry = el('div.collection-option-li.collection-entry', {
-				'data-entry-id': entry.id
-			}, [
-				`(#${entry.id}) ` +
-				(entry.description || entry.reference || entry.DOI)
-			])
-
-			elEntry.addEventListener('click', inspectEntry, false)
-
-			elEntries.appendChild(elEntry)
+			window.api.v1.entry.taxonomy(entry.id).then(classification => {
+				var elEntry = el('div.overview-entry', {
+					'data-entry-id': entry.id
+				}, [
+					el('div.entry-type', [entry.type]),
+					el('div.entry-title', [`(#${entry.id}) ` +
+						(entry.description || entry.reference || entry.DOI)]),
+					el('div.entry-tags', 
+						Object.keys(classification).map(facet => 
+							el('div.entry-tag', [taxonomy.root.dfs(facet).name()])))
+				])
+	
+				elEntry.addEventListener('click', inspectEntry, false)
+	
+				elEntries.appendChild(elEntry)
+			})
 		})
 	}
 
