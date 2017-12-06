@@ -13,6 +13,9 @@ $(function () {
 	}
 
 	['general', 'users', 'entries'].forEach(id => updateLink(document.getElementById(id)))
+	document.getElementById('new-entry').addEventListener('click', evt => {
+		window.location = "/submit.html?c=" + cID
+	})
 
 	function refresh() {
 		Promise.all([
