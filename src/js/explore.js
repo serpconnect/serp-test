@@ -157,16 +157,16 @@ $(function() {
 	}
 
 	function resetTaxonomy(evt) {
-		currentTaxonomy = new Taxonomy([])
-		if (serpTaxonomy)
-			currentTaxonomy.tree(serpTaxonomy.tree())
-
-		currentExtension = new Taxonomy([])
-		if (serpExtension)
-			currentExtension.tree(serpExtension.tree())
-
-		explore(currentTaxonomy,
-				currentExtension,
+		var hasCollection = window.location.hash.length > 0
+		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
+		if (hasCollection) {
+			$$('#dataset').value = collectionId
+			Dataset.loadCollection(collectionId, exploreSet)
+		} else
+			Dataset.loadDefault(exploreSet)
+			
+		explore(serpTaxonomy,
+				serpExtension,
 				currentDataset,
 				$$('#graph'), {
 					reapplyFilters: false
