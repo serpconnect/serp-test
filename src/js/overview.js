@@ -5,15 +5,13 @@ $(function () {
 
 	/* remove -10 to make svg fill the square from edge-to-edge */
 	var radius = (Math.min(width, height) / 2) - 10
-	var nbrPercent = d3.format("%") // e.g 53%
-	var nbrSI = d3.format("s") // e.g 5.1k
 
 	/* colorScheme is defined in util/color.js */
 	var color = window.util.colorScheme()
+
 	//used to set text size depending on 'zoom' level
 	var tier =0;
-	//used for back btn referencing 
-	var currentTier = tier;
+	
 	/* x-axis should map to a full circle, otherwise strange chart */
 	var x = d3.scale.linear().range([0, 2 * Math.PI])
 
@@ -56,7 +54,7 @@ $(function () {
 	}
 
 	function computeTextRotation(d) {
-  		return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
+		return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
 	}
 	/* Idea is to map the flat tree into an arc tree using the computed
 	 * extents (d.dx, d.dy). A partition layout normally looks something
@@ -126,37 +124,25 @@ $(function () {
         	var hand = document.getElementById('hand')
         	hand.style.background = color(d.name)(relativeUse(d))
 			var facetTitle = document.getElementById('hover-facet-title')
-	    	facetTitle.innerText = d.name
+	    	facetTitle.innerText = d.full || d.name
 	    	facetTitle.style.fontStyle= "normal"
 			facetTitle.style.color = "black"
         }
 
 	    function mouseMove(d) {
-	    	hoverFacet(d)
-		 	svg.select('#text'+d.name)
+			hoverFacet(d)
+			if (d.depth === 0) return
+			svg.select('#text'+d.name)
 		 		.attr('font-size', d=>labelScale(d)+ (relativeDepth(d)*2))
 		 		.attr("transform", function() {return "rotate(0)"  })
 		 		.attr('text-anchor', 'middle')
 				.attr('x', arcX)
 				.attr('y', arcY)
 				.attr('dx',"0")
-	     	svg.select('#path'+d.name)
-				.transition()
-				.duration(500)
-				.ease('elastic')
-				.attr('transform',function(d){
-					var dist = -3
-					var startAngle = getStartAngle(d)
-					var endAngle = getEndAngle(d)
-					var midAngle = ((endAngle - startAngle)/2) + startAngle;
-					var x = Math.sin(midAngle) * dist;
-					var y = Math.cos(midAngle) * dist;
-					return 'translate(' + x + ',' + y + ')';
-				});
 		}
 
 		function mouseOut(d){
-			if(d.name=='serp')return
+			if (d.depth === 0) return
 		 	svg.select('#text'+d.name)
 				.attr('font-size', d => (labelScale(d)) )
 				.attr("x", function(d) { return y(d.y); })
@@ -164,12 +150,7 @@ $(function () {
 		    	.attr("y", d.y)
 		    	.attr("transform", function() {return "rotate(" + computeTextRotation(d) + ")"})
 		    	.attr('text-anchor','none')
-		 		.style("text-shadow", "none")
-			svg.select('#path'+d.name)
-				.transition()
-				.duration(500)
-				.ease('bounce')
-				.attr('transform','translate(0,0)');
+				 .style("text-shadow", "none")
 		}
 
 		function labelScale(d){
@@ -187,10 +168,8 @@ $(function () {
 		function facetInfo(d){
 			var info = window.info.getInfo(d.name)
 			var explanation = document.getElementById('facet-explanation')
-			var facetTitle = document.getElementById('facet-title')
 			explanation.innerText=info.description
-			var title = d.name
-			if(d.name!='serp'){
+			if(d.depth != 0){
 				explanation.style.fontStyle= "normal"
 				explanation.style.color = "black"
 			}
@@ -198,16 +177,20 @@ $(function () {
 				explanation.style.fontStyle= "italic"
 				explanation.style.color = ''
 			}
-			if(getParent(d.name)!= 'root' || getParent(d.name)!= "serp"){
-				title = title +' ('+ getParent(d.name)+')'
+			
+			var facetTitle = document.getElementById('facet-title')
+			var title = d.full || d.name
+			if (d.depth > 0) {
+				title = title +' ('+ getParent(d.name) + ')'
 			}
 			facetTitle.innerText = title
+
 			var square = document.getElementById('square')
 			square.style.background = color(d.name)(relativeUse(d))
 		}
 
 		function relativeDepth(d){
-			return d.depth-tier
+			return d.depth - tier
 		}
 
       	function arcTween(d) {
@@ -226,7 +209,7 @@ $(function () {
 				.attr("opacity", 0)
 				.attr('font-size', d => labelScale(d))
 		  	svg.selectAll("path").transition()
-		  		.duration(600+delay)
+		  		.duration(600 + delay)
 		  		.attrTween("d",arcTween(d))
 			    .each("end", function(e, i) {
 		        	// check if the animated element's data e lies within the visible angle span given in d
@@ -234,7 +217,7 @@ $(function () {
 			        // get a selection of the associated text element
 		            var arcText = d3.select("#text"+e.name);
 		            // fade in the text element and recalculate positions
-		            arcText.transition().duration(400+delay)
+		            arcText.transition().duration(400 + delay)
 		              .attr("opacity", 1)
 		              .attr("transform", function() {return "rotate(" + computeTextRotation(e) + ")"  })
 		              .attr("x", function(d) { return y(d.y); });
@@ -253,15 +236,12 @@ $(function () {
 		//use to isolate direction of taxonomy exporer 
 		function getActiveList(d, list){
 			var children = d.children
-			if(typeof children!== 'undefined' && children.length >0){
-				children.forEach( child => {
-					if(typeof child.children !== 'undefined' && child.children.length >0){
-						getActiveList(child, list)
-					}
-					list.push(child)
-				})
+			if (children && children.length > 0) {
+				for (var i = 0; i < children.length; i++) {
+					getActiveList(children[i], list)
+					list.push(children[i])
+				}
 			}
-			return
 		}
 
 		function getHiddenItems(reverseList, type){
@@ -278,23 +258,22 @@ $(function () {
 		} 
 
 		function click(d){
-			function first(d) {
-				return new Promise(function (R, F) {
-	       			toggleMouseEvents(d,true)
-	       			zoom(d,delay)
-	     			setTimeout(R, 700+delay)
-   				})
-   			}
-			if(d.depth-tier!=0){
-				var delay = relativeDepth(d)>0? (relativeDepth(d)*50): 100
-				facetInfo(d,delay)
-				first(d).then( toggleMouseEvents(d,false) )
+			var rel = relativeDepth(d)
+			if(rel !== 0){
+				var delay = rel > 0 ? (rel*50) : 100
+				facetInfo(d, delay)
+				toggleMouseEvents(d, true)
+				new Promise(function (F, R) {
+					zoom(d, delay)
+					setTimeout(F, Math.max(1100, 700 + delay))
+				}).then( function () {
+					toggleMouseEvents(d, false)
+				})
 			}
 		}
 
-		function zoom(d,delay) {
+		function zoom(d, delay) {
 			var activeList =[]
-			currentTier = tier
 			tier = d.depth
 			getActiveList(d, activeList)
 			activeList.push(d)		
@@ -311,12 +290,12 @@ $(function () {
 			activeText[0].forEach(active => {
 				setTimeout(function(){
 					active.classList.remove("hide")
-				},300)
+				}, 300)
 			})
 			hiddenText[0].forEach(hidden => {
 				hidden.classList.add("hide");
 			})
-			pathWindUp(d,delay)
+			pathWindUp(d, delay)
 			activeFacets[0].forEach(active => {
 				active.classList.remove("disappear")
 				active.classList.remove('hide')
@@ -325,7 +304,7 @@ $(function () {
 			hidden.classList.add("disappear")
 				setTimeout(function(){
 					hidden.classList.add('hide')
-				},1100)
+				}, 1100)
 			})
 		}
 
