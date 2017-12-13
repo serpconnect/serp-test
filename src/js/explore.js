@@ -133,7 +133,7 @@ $(function() {
 			else if (node.category === CATEGORY_CHALLENGE)
 				challenges.push(node)
 		}
-		
+
 		var conf = window.explore_conf
 		var current = 0
 		var max = Math.max(1, research.length - 1)
@@ -157,16 +157,16 @@ $(function() {
 	}
 
 	function resetTaxonomy(evt) {
-		currentTaxonomy = new Taxonomy([])
-		if (serpTaxonomy)
-			currentTaxonomy.tree(serpTaxonomy.tree())
+		var hasCollection = window.location.hash.length > 0
+		if (hasCollection) {
+			var collectionId = window.location.hash.substring(1)
+			$$('#dataset').value = collectionId
+			Dataset.loadCollection(collectionId, exploreSet)
+		} else
+			Dataset.loadDefault(exploreSet)
 
-		currentExtension = new Taxonomy([])
-		if (serpExtension)
-			currentExtension.tree(serpExtension.tree())
-
-		explore(currentTaxonomy,
-				currentExtension,
+		explore(serpTaxonomy,
+				serpExtension,
 				currentDataset,
 				$$('#graph'), {
 					reapplyFilters: false
