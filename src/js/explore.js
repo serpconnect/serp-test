@@ -133,7 +133,7 @@ $(function() {
 			else if (node.category === CATEGORY_CHALLENGE)
 				challenges.push(node)
 		}
-		
+
 		var conf = window.explore_conf
 		var current = 0
 		var max = Math.max(1, research.length - 1)
@@ -158,13 +158,13 @@ $(function() {
 
 	function resetTaxonomy(evt) {
 		var hasCollection = window.location.hash.length > 0
-		var collectionId = hasCollection ? window.location.hash.substring(1) : ""
 		if (hasCollection) {
+			var collectionId = window.location.hash.substring(1)
 			$$('#dataset').value = collectionId
 			Dataset.loadCollection(collectionId, exploreSet)
 		} else
 			Dataset.loadDefault(exploreSet)
-			
+
 		explore(serpTaxonomy,
 				serpExtension,
 				currentDataset,
