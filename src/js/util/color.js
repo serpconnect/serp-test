@@ -6,7 +6,7 @@
 		'effect': ['#c6dbef', '#9ecae1', '#6baed6', '#3182bd'],
 		'scope': ['#c7e9c0', '#a1d99b', '#74c476', '#31a354'],
 		'context': ['#fdae6b', '#fd8d3c', '#e6550d', '#a63603'],
-		'intervention': ['#756bb1'],
+		'intervention': ['#cbc9e2','#9e9ac8','#756bb1','#54278f'],
 		'serp': ['#FDFDFD']
 	}
 	var facets = Object.keys(colors)

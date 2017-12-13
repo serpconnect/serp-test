@@ -20,6 +20,7 @@
 
 			var entry = {
 				name: node.id().toLowerCase(),
+				full: node.name(),
 				size: size,
 				usage: node.usage
 			}
