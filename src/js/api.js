@@ -1,6 +1,14 @@
 $(function () {
+    var project = 'serp';
 
     function ajax(method, url, data) {
+        if (data) {
+            if (data.project)
+                console.warn('overwriting old project property', data.project, 'with', project)
+            data.project = project
+        } else {
+            data = { project: project }
+        }
         return $.ajax(url, {
             method: method,
             data: data,
@@ -15,6 +23,13 @@ $(function () {
         host: "https://api.serpconnect.cs.lth.se",
         ajax: ajax,
         json: function (method, url, data) {
+            if (data) {
+                if (data.project)
+                    console.warn('overwriting old project property', data.project, 'with', project)
+                data.project = project
+            } else {
+                data = { project: project }
+            }
             return $.ajax(url, {
                 method: method,
                 data: JSON.stringify(data),
@@ -37,7 +52,8 @@ $(function () {
         account: {},
         entry: {},
         collection: {},
-        admin: {}
+        admin: {},
+        project: {}
     }
 
     // Account API
@@ -123,9 +139,9 @@ $(function () {
 	}
 
 	v1.collection.kick = function(email, id){
-			return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
-						email: email
-			});
+        return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
+                    email: email
+        });
 	}
 
 	v1.collection.leave = function(cID) {
@@ -217,15 +233,26 @@ $(function () {
         })
     }
     //
+    v1.entry.get = function (id) {
+        return ajax("GET", endpoint("/v1/entry/") + id)
+    }
+
     v1.entry.taxonomy = function (id) {
         return ajax("GET", endpoint(`/v1/entry/${id}/taxonomy`))
     }
+
     v1.entry.collection = function (id) {
         return ajax("GET", endpoint(`/v1/entry/${id}/collection`))
     }
 
-    v1.taxonomy = function() {
-        return ajax("GET", endpoint("/v1/entry/taxonomy"))
+    // PROJECT API
+
+    v1.project.taxonomy = v1.taxonomy = function() {
+        return ajax("GET", endpoint(`/v1/project/${project}/taxonomy`))
+    }
+
+    v1.project.create = function (name) {
+        return ajax("POST", endpoint(`/v1/project/`), { name: name })
     }
 
     // Root API

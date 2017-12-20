@@ -43,7 +43,7 @@ $(document).ready(function() {
 
     /* Update the select element with user's collections */
     function updateCollectionList() {
-        return window.user.collections()
+        return window.api.v1.account.collections()
         .then(collz => {
             var select = document.getElementById('collection')
             var def = 0
@@ -94,7 +94,7 @@ $(document).ready(function() {
             return selectCollection(parseInt(collections[i].value))
         }).then(() => {
             return Promise.all([
-                api.v1.getEntry(entryId),
+                api.v1.entry.get(entryId),
                 api.v1.entry.taxonomy(entryId)
             ]).then(promise => {
                 var entry = promise[0]
@@ -598,13 +598,13 @@ $(document).ready(function() {
 
     $("#load-btn").on("click", function(evt) {
         if(loggedIn){
-          window.user.self().done(user => {
+          window.api.v1.account.self().done(user => {
               var conf = {
                   desc: "Load an entry",
                   input: user.entries
               };
               window.modals.listModal(conf, function (entryId) {
-                  api.v1.getEntry(entryId).done(entry => {
+                  api.v1.entry.get(entryId).done(entry => {
                         $("#" + entry.type + "-button").trigger("click");
                         api.v1.getTaxonomyEntry(entryId).done(taxonomy =>{
                           entry["serpClassification"] = taxonomy;

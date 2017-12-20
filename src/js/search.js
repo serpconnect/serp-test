@@ -276,7 +276,7 @@ $(document).ready(function () {
 
     // Append a select element if logged in so user can export to new/existing
     // collection/
-    window.user.self().done(self => {
+    window.api.v1.account.self().done(self => {
         $('tr').append(Element('th').text("export"))
 
         $('.table-view-area')
@@ -289,7 +289,7 @@ $(document).ready(function () {
 
     api.v1.taxonomy().then(data => {
         serpTaxonomy = new Taxonomy(data.taxonomy)
-        return window.user.collections()
+        return window.api.v1.account.collections()
     }).then(collz => {
         var selector = document.getElementById('collection-dropdown')
         var requested = getCollectionFromPreviousPage()
@@ -511,8 +511,8 @@ $(document).ready(function () {
 
 
             Promise.all([
-                window.user.getEntry(id),
-                window.user.getTaxonomyEntry(id)
+                window.api.v1.entry.get(id),
+                window.api.v1.entry.taxonomy(id)
             ]).then(promise => {
                 window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
@@ -611,8 +611,8 @@ $(document).ready(function () {
             removeBtn.addEventListener('click', deleteEntry, false)
 
             Promise.all([
-                window.user.getEntry(id),
-                window.user.getTaxonomyEntry(id)
+                window.api.v1.entry.get(id),
+                window.api.v1.entry.taxonomy(id)
             ]).then(promise => {
                 window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
