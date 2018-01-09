@@ -1,0 +1,20 @@
+extends base
+block view-specific-scripts
+    script(src="js/util/el.js")
+    script(src="js/modal.js")
+    script(src="js/vendor/fuse.min.js")
+    script(src="js/util/awesomplete.js")
+    script(src="js/components/create-project-modal.js")
+
+    script(src="js/projects.js")
+block content
+    div.inner-content
+        h3 Known projects
+        p#msg-box A list of all known frontend projects.
+        table#projects-list
+            thead
+                tr
+                    th Name
+                    th Link
+                    th Actions
+            tbody

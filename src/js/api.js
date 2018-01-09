@@ -161,7 +161,7 @@ $(function () {
 	v1.collection.members = function (id, q) {
 		return ajax("GET", endpoint("/v1/collection/" + id + "/members"), {q:q})
     }
-    
+
     v1.collection.memberOf = function (id) {
         return ajax("GET", endpoint("/v1/collection/" + id + "/"))
     }
@@ -233,6 +233,10 @@ $(function () {
         })
     }
     //
+    v1.entry.all = function () {
+        return ajax("GET", endpoint("/v1/entry"))
+    }
+
     v1.entry.get = function (id) {
         return ajax("GET", endpoint("/v1/entry/") + id)
     }
@@ -251,8 +255,16 @@ $(function () {
         return ajax("GET", endpoint(`/v1/project/${project}/taxonomy`))
     }
 
-    v1.project.create = function (name) {
-        return ajax("POST", endpoint(`/v1/project/`), { name: name })
+    v1.project.create = function (name, link) {
+        return ajax("POST", endpoint(`/v1/project`), { name: name, link: link })
+    }
+
+    v1.project.delete = function (name) {
+        return ajax("DELETE", endpoint(`/v1/project/${name}`))
+    }
+
+    v1.project.all = function () {
+        return ajax("GET", endpoint(`/v1/project`))
     }
 
     // Root API
