@@ -2,13 +2,6 @@ $(function () {
     var project = 'serp';
 
     function ajax(method, url, data) {
-        if (data) {
-            if (data.project)
-                console.warn('overwriting old project property', data.project, 'with', project)
-            data.project = project
-        } else {
-            data = { project: project }
-        }
         return $.ajax(url, {
             method: method,
             data: data,
@@ -23,13 +16,6 @@ $(function () {
         host: "https://api.serpconnect.cs.lth.se",
         ajax: ajax,
         json: function (method, url, data) {
-            if (data) {
-                if (data.project)
-                    console.warn('overwriting old project property', data.project, 'with', project)
-                data.project = project
-            } else {
-                data = { project: project }
-            }
             return $.ajax(url, {
                 method: method,
                 data: JSON.stringify(data),
@@ -80,11 +66,11 @@ $(function () {
     }
 
     v1.account.collections = function () {
-        return ajax("GET", endpoint("/v1/account/collections"))
+        return ajax("GET", endpoint("/v1/account/collections"), { project: project })
     }
 
     v1.account.invites = function () {
-        return ajax("GET", endpoint("/v1/account/invites"))
+        return ajax("GET", endpoint("/v1/account/invites"), { project: project })
     }
 
     v1.account.friends = function (email) {
@@ -95,6 +81,10 @@ $(function () {
 
     v1.account.lookup = function (email) {
         return ajax("GET", endpoint("/v1/account/") + email)
+    }
+
+    v1.account.projects = function () {
+        return ajax("GET", endpoint("/v1/account/projects"))
     }
 
     v1.account.register = function (email, passw) {
@@ -128,8 +118,13 @@ $(function () {
     // Collection API
     v1.collection.create = function (name) {
         return ajax("POST", endpoint("/v1/collection/"), {
-            name: name
+            name: name,
+            project: project
         });
+    }
+
+    v1.collection.project = function (id) {
+        return ajax("GET", endpoint("/v1/collection/" + id + "/project"))
     }
 
     v1.collection.invite = function (email, id) {
@@ -140,7 +135,7 @@ $(function () {
 
 	v1.collection.kick = function(email, id){
         return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
-                    email: email
+            email: email
         });
 	}
 
@@ -234,7 +229,7 @@ $(function () {
     }
     //
     v1.entry.all = function () {
-        return ajax("GET", endpoint("/v1/entry"))
+        return ajax("GET", endpoint("/v1/entry"), { project: project })
     }
 
     v1.entry.get = function (id) {
@@ -251,28 +246,36 @@ $(function () {
 
     // PROJECT API
 
-    v1.project.taxonomy = v1.taxonomy = function() {
-        return ajax("GET", endpoint(`/v1/project/${project}/taxonomy`))
+    v1.project.taxonomy = v1.taxonomy = function(proj, taxonomy) {
+        if (taxonomy)
+            return json("PUT", endpoint(`/v1/project/${proj}/taxonomy`), taxonomy)
+        else if (proj)
+            return ajax("GET", endpoint(`/v1/project/${proj}/taxonomy`))
+        else
+            return ajax("GET", endpoint(`/v1/project/${project}/taxonomy`))
     }
 
     v1.project.create = function (name, link) {
         return ajax("POST", endpoint(`/v1/project`), { name: name, link: link })
     }
 
+    v1.project.update = function (name, update) {
+        return ajax("PUT", endpoint(`/v1/project/${name}`), update)
+    }
+
     v1.project.delete = function (name) {
-        return ajax("DELETE", endpoint(`/v1/project/${name}`))
+        return ajax("POST", endpoint(`/v1/project/${name}/delete`))
+    }
+
+    v1.project.get = function (name) {
+        return ajax("GET", endpoint(`/v1/project/${name}`))
     }
 
     v1.project.all = function () {
         return ajax("GET", endpoint(`/v1/project`))
     }
 
-    // Root API
-    v1.getEntry = function (id) {
-        return ajax("GET", endpoint("/v1/entry/") + id)
-    }
-
-    v1.getTaxonomyEntry = function (id) {
-        return ajax("GET", endpoint("/v1/entry/" + id + "/taxonomy"))
-    }
+    // Root API -- deprecated
+    v1.getEntry = v1.entry.get
+    v1.getTaxonomyEntry = v1.entry.taxonomy
 })

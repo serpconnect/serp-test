@@ -12,61 +12,61 @@
 		lastBtn.parentNode.insertBefore(complaint, lastBtn.nextSibling)
 	}
 
-	G.createProjectModal = function () {
-		var create = el('button#confirm.btn', ['create'])
+	G.editProjectModal = function (project) {
+		var update = el('button#confirm.btn', ['update'])
 		var projectName = el('input.modal-input-box', {
-			placeholder: 'serp'
+			value: project.name
 		})
 
 		var projectLink = el('input.modal-input-box', {
-			placeholder: 'http://serpconnect.cs.lth.se'
+			value: project.link
 		})
 
 		var modal = el('div#modalConf.modal.confirm.appear', [
 			el('div', [
 				window.modals.closeButton(),
-				el("div.modal-header-title", ['Create new project']),
+				el("div.modal-header-title", ['Edit project']),
 				el('div.modal-divider'),
 				el('div', [
 					el('label.w-3em', ['name']),
-					projectName,
+					projectName
 				]),
 				el('div', [
 					el('label.w-3em', ['link']),
 					projectLink,
 				]),
 				el("div#bottom-divider.modal-divider"),
-				create,
+				update,
 				window.modals.cancelButton()
 			])
 		])
-
 		return new Promise(function (F, R) {
-			create.addEventListener('click', evt => {
-				if (!projectName.value) {
-					updateError(modal, "Must provide a name")
-					return
+			update.addEventListener('click', evt => {
+				var updatedNameOrLink = {}
+				updateNameOrLink = false
+
+				if (projectName.value !== project.name) {
+					updatedNameOrLink.name = projectName.value
 				}
 
-				if (!projectLink.value) {
-					updateError(modal, "Must provide a home page")
+				if (projectLink.value !== project.link) {
+					updatedNameOrLink.link = projectLink.value
+				}
+
+				var updateNameOrLink = Object.keys(updatedNameOrLink).length > 0
+				if (!updateNameOrLink) {
+					updateError(modal, "Nothing to update")
 					return
 				}
 
 				window.modals.toggleButtonState()
-				api.v1.project.create(projectName.value, projectLink.value)
-                	.done(data => {
-                		document.body.removeChild(modal)
-                		F({
-	                		link: projectLink.value,
-	                		name: projectName.value
-                		})
-                	})
-	                .fail(xhr => {
+				api.v1.project.update(project.name, updatedNameOrLink)
+					.done(() => {
+						document.body.removeChild(modal)
+						F()
+					}).fail(xhr => {
 						updateError(modal, xhr.responseText)
-					}).always(() => {
-	                	window.modals.toggleButtonState()
-	                })
+					}).always(window.modals.toggleButtonState())
 			})
 
 			document.body.appendChild(modal)
