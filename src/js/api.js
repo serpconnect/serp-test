@@ -173,6 +173,10 @@ $(function () {
 		return ajax("GET", endpoint("/v1/collection/" + cID + "/entries"))
 	}
 
+    v1.collection.entities = function(cID){
+        return ajax("GET", endpoint("/v1/collection/" + cID + "/entities"))
+    }
+
 	v1.collection.graph = function(cID){
 		return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
 	}
@@ -207,6 +211,12 @@ $(function () {
     v1.admin.deleteUser = function (email) {
         return ajax("POST", endpoint('/v1/admin/delete-user'), {
             email: email
+        })
+    }
+
+    v1.admin.deleteEntry = function (id) {
+        return ajax("POST", endpoint('/v1/admin/delete-entry'), {
+            entryId: id
         })
     }
 
