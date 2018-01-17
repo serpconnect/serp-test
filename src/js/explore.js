@@ -243,6 +243,9 @@ $(function() {
 			serpExtension = currentExtension = extended
 		}
 		currentTaxonomy.tree(serpTaxonomy.tree())
+		// Only remove facets if there are nodes in the dataset; it looks weird
+		// if graph is totally empty...
+		window.explore_conf.pruneUnused = set.nodes().length !== 0
 		explore(serpTaxonomy, extended, set, $$('#graph'))
 	}
 

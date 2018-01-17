@@ -5,7 +5,7 @@
 	 */
 	function treeify(root, len) {
 		return {
-			name: 'serp',
+			name: 'root',
 			size: 1.0,
 			usage: len,
 			children: recurseTree(root, 1.0)
