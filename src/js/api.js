@@ -1,5 +1,5 @@
 $(function () {
-    var project = 'serp';
+    var project = 'serp-test';
 
     function ajax(method, url, data) {
         return $.ajax(url, {
@@ -12,20 +12,22 @@ $(function () {
         })
     }
 
+    function json(method, url, data) {
+        return $.ajax(url, {
+            method: method,
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            xhrFields: {
+                withCredentials: true
+            },
+            crossDomain: true
+        })
+    }
+
     window.api = {
         host: "https://api.serpconnect.cs.lth.se",
         ajax: ajax,
-        json: function (method, url, data) {
-            return $.ajax(url, {
-                method: method,
-                data: JSON.stringify(data),
-                contentType: "application/json",
-                xhrFields: {
-                    withCredentials: true
-                },
-                crossDomain: true
-            })
-        }
+        json: json
     }
 
     function endpoint(route) {
@@ -130,56 +132,56 @@ $(function () {
     v1.collection.invite = function (email, id) {
         return ajax("POST", endpoint("/v1/collection/" + id + "/invite"), {
             email: email
-		});
-	}
+        });
+    }
 
-	v1.collection.kick = function(email, id){
+    v1.collection.kick = function(email, id){
         return ajax("POST", endpoint("/v1/collection/" + id + "/kick"), {
             email: email
         });
-	}
+    }
 
-	v1.collection.leave = function(cID) {
-		return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
-	}
+    v1.collection.leave = function(cID) {
+        return ajax("POST", endpoint("/v1/collection/" + cID + "/leave"))
+    }
 
-	v1.collection.addEntry = function(cid, eid){
-		return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), {
-			entryId: eid
-		})
-	}
+    v1.collection.addEntry = function(cid, eid){
+        return ajax("POST", endpoint("/v1/collection/" + cid + "/addEntry"), {
+            entryId: eid
+        })
+    }
 
-	v1.collection.stats = function(id){
-		return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
-	}
+    v1.collection.stats = function(id){
+        return ajax("GET", endpoint("/v1/collection/" + id + "/stats"))
+    }
 
-	v1.collection.members = function (id, q) {
-		return ajax("GET", endpoint("/v1/collection/" + id + "/members"), {q:q})
+    v1.collection.members = function (id, q) {
+        return ajax("GET", endpoint("/v1/collection/" + id + "/members"), {q:q})
     }
 
     v1.collection.memberOf = function (id) {
         return ajax("GET", endpoint("/v1/collection/" + id + "/"))
     }
 
-	v1.collection.url = function(cID){
-		return endpoint("/v1/collection/" + cID + "/addEntry")
-	}
+    v1.collection.url = function(cID){
+        return endpoint("/v1/collection/" + cID + "/addEntry")
+    }
 
-	v1.collection.isOwner = function(cID){
-		return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
-	}
+    v1.collection.isOwner = function(cID){
+        return ajax("GET", endpoint("/v1/collection/" + cID + "/is-owner"))
+    }
 
-	v1.collection.entries = function(cID){
-		return ajax("GET", endpoint("/v1/collection/" + cID + "/entries"))
-	}
+    v1.collection.entries = function(cID){
+        return ajax("GET", endpoint("/v1/collection/" + cID + "/entries"))
+    }
 
     v1.collection.entities = function(cID){
         return ajax("GET", endpoint("/v1/collection/" + cID + "/entities"))
     }
 
-	v1.collection.graph = function(cID){
-		return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
-	}
+    v1.collection.graph = function(cID){
+        return ajax("GET", endpoint("/v1/collection/" + cID + "/graph"))
+    }
 
     v1.collection.classification = function (cID) {
         return ajax("GET", endpoint("/v1/collection/" + cID + "/classification"))
@@ -189,9 +191,9 @@ $(function () {
         return ajax("GET", endpoint("/v1/collection/" + cid + "/taxonomy"))
     }
 
-	// Admin API
-	v1.admin.acceptEntry = function (id) {
-		return ajax("POST", endpoint('/v1/admin/accept-entry'), {
+    // Admin API
+    v1.admin.acceptEntry = function (id) {
+        return ajax("POST", endpoint('/v1/admin/accept-entry'), {
             entry : id
         })
     }
@@ -228,9 +230,9 @@ $(function () {
         return ajax("GET", endpoint("/v1/admin/pending"))
     }
 
-	v1.admin.isCollectionOwner = function (cID){
-		return ajax("GET", endpoint("/v1/admin/" + cID + "/is-collection-owner"))
-	}
+    v1.admin.isCollectionOwner = function (cID){
+        return ajax("GET", endpoint("/v1/admin/" + cID + "/is-collection-owner"))
+    }
 
     v1.admin.deleteCollection = function (cID) {
         return ajax("POST", endpoint("/v1/admin/delete-collection"), {
@@ -256,6 +258,11 @@ $(function () {
 
     // PROJECT API
 
+    /** 
+     * taxonomy()   --> current project taxonomy
+     * taxonomy(p)  --> project taxonomy
+     * taxonomy(p,t): update taxonomy
+     */
     v1.project.taxonomy = v1.taxonomy = function(proj, taxonomy) {
         if (taxonomy)
             return json("PUT", endpoint(`/v1/project/${proj}/taxonomy`), taxonomy)
