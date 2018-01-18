@@ -104,12 +104,10 @@ $(function() {
 		var is_admin = self.trust === 'Admin'
 		var is_verified = self.trust === 'Verified' || is_admin
 
-		var table = document.getElementById('projects-list')
-
 		if (is_verified) {
 			var create_btn = el('button#create.btn', ['create project'])
 			create_btn.addEventListener('click', create_new_project, false)
-			table.parentNode.insertBefore(create_btn, table)
+			box.appendChild(create_btn)
 		}
 
 		user_data = self
