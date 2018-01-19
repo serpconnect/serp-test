@@ -57,6 +57,7 @@
 					taxonomy: serpTaxonomy.root.flatten(),
 					version: 1
 				}
+				data.taxonomy.splice(0, 1) // remove root node
 				api.v1.project.taxonomy(project.name, data)
 					.done(() => {
 						document.body.removeChild(modal)
