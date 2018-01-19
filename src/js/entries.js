@@ -4,7 +4,7 @@ $(document).ready(function() {
     
     var CID = window.location.hash.substring(1)
 
-    user.invites().done(showInvites)
+    api.v1.account.invites().done(showInvites)
     //check if invites exist and display number above invitations tab on profile page
     function showInvites(invites) {
         if(invites.length > 0 ){

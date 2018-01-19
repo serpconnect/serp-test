@@ -30,7 +30,7 @@ $(document).ready(function () {
         var type = window.location.hash
         return type ? type.substring(1) : null
     }
-    
+
     function getCollectionID() {
         return document.getElementById('collection-dropdown').value
     }
@@ -43,7 +43,7 @@ $(document).ready(function () {
             return
         var facet = evt.target.dataset.facet
         var entries = dataset.filter(entry => fitsCurrentClassification(entry))
-        
+
         var done = function () {
             var remaining = entries.filter(entry => entry.taxonomy === undefined).length
             if (remaining !== 0) return
@@ -77,9 +77,9 @@ $(document).ready(function () {
 
             function showTaxonomyModal() {
                 Promise.all([
-                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/entities"),
-                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/taxonomy"),
-                    window.api.json("GET", window.api.host + "/v1/collection/" + CID + "/classification")
+                    api.v1.collection.entities(CID),
+                    api.v1.collection.taxonomy(CID),
+                    api.v1.collection.classification(CID),
                 ]).then(promise => {
                     var entities = promise[0]
                     var dynamicTaxonomy = promise[1]
@@ -104,7 +104,7 @@ $(document).ready(function () {
                         }
 
                     })
-                    // 
+                    //
                     if (newClass.length != 0 && newClass[0].facetId != facet.toUpperCase()) {
                         newClass.unshift({ facetId: facet, text: [] });
                     }
@@ -115,7 +115,7 @@ $(document).ready(function () {
 
 
         var update = function (entry) {
-            window.api.ajax("GET", window.api.host + "/v1/entry/" + entry.id + "/taxonomy")
+            api.v1.entry.taxonomy(entry.id)
                 .then(taxonomy => {
                     entry.taxonomy = taxonomy
                     done()
@@ -222,7 +222,7 @@ $(document).ready(function () {
                 return
             }
 
-            window.api.ajax("GET", window.api.host + "/v1/entry")
+            api.v1.entry.all()
                 .done(graph => {
                     mainDataset = processGraph(graph)
                     updateDataset(mainDataset)
@@ -276,7 +276,7 @@ $(document).ready(function () {
 
     // Append a select element if logged in so user can export to new/existing
     // collection/
-    window.user.self().done(self => {
+    window.api.v1.account.self().done(self => {
         $('tr').append(Element('th').text("export"))
 
         $('.table-view-area')
@@ -289,7 +289,7 @@ $(document).ready(function () {
 
     api.v1.taxonomy().then(data => {
         serpTaxonomy = new Taxonomy(data.taxonomy)
-        return window.user.collections()
+        return window.api.v1.account.collections()
     }).then(collz => {
         var selector = document.getElementById('collection-dropdown')
         var requested = getCollectionFromPreviousPage()
@@ -492,9 +492,7 @@ $(document).ready(function () {
             var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
-                window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
-                    entryId: id
-                })
+                api.v1.admin.deleteEntry(id)
                     .done(() => {
                         window.modals.clearAll();
                         dataset.splice(entryNumber, 1);
@@ -511,8 +509,8 @@ $(document).ready(function () {
 
 
             Promise.all([
-                window.user.getEntry(id),
-                window.user.getTaxonomyEntry(id)
+                window.api.v1.entry.get(id),
+                window.api.v1.entry.taxonomy(id)
             ]).then(promise => {
                 window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}
@@ -595,9 +593,7 @@ $(document).ready(function () {
             var CID = getCollectionID()
             function deleteEntry() {
                 toggleButtonState()
-                window.api.ajax("POST", window.api.host + "/v1/admin/delete-entry", {
-                    entryId: id
-                })
+                api.v1.admin.deleteEntry(id)
                     .done(() => {
                         window.modals.clearAll();
                         dataset.splice(entryNumber, 1);
@@ -611,8 +607,8 @@ $(document).ready(function () {
             removeBtn.addEventListener('click', deleteEntry, false)
 
             Promise.all([
-                window.user.getEntry(id),
-                window.user.getTaxonomyEntry(id)
+                window.api.v1.entry.get(id),
+                window.api.v1.entry.taxonomy(id)
             ]).then(promise => {
                 window.modals.entryModal(CID, promise[0], promise[1],
                     admin ? { button: removeBtn } : {}

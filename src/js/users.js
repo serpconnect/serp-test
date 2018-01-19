@@ -23,7 +23,7 @@ $(document).ready(function() {
     var levelDescriptions = Object.assign({}, ...descriptions)
 
     // Check if invites exist and display number above invitations tab on profile page
-    user.invites().done(showInvites)
+    api.v1.account.invites().done(showInvites)
     function showInvites(invites) {
         if(invites.length > 0 ){
             var invitationsContainer = el('div.invitationContainer')

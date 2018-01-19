@@ -130,7 +130,7 @@
   }
 
   function createCollection(validEntries, newCollectionName, pushEntry, modal){
-    window.user.createCollection(newCollectionName)
+    window.api.v1.collection.create(newCollectionName)
     .done(ok => {
       var collectionID = ok.id;
       updateDisplayedCollectionName(collectionID, newCollectionName);
