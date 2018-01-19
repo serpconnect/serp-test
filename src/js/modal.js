@@ -441,14 +441,26 @@ $(document).ready(function() {
 	}
 
 	/* Create simple modal */
-	modals.confirmPopUp = function(desc, onConfirm) {
-		var modal = modals.optionsModal({
-			desc: desc,
-			message: "",
-			input: [],
-			btnText: 'confirm'
-		}, onConfirm)
+	modals.confirmPopUp = function(desc, method) {
+		
+		var confirmBtn = el('button#confirm.btn', ['confirm'])
+		var modal = el('div#modal.modal.appear', [
+			el('div', [
+				closeButton(),
+				el("div.modal-header-title", [desc]),
+				el("div#bottom-divider.modal-divider"),
+				confirmBtn, cancelButton()
+			])
+		])
         modal.classList.add('confirm')
+
+    	confirmBtn.addEventListener('click', (evt) => {
+			method.apply({ modal })
+			modal.remove()
+		})
+
+		modals.appear(modal)
+		document.body.appendChild(modal)
 	}
 
 	/* Create simple modal with unique id */
@@ -466,6 +478,7 @@ $(document).ready(function() {
 
 		confirmBtn.addEventListener('click', (evt) => {
 			method.apply({modal})
+
 		})
 
 		modals.appear(modal)

@@ -150,7 +150,7 @@ $(function () {
 		    	.attr("y", d.y)
 		    	.attr("transform", function() {return "rotate(" + computeTextRotation(d) + ")"})
 		    	.attr('text-anchor','none')
-				 .style("text-shadow", "none")
+				.style("text-shadow", "none")
 		}
 
 		function labelScale(d){
@@ -258,6 +258,8 @@ $(function () {
 		} 
 
 		function click(d){
+			if(d.name=='serp')
+				return
 			var rel = relativeDepth(d)
 			if(rel !== 0){
 				var delay = rel > 0 ? (rel*50) : 100
@@ -345,4 +347,17 @@ $(function () {
  			renderGraph('#taxonomy', data, taxonomy)
  		})
  	})
+// })
+ // only works on live
+/*Dataset.loadDefault(data => {
+		Promise.all([
+			api.v1.taxonomy(),
+			api.v1.collection.taxonomy(682)
+		]).then(taxonomies => {
+			var taxonomy = new window.Taxonomy(taxonomies[0].taxonomy)
+			taxonomy.extend(taxonomies[1].taxonomy)
+			//taxonomy.extend(taxonomies[1].taxonomy)
+			renderGraph('#taxonomy', data, taxonomy)
+		})
+	})*/
 })

@@ -31,6 +31,7 @@
 			var id = node.id().toLowerCase()
 
 			if (node.tree.length === 0 || facets[id] > 0) {
+				if (!facets[id]) facets[id] = 0
 				return facets[id] || 0
 			}
 

@@ -1,0 +1,42 @@
+extends base
+block view-specific-scripts
+    // libraries - d3
+    script(src="//d3js.org/d3.v3.min.js" charset="utf-8")
+
+    // app
+    script(src="js/util/color.js")
+    script(src="js/util/el.js")
+    script(src="js/util/usage.js")
+    script(src="js/util/treeify.js")
+    script(src="js/dataset.js")
+    script(src="js/project.js")
+    script(src="js/index.js")
+    script(src="js/info.js")
+    script(src="js/modal.js")
+
+block content
+        div.overview-container
+            div.ov-tax-container
+                span#taxonomy
+                div.center Expand your SERP taxonomy
+            
+            div#newFacet.newFacetContainer
+                
+                h2#newFacetBox  Extend Taxonomy
+                div.divider-wrapper   
+                    div.proj-ui-title-divider
+                    h3#facetName effect
+                    div.proj-ui-title-divider
+                div.proj-ui-input-container  
+                    div.proj-ui-input-containers
+                        h4 id:
+                        input#idInput.proj-ui-inputbox(type='text', name='id', value=id)
+                    div.proj-ui-input-containers
+                        h4 name:
+                        input#nameInput.proj-ui-inputbox(type='text', name='name', value=name)
+                div.proj-ui-btn-wrapper
+                    button#submitBtn.btn extend
+                div.proj-ui-btn-wrapper
+                    button#saveBtn.btn save
+                    button#resetBtn.btn reset
+                    button#backBtn.btn back
