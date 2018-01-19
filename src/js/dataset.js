@@ -46,7 +46,6 @@ Dataset.loadQuery = function(query, cb) {
 	throw new Error("NYI")
 }
 Dataset.loadCollection = function(id, cb) {
-
 	Promise.all([
 		window.api.ajax("GET", window.api.host + "/v1/collection/" + id + "/graph"),
 		api.v1.collection.taxonomy(id)
@@ -63,7 +62,7 @@ Dataset.loadDefault = function(cb) {
 		return
 	}
 
-	$.getJSON(window.api.host + "/v1/entry")
+	api.v1.entry.all()
 	 .then(function (data) {
 	 	Dataset.default = new Dataset(data)
 	 	cb(Dataset.default)
