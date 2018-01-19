@@ -199,11 +199,13 @@
 			node.map(initWeight)
 		})
 
-		taxonomy.root.map(function remove_unused(node, i) {
-			if (!usage[node.id().toLowerCase()] && node.isTreeLeaf())
-				delete facets[node.id().toLowerCase()]
-			node.map(remove_unused)
-		})
+		if (conf.pruneUnused) {
+			taxonomy.root.map(function remove_unused(node, i) {
+				if (!usage[node.id().toLowerCase()] && node.isTreeLeaf())
+					delete facets[node.id().toLowerCase()]
+				node.map(remove_unused)
+			})
+		}
 
 		compute_weight(taxonomy.root, facets)
 		/* tighten the segment sizes so that facets appear clustered */
@@ -217,10 +219,11 @@
 
 			var facet = facets[node.id().toLowerCase()]
 			if (facet)
-				add_facet_node(node.name(), 
-					node.id().toLowerCase(), 
+				add_facet_node(node.name(),
+					node.id().toLowerCase(),
 					facet.offset + facet.segmentSize * 0.5)
 		})
+		console.log(taxonomy, facets)
 
 		return {
 			nodes: nodes,

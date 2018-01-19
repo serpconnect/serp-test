@@ -46,15 +46,13 @@ $(document).ready(function() {
         return window.user.collections()
         .then(collz => {
             var select = document.getElementById('collection')
-            var def = 0
+            var def = collz[0].id
 
             while (select.firstChild)
                 select.removeChild(select.firstChild)
 
             collz
                 .map(coll => {
-                    if (coll.name === 'default')
-                        def = coll.id
                     return el('option', {value:coll.id}, [coll.name])
                 })
                 .forEach(option => select.appendChild(option))
@@ -86,12 +84,8 @@ $(document).ready(function() {
                       "this entry to your own collection instead."
             flashErrorMessage(msg)
             var collections = document.querySelectorAll('#collection > option')
-            var i = 0
-            for (i = 0; i < collections.length; i++)
-                if (collections[i].textContent === "default")
-                    break
-
-            return selectCollection(parseInt(collections[i].value))
+            // We pick first collection available as default
+            return selectCollection(parseInt(collections[0].value))
         }).then(() => {
             return Promise.all([
                 api.v1.getEntry(entryId),

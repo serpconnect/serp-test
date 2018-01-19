@@ -26,6 +26,8 @@
 		.domain(["challenge", "research"])
 		.range(["#BAF", "#FAB"])
 
+	conf.pruneUnused = false
+
 	/* export */
 	scope.explore_conf = conf
 
