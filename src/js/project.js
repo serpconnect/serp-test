@@ -1,4 +1,19 @@
 $(function () {
+	/* returned data from project.taxonomy(p): taxonomy and version */
+	var baseTaxonomyData
+
+	var querystring = {}
+    /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
+    if (window.location.search) {
+        var params = window.location.search.substring(1).split('&')
+        for (var i = 0; i < params.length; i++) {
+            var split = params[i].indexOf('=')
+            var name = params[i].substring(0, split)
+            var value = params[i].substring(split + 1)
+
+            querystring[name] = value
+        }
+    }
 
 	/* used to store order in which elements are added so user can reverse operations */
 	var operations = []
@@ -85,7 +100,7 @@ $(function () {
 		var color = window.util.colorScheme(taxonomy)
 		var serp = serp
 		if(count==0){
-			trimTaxonomy(serp)
+			//trimTaxonomy(serp)
 		}
 		count++
 		function trimTaxonomy(d){
@@ -260,8 +275,16 @@ $(function () {
 	    }
 
 	    function save(){
-	    	//some api call.
-	    	//refresh page or reload taxonomy from saved state.
+	    	var taxonomyData = {
+	    		taxonomy: serp.flatten(),
+	    		version: baseTaxonomyData.version + 1
+	    	}
+	    	taxonomyData.taxonomy.splice(0, 1) // remove 'root' node
+	    	baseTaxonomyData = taxonomyData
+
+	    	return api.v1.project.taxonomy(querystring.p, taxonomyData).then(() => {
+	    		alert("ok")
+	    	}).fail(xhr => alert(xhr.responseText))
 	    }
 
 	    function reset() {
@@ -395,7 +418,10 @@ $(function () {
 
 	}
 	Dataset.loadDefault(data => {
-		api.v1.taxonomy().then(serp => {
+	    if (!querystring.p) return
+
+		api.v1.project.taxonomy(querystring.p).then(serp => {
+			baseTaxonomyData = serp
 			var taxonomy = new window.Taxonomy(serp.taxonomy)
 			renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
 		})

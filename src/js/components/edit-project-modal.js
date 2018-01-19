@@ -18,8 +18,7 @@
 			value: project.name
 		})
 
-		var set_serp_btn = el('button.btn', ['set serp taxonomy'])
-		var set_test_btn = el('button.btn', ['set serp-test taxonomy'])
+		var edit_taxonomy_btn = el('button.btn', ['edit taxonomy'])
 
 		var projectLink = el('input.modal-input-box', {
 			value: project.link
@@ -39,32 +38,15 @@
 					projectLink,
 				]),
 				el('div.modal-divider'),
-				set_serp_btn,
+				edit_taxonomy_btn,
 				el("div#bottom-divider.modal-divider"),
 				update,
 				window.modals.cancelButton()
 			])
 		])
 		return new Promise(function (F, R) {
-			set_serp_btn.addEventListener('click', evt => {
-				window.modals.toggleButtonState()
-				var serpTaxonomy = new window.Taxonomy()
-				serpTaxonomy.root.addChild(new FacetNode("effect", "Effect", [], ""))
-				serpTaxonomy.root.addChild(new FacetNode("intervention", "Intervention", [], ""))
-				serpTaxonomy.root.addChild(new FacetNode("scope", "Scope", [], ""))				
-				serpTaxonomy.root.addChild(new FacetNode("context", "Context", [], ""))
-				var data = {
-					taxonomy: serpTaxonomy.root.flatten(),
-					version: 1
-				}
-				data.taxonomy.splice(0, 1) // remove root node
-				api.v1.project.taxonomy(project.name, data)
-					.done(() => {
-						document.body.removeChild(modal)
-						F()
-					}).fail(xhr => {
-						updateError(modal, xhr.responseText)
-					}).always(window.modals.toggleButtonState())
+			edit_taxonomy_btn.addEventListener('click', evt => {
+				window.location = "/project.html?p=" + project.name
 			})
 
 			update.addEventListener('click', evt => {
