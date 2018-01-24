@@ -15,6 +15,8 @@ block view-specific-scripts
     script(src="js/modal.js")
 
 block content
+    div.inner-content
+        h3.text-title Create/Edit Your Own Taxonomy
         div.overview-container
             div.ov-tax-container
                 span#taxonomy
@@ -29,14 +31,15 @@ block content
                     div.proj-ui-title-divider
                 div.proj-ui-input-container  
                     div.proj-ui-input-containers
-                        h4 id:
+                        label.proj-ui-label(for="idInput") id
                         input#idInput.proj-ui-inputbox(type='text', name='id', value=id)
                     div.proj-ui-input-containers
-                        h4 name:
+                        label.proj-ui-label(for="nameInput") name
                         input#nameInput.proj-ui-inputbox(type='text', name='name', value=name)
                 div.proj-ui-btn-wrapper
                     button#submitBtn.btn extend
+                    button#removeBtn.btn remove
                 div.proj-ui-btn-wrapper
                     button#saveBtn.btn save
                     button#resetBtn.btn reset
-                    button#backBtn.btn back
+                    button#backBtn.btn undo

@@ -11,7 +11,9 @@
 	width:30%;
 	padding-top: 10px;
 	padding-bottom: 10px;
+ 	position:relative;
 }
+
 .newFacetContainer > input{
 	display: flex;
 	width:fit-content;
@@ -29,6 +31,11 @@
 }
 .proj-ui-btn-wrapper >button{
 	margin-left: 5px;
+}
+.proj-ui-label {
+  width: calc(18%);
+  text-align:right;
+  padding: 5px;
 }
 .proj-ui-inputbox{
 	  display: inline;
@@ -50,16 +57,14 @@
     -ms-transition: background-color .2s ease;
     transition: background-color .2s ease;
 }
-
 .proj-ui-input-container{
 	margin: auto;
 }
-
 .proj-ui-input-containers{
 	align-items:center;
+      justify-content: flex-start;
 	display:flex;
 }
-
 .proj-ui-input-containers > h4{
 	  display: inline;
     float: none;

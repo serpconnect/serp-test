@@ -14,7 +14,7 @@ $(function () {
             querystring[name] = value
         }
     }
-
+    var	currentFacetName = document.getElementById('facetName').innerText
 	/* used to store order in which elements are added so user can reverse operations */
 	var operations = []
 
@@ -89,20 +89,17 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
-	var count=0
 	function renderGraph(nodeId, dataset, taxonomy,serp) {
 		document.getElementById('submitBtn').addEventListener('click', submit, false)
-		document.getElementById('backBtn').addEventListener('click', cancel, false)
+		document.getElementById('backBtn').addEventListener('click', undo, false)
 		document.getElementById('resetBtn').addEventListener('click', reset, false)
 		document.getElementById('saveBtn').addEventListener('click', save, false)
+		document.getElementById('removeBtn').addEventListener('click', remove, false)
+
 
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = serp
-		if(count==0){
-			//trimTaxonomy(serp)
-		}
-		count++
 		function trimTaxonomy(d){
 			var tree = d.tree
 			if(typeof tree !== 'undefined' && tree.length >0){
@@ -167,7 +164,6 @@ $(function () {
 		function labelScale(d){
 			return 14
 		}
-
 
 		function putIntoTaxonomy(serp,node,d){
 			serp.tree.forEach( child => {
@@ -262,16 +258,63 @@ $(function () {
     	    where.appendChild(el("div#complaint.complaint", [what]));
 	    }
 
+	    function clearInputText(){
+	    	document.getElementById('idInput').value = ""
+			document.getElementById('nameInput').value = ""
+	    }
+
 	    function removeEvents(){
 	    	document.getElementById('submitBtn').removeEventListener('click', submit, false)
-			document.getElementById('backBtn').removeEventListener('click', cancel, false)
+			document.getElementById('backBtn').removeEventListener('click', undo, false)
 			document.getElementById('resetBtn').removeEventListener('click', reset, false)
 			document.getElementById('saveBtn').removeEventListener('click', save, false)
+			document.getElementById('removeBtn').removeEventListener('click', remove, false)
 	    }
 
 	    function removeSvg(){
 	    	document.getElementById('g').remove()
 			document.getElementById('svgMain').remove()
+	    }
+
+	    function remove(){
+	    	var head = serp.dfs(currentFacetName)
+	    	if(head.parent=='root'){
+	    		return
+	    	}	
+			var children = head.tree
+			if ( children && children.length > 0 ) {
+				while(children.length > 0){
+					removeChildren(children[0])
+					children.shift()
+				}
+			}
+			//remove from taxonomy
+			var parent = serp.dfs(head.parent)
+			var y = parent.tree.indexOf(head)
+			parent.tree.splice(y,1)
+			console.log(taxonomy)
+			removeFacet(currentFacetName)
+			updateName(head.parent)
+			clearInputText()
+			//Clear operations list otherwise will give error. undo button works up until last remove sequence.
+			operations = []
+	    }
+
+	    function removeChildren(x){
+	    	var children = x.tree
+			if (children && children.length > 0 ) {
+				while(children.length > 0){
+					removeChildren(children[0])
+					children.shift()
+				}
+			}
+			removeFacet(x.short)
+		    return
+	    }
+
+	    function removeFacet(x){
+	    	svg.select('#path'+x).remove()
+		    svg.select('#text'+x).remove()
 	    }
 
 	    function save(){
@@ -294,23 +337,24 @@ $(function () {
 		    	//reset everything
 		    	removeEvents()
 				removeSvg()
-				count=0
+				clearInputText()
 				operations = []
 				globalDepth =1
 				currentDepth=1
 				y = d3.scale.pow().exponent(1.3).range([0, radius])
 				//load initial taxonomy
 		    	Dataset.loadDefault(data => {
-					api.v1.taxonomy().then(serp => {
+				    if (!querystring.p) return
+					api.v1.project.taxonomy(querystring.p).then(serp => {
+						baseTaxonomyData = serp
 						var taxonomy = new window.Taxonomy(serp.taxonomy)
 						renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
 					})
 				})
 		    }	
-
 	    }
 
-		function cancel(){
+		function undo(){
 			var current = operations.pop()
 			if(current){
 				document.getElementById('path'+current).remove()
@@ -322,13 +366,18 @@ $(function () {
 			//get depth level via operations
 		}
 
-		function click(d){
-			document.getElementById('newFacet').style.background = color(d.name)(relativeUse(d))
-			if(d.name.length<20)
-				document.getElementById('facetName').innerText = d.name	
+		function updateName(name){
+			name = name.toLowerCase()
+			if(name.length<20)
+				document.getElementById('facetName').innerText = name	
 			else
-				document.getElementById('facetName').innerText = d.name.substring(1,12)+"...";
+				document.getElementById('facetName').innerText = name.substring(1,12)+"...";
+		}
 
+		function click(d){
+			currentFacetName = d.name
+			document.getElementById('newFacet').style.background = color(d.name)(relativeUse(d))
+			updateName(d.name)
 			currentDepth = d.depth+1
 			svg.selectAll("path")
 				.style("stroke", '#f2f2f2')
@@ -370,6 +419,7 @@ $(function () {
 				exp = exp-0.15
 				y = d3.scale.pow().exponent(exp).range([0, radius]);
 			}
+			clearInputText()
 			/* creates new svg with updates */
 			renderGraph('#taxonomy', dataset, taxonomy, serp)
 		}
@@ -401,14 +451,14 @@ $(function () {
 			.attr('font-size', 12)
 			.append('tspan')
 				.on("click", click)
-			svg.select("#textserp")
+			svg.select("#textroot")
 				.attr('text-anchor', 'middle')
 				.attr('x', arcX)
 				.attr('y', arcY)
 
 			//can't extend from root node
-			svg.select('#pathserp').on('click',null);
-			svg.select('#textserp').on('click',null);
+			svg.select('#pathroot').on('click',null);
+			svg.select('#textroot').on('click',null);
 			//sets initial colour to effect
 			var activeName = document.getElementById('facetName').innerText
 			document.getElementById('newFacet').style.background = document.getElementById('path'+activeName).style.fill
@@ -419,7 +469,6 @@ $(function () {
 	}
 	Dataset.loadDefault(data => {
 	    if (!querystring.p) return
-
 		api.v1.project.taxonomy(querystring.p).then(serp => {
 			baseTaxonomyData = serp
 			var taxonomy = new window.Taxonomy(serp.taxonomy)
