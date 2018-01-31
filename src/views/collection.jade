@@ -6,11 +6,21 @@ block view-specific-scripts
     script(src="js/components/kick-user-modal.js")
     script(src="js/components/fuzzy-kick-user-modal.js")
     script(src="js/components/leave-collection-modal.js")
-    script(src="js/components/inspect-taxonomy-modal.js")
     script(src="js/modal.js")
     script(src="js/taxonomy.js")
     script(src="js/taxonomy-functionality.js")
     script(src="js/export.js")
+
+
+    script(src="js/util/color.js")
+    script(src="js/util/el.js")
+    script(src="js/util/usage.js")
+    script(src="js/util/treeify.js")
+    script(src="js/dataset.js")
+    script(src="js/project.js")
+    script(src="js/index.js")
+    script(src="js/info.js")
+    script(src="js/modal.js")    
 
 block content
     div.profile-area-wrapper
@@ -30,3 +40,30 @@ block content
                     button#export.btn export collection
                 div.collections-main-title statistics
                     p.collection-stats 0 entries, 0 members
+    div.inner-content
+        h3.text-title Create/Edit Your Own Taxonomy
+        div.overview-container
+            div.ov-tax-container
+                span#taxonomy
+                div.center Expand your SERP taxonomy
+            div#newFacet.newFacetContainer
+                h2#newFacetBox  Extend Taxonomy
+                div.divider-wrapper   
+                    div.proj-ui-title-divider
+                    h3#facetName effect
+                    div.proj-ui-title-divider
+                div.proj-ui-input-container  
+                    div.proj-ui-input-containers
+                        label.proj-ui-label(for="idInput") id
+                        input#idInput.proj-ui-inputbox(type='text', name='id', value=id)
+                    div.proj-ui-input-containers
+                        label.proj-ui-label(for="nameInput") name
+                        input#nameInput.proj-ui-inputbox(type='text', name='name', value=name)
+                div.proj-ui-btn-wrapper
+                    button#submitBtn.btn extend
+                    button#removeBtn.btn remove
+                div.proj-ui-btn-wrapper
+                    button#saveBtn.btn save
+                    button#resetBtn.btn reset
+                    button#backBtn.btn undo
+          
