@@ -42,7 +42,7 @@ $(function () {
 	}
 
 	function getCollectionName(){
-		return $('#name').text()
+		return $('#name').innerText
 	}
 
 	/* X member(s), Y entr(y|ies) */
@@ -56,6 +56,8 @@ $(function () {
 	function setupStats(stats) {
 		$('.collection-stats').text(formatStats(stats.members, stats.entries))
 	}
+
+	document.getElementById('taxonomy-extension').innerText='extend taxonomy for collection: ' + getCollectionName()
 
     // Create leave collection modal
 	document.getElementById('leave').addEventListener('click', (evt) => {
