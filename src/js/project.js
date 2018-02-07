@@ -419,15 +419,15 @@ $(function () {
 			var newName = document.getElementById('nameInput').value
 			let idExists = serp.dfs(newId)
 			if(idExists){
-				complain(document.getElementById('newFacet'), "Id is already in use")
+				complain(document.getElementById('error-messages'), "Id is already in use")
 				return
 			}
 			else if(!newId){
-				complain(document.getElementById('newFacet'), "Please enter an Id for this Facet")
+				complain(document.getElementById('error-messages'), "Please enter an Id for this Facet")
 				return
 			}
 			else if(!newName){
-				complain(document.getElementById('newFacet'), "Please enter a Name for this Facet")
+				complain(document.getElementById('error-messages'), "Please enter a Name for this Facet")
 				return
 			}
 			/* removes events from current svg, otherwise these will still be called after current svg is removed */
