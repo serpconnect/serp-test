@@ -1,4 +1,6 @@
 $(function () {
+	var proj = "serp-test"
+	var cID = window.location.hash.substring(1)
 	/* svg settings */
 	var width = 450
 	var height = 450
@@ -331,10 +333,18 @@ $(function () {
 			.attr('y', arcY)
 
 	}
- 	Dataset.loadDefault(data => {
- 		api.v1.taxonomy().then(serp => {
- 			var taxonomy = new window.Taxonomy(serp.taxonomy)
- 			renderGraph('#taxonomy', data, taxonomy)
- 		})
- 	})
+
+Dataset.loadDefault(data => {
+		var baseSerp
+		if (!cID) return
+		api.v1.project.taxonomy(proj).then(serp => {
+			baseSerp = serp
+		})
+		api.v1.collection.taxonomy(cID).then(serpExt => {
+			extendedTaxonomyData = serpExt
+			var workingTaxonomyList = baseSerp.taxonomy.concat(serpExt.taxonomy)
+			var workingTaxonomy = new window.Taxonomy(workingTaxonomyList)
+			renderGraph('#taxonomy', data, workingTaxonomy)
+		})
+	})
 })

@@ -68,4 +68,8 @@ $(function () {
 		window.export.toFile(cID, cName);
 	}, false)
 
+	document.getElementById('presentation').addEventListener('click', (evt) => {
+        window.location = window.location.origin + "/presentation.html#" + cID
+    })
+
 })

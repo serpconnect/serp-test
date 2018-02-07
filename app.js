@@ -61,6 +61,9 @@ function renderView(page) {
 app.get("/", renderView('index'));
 app.get("/about", renderView("about"));
 app.get("/profile", renderView("profile"))
+app.get("/presentation", renderView("presentations/presentation-overview"));
+app.get("/presentation/explore", renderView("presentations/presentation-explore"));
+app.get("/presentation/search", renderView("presentations/presentation-search"));
 app.get("/invitations", renderView("invitations"));
 app.get("/users", renderView("users"))
 app.get("/collections", renderView("collections"))
