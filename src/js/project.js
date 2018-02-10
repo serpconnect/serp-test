@@ -1,9 +1,15 @@
 $(function () {
 	/* returned data from project.taxonomy(p): taxonomy and version */
-	var proj = "serp-test"
+	var proj 
+	  
 	var baseTaxonomyData
 	var extendedTaxonomyData
 	var cID = window.location.hash.substring(1)
+
+	api.v1.collection.project(cID).then(project => {
+			proj=project.name
+	})
+
 	var querystring = {}
     /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
     if (window.location.search) {
