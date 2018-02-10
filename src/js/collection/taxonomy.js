@@ -34,7 +34,7 @@ $(function () {
 	})
 
 	window.api.v1.collection.stats(cID)
-		.done(setupStats)
+		.done()
 		.fail(toProfilePage)
 
 	function setupName(collection) {
@@ -46,28 +46,5 @@ $(function () {
 		return $('#name').innerText
 	}
 
-	/* X member(s), Y entr(y|ies) */
-    function formatStats(members, entries) {
-        var mems = members === 1 ? "member" : "members"
-        var entr = entries === 1 ? "entry" : "entries"
-
-        return `${members} ${mems}, ${entries} ${entr}`
-    }
-
-	function setupStats(stats) {
-		$('.collection-stats').text(formatStats(stats.members, stats.entries))
-	}
-
-    // Create leave collection modal
-	document.getElementById('leave').addEventListener('click', (evt) => {
-		window.components.leaveCollectionModal(cID, isOwner)
-			.then(toProfilePage)
-  }, false)
-
-	document.getElementById('export').addEventListener('click', (evt) => {
-		var cName = document.getElementById("name").innerText;
-		window.export.toFile(cID, cName);
-	}, false)
-
-	 $("#profile").addClass("current-view");
+	$("#profile").addClass("current-view");
 })

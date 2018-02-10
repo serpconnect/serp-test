@@ -68,7 +68,7 @@ $(function () {
 
 	/* sample y coord of arc for label positioning */
 	function arcY(d) {
-		if (d.name === 'serp')
+		if (d.name === 'root')
 			return 0
 
 		var angle = Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx * 0.5)))
@@ -77,6 +77,7 @@ $(function () {
 	}
 
 	function computeTextRotation(d) {
+		if (d.name === "root") return 0;
 		return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
 	}
 	/* Idea is to map the flat tree into an arc tree using the computed
@@ -257,7 +258,7 @@ $(function () {
 		}
 
     	function complain(where, what) {
-    	    where.appendChild(el("div#complaint.complaint", [what]));
+    	    where.appendChild(el("div#complaint.complaint.center", [what]));
 	    }
 
 	    function clearInputText(){
@@ -352,7 +353,7 @@ $(function () {
 
 	    function reset() {
 	    	//modal confirm
-	    	window.modals.confirmPopUp('this will reset your changes, are you sure??', doIt)
+	    	window.modals.confirmPopUp('this will reset any unsaved changes, are you sure??', doIt)
 		    function doIt(){
 		    	//reset everything
 		    	removeEvents()
@@ -403,13 +404,15 @@ $(function () {
 
 		function click(d){
 			currentFacetName = d.name
-			document.getElementById('newFacet').style.background = color(d.name)(relativeUse(d))
 			updateName(d.name)
 			currentDepth = d.depth+1
 			svg.selectAll("path")
 				.style("stroke", '#f2f2f2')
 			svg.select("#path"+d.name)
 				.style("stroke", '#000')
+			var square = document.getElementById('facetName')
+			if(square)
+				square.style.color = color(d.name)(relativeUse(d))
 		}
 
 		function submit(){
@@ -478,16 +481,15 @@ $(function () {
 			.attr('font-size', 12)
 			.append('tspan')
 				.on("click", click)
-			svg.select("#textroot")
-				.attr('text-anchor', 'middle')
-				.attr('x', arcX)
-				.attr('y', arcY)
+		svg.select("#textroot")
+			.attr('text-anchor', 'middle')
+			.attr('x', arcX)
+			.attr('y', arcY)
 			//can't extend from root node
 			svg.select('#pathroot').on('click',null);
 			svg.select('#textroot').on('click',null);
 			//sets initial colour to effect
 			var activeName = document.getElementById('facetName').innerText
-			document.getElementById('newFacet').style.background = document.getElementById('path'+activeName).style.fill
 
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
