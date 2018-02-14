@@ -5,9 +5,14 @@ $(function () {
 	var baseTaxonomyData
 	var extendedTaxonomyData
 	var cID = window.location.hash.substring(1)
-
+	var errorDiv = document.getElementById('error-messages')
+	var inputs = [
+		document.getElementById('idInput'),
+		document.getElementById('nameInput'),
+		document.getElementById('descInput')
+	]
 	api.v1.collection.project(cID).then(project => {
-			proj=project.name
+		proj=project.name
 	})
 
 	var querystring = {}
@@ -99,13 +104,8 @@ $(function () {
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
 	function renderGraph(nodeId, dataset, taxonomy,serp) {
-		document.getElementById('submitBtn').addEventListener('click', submit, false)
-		document.getElementById('backBtn').addEventListener('click', undo, false)
-		document.getElementById('resetBtn').addEventListener('click', reset, false)
-		document.getElementById('saveBtn').addEventListener('click', save, false)
-		document.getElementById('removeBtn').addEventListener('click', remove, false)
-
-
+		buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
+		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = serp
@@ -120,6 +120,15 @@ $(function () {
 				})
 			}
 		}
+
+		Node = function(short,long,parent,tree,desc) {
+            this.short = short
+            this.long = long
+            this.parent = parent
+            this.tree = tree
+            this.usage=0
+            this.desc=desc
+    	}
 
 		/* Ensure that all facets and sub facets have an object that contains the
 		 * 'usage' key, which is parsed during treeify and added to the new node.
@@ -231,15 +240,6 @@ $(function () {
             })
         }
 
-		Node = function(short,long,parent,tree) {
-            this.short = short
-            this.long = long
-            this.parent = parent
-            this.tree = tree
-            this.usage=0
-    	}
-
-
 	    function mouseMove(d) {
 			if (d.depth === 0) return
 			svg.select('#text'+d.name)
@@ -267,17 +267,28 @@ $(function () {
     	    where.appendChild(el("div#complaint.complaint.center", [what]));
 	    }
 
+	    function errorCheck(){
+	    	return inputs.some( input => {
+	    		return input.value == ""
+	    	})
+	    }
+
 	    function clearInputText(){
-	    	document.getElementById('idInput').value = ""
-			document.getElementById('nameInput').value = ""
+	    	inputs.forEach( input =>{
+    			input.value = ""	
+	    	})
+	    }
+	    
+	    function addEvents(){
+	    	buttonEvents.forEach( button => {
+	    		document.getElementById(button[0]).addEventListener('click', button[1], false)
+	    	})
 	    }
 
 	    function removeEvents(){
-	    	document.getElementById('submitBtn').removeEventListener('click', submit, false)
-			document.getElementById('backBtn').removeEventListener('click', undo, false)
-			document.getElementById('resetBtn').removeEventListener('click', reset, false)
-			document.getElementById('saveBtn').removeEventListener('click', save, false)
-			document.getElementById('removeBtn').removeEventListener('click', remove, false)
+			buttonEvents.forEach( button => {
+	    		document.getElementById(button[0]).removeEventListener('click', button[1], false)
+	    	})
 	    }
 
 	    function removeSvg(){
@@ -387,7 +398,6 @@ $(function () {
 				})
 		    }	
 	    }
-
 		function undo(){
 			var current = operations.pop()
 			if(current){
@@ -409,11 +419,13 @@ $(function () {
 		}
 
 		function click(d){
+			$('.complaint').remove()
+			
 			currentFacetName = d.name
 			updateName(d.name)
 			currentDepth = d.depth+1
 			svg.selectAll("path")
-				.style("stroke", '#f2f2f2')
+				.style("stroke", d =>(isBaseTax(d)))
 			svg.select("#path"+d.name)
 				.style("stroke", '#000')
 			var square = document.getElementById('facetName')
@@ -424,31 +436,25 @@ $(function () {
 		function submit(){
 			$('.complaint').remove()
 			var	currentName = document.getElementById('facetName').innerText
-			var newId = document.getElementById('idInput').value
-			var newName = document.getElementById('nameInput').value
-			let idExists = serp.dfs(newId)
+			let idExists = serp.dfs(inputs[0].value)
 			if(idExists){
-				complain(document.getElementById('error-messages'), "Id is already in use")
+				complain(errorDiv, "Id is already in use")
 				return
 			}
-			else if(!newId){
-				complain(document.getElementById('error-messages'), "Please enter an Id for this Facet")
-				return
-			}
-			else if(!newName){
-				complain(document.getElementById('error-messages'), "Please enter a Name for this Facet")
+			if(errorCheck()){
+				complain(errorDiv, "text field empty: please enter an id,name and description")
 				return
 			}
 			/* removes events from current svg, otherwise these will still be called after current svg is removed */
 			removeEvents()
 			/* create new node and update taxonomy */
-			var cNode = new window.FacetNode(newId,newName,[],currentName)
+			var cNode = new window.FacetNode(inputs[0].value,inputs[1].value,[],currentName, inputs[2].value)
 			var x = serp.dfs(currentName)
 			x.addChild(cNode)
 			/* deletes current svg */
 			removeSvg()
 			/* adds to list of operations so user can reverse step */
-			operations.push(newId)
+			operations.push(inputs[0].value)
 			/* update scaling for new svg */
 			if(currentDepth > globalDepth){
 				globalDepth+=1
@@ -460,6 +466,16 @@ $(function () {
 			renderGraph('#taxonomy', dataset, taxonomy, serp)
 		}
 
+		function isBaseTax(d){
+			var current = serp.dfs(d.name)
+			var isBase = baseTaxonomyData.taxonomy.some( some => {
+	    		return some.id.toLowerCase()==current.id().toLowerCase()
+	    	})
+		    if(isBase)
+		    	return '#f2f2f2'
+		    else
+		    	return '#ffff33'
+		}
 		/* setup the main graph */
 		svg.selectAll("path")
 			.data(partition).enter()
@@ -467,7 +483,7 @@ $(function () {
 				.attr("d", arc)
 				.attr("id", d=> 'path'+d.name)
 				.style("fill", d => color(d.name)(relativeUse(d)))
-				.style("stroke", '#f2f2f2')
+				.style("stroke", d => isBaseTax(d))
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
 				.on("click", click)

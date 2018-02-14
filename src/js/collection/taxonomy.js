@@ -47,4 +47,7 @@ $(function () {
 	}
 
 	$("#profile").addClass("current-view");
+	document.getElementById('baseLegend').style.borderColor='#f2f2f2'
+	document.getElementById('extendedLegend').style.borderColor= '#ffff33'
+
 })

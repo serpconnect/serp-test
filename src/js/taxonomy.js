@@ -2,15 +2,17 @@
 (function (win) {
 
     /* Data structure of the tree */
-    function Node(short, long, children, parent) {
+    function Node(short, long, children, parent, desc) {
         this.short = short
         this.long = long
         this.tree = children
         this.parent = parent
+        this.desc = desc
     }
     Node.prototype.name = function() { return this.long }
     Node.prototype.id = function() { return this.short }
     Node.prototype.parentId = function() { return this.parent }
+    Node.prototype.desc = function() { return this.desc }
     /**
      * We have two types of leaf nodes:
      *   - nodes that have no children
@@ -26,8 +28,7 @@
         this.tree.push(c) 
     }
     Node.prototype.clone = function(deep) {
-        var newNode = new Node(this.id(), this.name(), [], this.parentId())
-
+        var newNode = new Node(this.id(), this.name(), [], this.parentId(),this.desc)
         for (var i = 0; deep & i < this.tree.length; i++) {
             newNode.addChild(this.tree[i].clone(deep))
         }
@@ -68,7 +69,7 @@
      */
     Node.prototype.dfs = function(id) {
         if (this.id() === undefined)
-            console.log(this)
+            
         if (this.id().toLowerCase() === id.toLowerCase())
             return this
 
@@ -85,7 +86,7 @@
      * Return a flattened graph of this subtree.
      */
     Node.prototype.flatten = function () {
-        var graph = [{ id: this.id(), name: this.name(), parent: this.parentId() }]
+        var graph = [{ id: this.id(), name: this.name(), parent: this.parentId(), desc:this.desc }]
         for (var i = 0; i < this.tree.length; i++) {
             graph = graph.concat(this.tree[i].flatten())
         }
@@ -96,7 +97,7 @@
      * A tree representation of a taxonomy.
      */
     function Taxonomy(backend_repr) {
-        this.root = new Node("root", "root", [])
+        this.root = new Node("root", "root", [],"root")
         if (backend_repr)
             this.extend(backend_repr)
     }
@@ -110,7 +111,6 @@
         else
             return this.root.clone(true)
     }
-
 
     /**
      * Extend a taxonomy.
@@ -126,7 +126,7 @@
                 continue
             }
 
-            parent.addChild(new FacetNode(node.id, node.name, [], node.parent))
+            parent.addChild(new FacetNode(node.id, node.name, [], node.parent, node.desc))
         }
     }
 
