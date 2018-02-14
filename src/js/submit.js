@@ -545,22 +545,7 @@ $(document).ready(function() {
     };
 
     $("#submit-create-collection").on("click", function(evt) {
-        modals.optionsModal(newCollectionModal, function (name) {
-            api.v1.collection.create(name)
-                .done(ok => {
-                    modals.clearAll()
-                    querystring.c = ok.id
-                    updateCollectionList()
-                    reloadAutocomplete(ok.id)
-                })
-                .fail(xhr => {
-                    $('.modal-complaint').remove()
-                    var modal = document.querySelector(".modal") || document.querySelector(".confirm")
-                    var error = modal.querySelector('#input0')
-                    var complaint = el('div.modal-complaint', [xhr.responseText])
-                    error.parentNode.insertBefore(complaint, error.nextSibling)
-                })
-        })
+        window.components.createCollectionModal()
     });
 
     $("#submit-btn").on("click", function(evt) {

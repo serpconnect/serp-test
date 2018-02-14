@@ -29,7 +29,7 @@
 
 		var inviteBtn = el('button#confirm.btn', ['invite'])
 
-		var modal = el('div#modal.modal.appear', [
+		var modal = el('div#modal.modal', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", [
@@ -50,7 +50,7 @@
 
 		return new Promise(function (F, R) {
 			document.body.appendChild(modal)
-
+			window.modals.appear(modal)
 			inviteBtn.addEventListener('click', evt => {
 				var email = search.value
 				window.modals.toggleButtonState()

@@ -326,10 +326,6 @@ $(function () {
 		    .text(function(d) { return d.name; })
 			.attr('pointer-events', 'none')
 			.attr('font-size', d => labelScale(d))
-		svg.select("#textroot")
-			.attr('text-anchor', 'middle')
-			.attr('x', arcX)
-			.attr('y', arcY)
 
 	}
  	Dataset.loadDefault(data => {

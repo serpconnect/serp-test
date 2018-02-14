@@ -16,7 +16,6 @@
 		return new Promise(function (F, R) {
 			document.body.appendChild(modal)
 			window.modals.appear(modal)
-
 			continueBtn.addEventListener('click', (evt) => {
 				document.body.removeChild(modal)
 				F()
