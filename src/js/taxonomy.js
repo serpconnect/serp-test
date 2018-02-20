@@ -69,7 +69,7 @@
      */
     Node.prototype.dfs = function(id) {
         if (this.id() === undefined)
-            
+            console.log(this)
         if (this.id().toLowerCase() === id.toLowerCase())
             return this
 

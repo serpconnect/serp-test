@@ -335,3 +335,16 @@ $(function () {
  		})
  	})
 })
+ // only works on live
+// Dataset.loadDefault(data => {
+// 		Promise.all([
+// 			api.v1.taxonomy(),
+// 			api.v1.collection.taxonomy(682)
+// 		]).then(taxonomies => {
+// 			var taxonomy = new window.Taxonomy(taxonomies[0].taxonomy)
+// 			taxonomy.extend(taxonomies[1].taxonomy)
+// 			//taxonomy.extend(taxonomies[1].taxonomy)
+// 			renderGraph('#taxonomy', data, taxonomy)
+// 		})
+// 	})
+// })
