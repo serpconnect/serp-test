@@ -1,6 +1,5 @@
 $(function () {
 	/* returned data from project.taxonomy(p): taxonomy and version */
-	var proj 
 	  
 	var baseTaxonomyData
 	var extendedTaxonomyData
@@ -11,9 +10,6 @@ $(function () {
 		document.getElementById('nameInput'),
 		document.getElementById('descInput')
 	]
-	api.v1.collection.project(cID).then(project => {
-		proj=project.name
-	})
 
 	var querystring = {}
     /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
@@ -516,12 +512,11 @@ $(function () {
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
 	}
- 	//api.v1.project.taxonomy
 
 	Dataset.loadDefault(data => {
 		var baseSerp
 		if (!cID) return
-		api.v1.project.taxonomy(proj).then(serp => {
+		api.v1.taxonomy().then(serp => {
 			baseTaxonomyData = serp
 			baseSerp = serp
 		})
