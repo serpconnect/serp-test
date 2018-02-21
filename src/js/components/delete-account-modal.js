@@ -17,7 +17,7 @@
 		var deleteEl = el('input.modal-input-box', {
 			placeholder: "your-email@something.com"
 		})
-		var modal = el('div#modalConf.modal.confirm.appear', [
+		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", ['Delete account']),
@@ -49,6 +49,7 @@
 			})
 
 			document.body.appendChild(modal)
+			window.modals.appear(modal)
 		})
 	}
 

@@ -4,7 +4,7 @@
 		var action = isOwner ? 'Delete' : 'Leave'
 		var confirm = el('button#confirm.btn', [action])
 
-		var modal = el('div#modal.modal.appear', [
+		var modal = el('div#modal.modal', [
             el('div', [
                 closeButton(),
                 el("div.modal-header-title", [obj.desc]),
@@ -22,7 +22,7 @@
 
 		return new Promise(function (F, R) {
 			document.body.appendChild(modal)
-			
+			window.modals.appear(modal)
 			confirm.addEventListener('click', evt => {
 				window.modals.toggleButtonState()
 

@@ -1,4 +1,5 @@
 $(function () {
+	var overview = window.overview = {}
 	/* svg settings */
 	var width = 450
 	var height = 450
@@ -70,7 +71,7 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 
-	function renderGraph(nodeId, dataset, taxonomy) {
+	overview.renderGraph = function(nodeId, dataset, taxonomy) {
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = taxonomy.tree()
@@ -160,7 +161,8 @@ $(function () {
 		function facetInfo(d){
 			var info = window.info.getInfo(d.name)
 			var explanation = document.getElementById('facet-explanation')
-			explanation.innerText=info.description
+			var description= serp.dfs(d.name).desc!=null? serp.dfs(d.name).desc : info.description
+			explanation.innerText=description
 			if(d.depth != 0){
 				explanation.style.fontStyle= "normal"
 				explanation.style.color = "black"
@@ -334,12 +336,7 @@ $(function () {
 			.attr('y', arcY)
 
 	}
- 	Dataset.loadDefault(data => {
- 		api.v1.taxonomy().then(serp => {
- 			var taxonomy = new window.Taxonomy(serp.taxonomy)
- 			renderGraph('#taxonomy', data, taxonomy)
- 		})
- 	})
+ 	
 // })
  // only works on live
 /*Dataset.loadDefault(data => {

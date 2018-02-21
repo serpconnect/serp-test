@@ -22,7 +22,7 @@
 			placeholder: 'http://serpconnect.cs.lth.se'
 		})
 
-		var modal = el('div#modalConf.modal.confirm.appear', [
+		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", ['Create new project']),
@@ -70,6 +70,7 @@
 			})
 
 			document.body.appendChild(modal)
+			window.modals.appear(modal)
 		})
 	}
 

@@ -2,6 +2,12 @@ $(function () {
 	/* returned data from project.taxonomy(p): taxonomy and version */
 	var baseTaxonomyData
 
+	var inputs = [
+		document.getElementById('idInput'),
+		document.getElementById('nameInput'),
+		document.getElementById('descInput')
+	]
+	var errorDiv = document.getElementById('error-messages')
 	var querystring = {}
     /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
     if (window.location.search) {
@@ -17,7 +23,7 @@ $(function () {
     var	currentFacetName = document.getElementById('facetName').innerText
 	/* used to store order in which elements are added so user can reverse operations */
 	var operations = []
-
+	$('#project-taxonomy').text('extend base-taxonomy for project: ' + querystring.p)
 	/* svg settings */
 	var width = 450
 	var height = 450
@@ -90,13 +96,8 @@ $(function () {
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
 	function renderGraph(nodeId, dataset, taxonomy,serp) {
-		document.getElementById('submitBtn').addEventListener('click', submit, false)
-		document.getElementById('backBtn').addEventListener('click', undo, false)
-		document.getElementById('resetBtn').addEventListener('click', reset, false)
-		document.getElementById('saveBtn').addEventListener('click', save, false)
-		document.getElementById('removeBtn').addEventListener('click', remove, false)
-
-
+		buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
+		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = serp
@@ -111,6 +112,15 @@ $(function () {
 				})
 			}
 		}
+
+		Node = function(short,long,parent,tree,desc) {
+            this.short = short
+            this.long = long
+            this.parent = parent
+            this.tree = tree
+            this.usage=0
+            this.desc=desc
+    	}
 
 		/* Ensure that all facets and sub facets have an object that contains the
 		 * 'usage' key, which is parsed during treeify and added to the new node.
@@ -222,15 +232,6 @@ $(function () {
             })
         }
 
-		Node = function(short,long,parent,tree) {
-            this.short = short
-            this.long = long
-            this.parent = parent
-            this.tree = tree
-            this.usage=0
-    	}
-
-
 	    function mouseMove(d) {
 			if (d.depth === 0) return
 			svg.select('#text'+d.name)
@@ -255,20 +256,37 @@ $(function () {
 		}
 
     	function complain(where, what) {
-    	    where.appendChild(el("div#complaint.complaint", [what]));
+    	    where.appendChild(el("div#complaint.complaint.center", [what]));
+	    }
+
+	    function validateId(id) {
+			var regex = new RegExp('[^A-Za-z0-9_]');
+			//to prevent issues with the db and d3 only allows a-z and _
+	    	return regex.test(id)
+    	}
+
+	    function errorCheck(){
+	    	return inputs.some( input => {
+	    		return input.value == ""
+	    	})
 	    }
 
 	    function clearInputText(){
-	    	document.getElementById('idInput').value = ""
-			document.getElementById('nameInput').value = ""
+	    	inputs.forEach( input =>{
+    			input.value = ""	
+	    	})
+	    }
+	    
+	    function addEvents(){
+	    	buttonEvents.forEach( button => {
+	    		document.getElementById(button[0]).addEventListener('click', button[1], false)
+	    	})
 	    }
 
 	    function removeEvents(){
-	    	document.getElementById('submitBtn').removeEventListener('click', submit, false)
-			document.getElementById('backBtn').removeEventListener('click', undo, false)
-			document.getElementById('resetBtn').removeEventListener('click', reset, false)
-			document.getElementById('saveBtn').removeEventListener('click', save, false)
-			document.getElementById('removeBtn').removeEventListener('click', remove, false)
+			buttonEvents.forEach( button => {
+	    		document.getElementById(button[0]).removeEventListener('click', button[1], false)
+	    	})
 	    }
 
 	    function removeSvg(){
@@ -276,7 +294,7 @@ $(function () {
 			document.getElementById('svgMain').remove()
 	    }
 
-	    function remove(){
+	     function remove(){
 	    	var head = serp.dfs(currentFacetName)
 	    	if(head.parent=='root'){
 	    		return
@@ -292,7 +310,6 @@ $(function () {
 			var parent = serp.dfs(head.parent)
 			var y = parent.tree.indexOf(head)
 			parent.tree.splice(y,1)
-			console.log(taxonomy)
 			removeFacet(currentFacetName)
 			updateName(head.parent)
 			clearInputText()
@@ -332,7 +349,7 @@ $(function () {
 
 	    function reset() {
 	    	//modal confirm
-	    	window.modals.confirmPopUp('this will reset your changes, are you sure??', doIt)
+	    	window.modals.confirmPopUp('this will reset any unsaved changes, are you sure??', doIt)
 		    function doIt(){
 		    	//reset everything
 		    	removeEvents()
@@ -343,7 +360,8 @@ $(function () {
 				currentDepth=1
 				y = d3.scale.pow().exponent(1.3).range([0, radius])
 				//load initial taxonomy
-		    	Dataset.loadDefault(data => {
+
+				Dataset.loadDefault(data => {
 				    if (!querystring.p) return
 					api.v1.project.taxonomy(querystring.p).then(serp => {
 						baseTaxonomyData = serp
@@ -353,6 +371,8 @@ $(function () {
 				})
 		    }	
 	    }
+
+
 
 		function undo(){
 			var current = operations.pop()
@@ -375,8 +395,8 @@ $(function () {
 		}
 
 		function click(d){
+			$('.complaint').remove()
 			currentFacetName = d.name
-			document.getElementById('newFacet').style.background = color(d.name)(relativeUse(d))
 			updateName(d.name)
 			currentDepth = d.depth+1
 			svg.selectAll("path")
@@ -388,31 +408,30 @@ $(function () {
 		function submit(){
 			$('.complaint').remove()
 			var	currentName = document.getElementById('facetName').innerText
-			var newId = document.getElementById('idInput').value
-			var newName = document.getElementById('nameInput').value
-			let idExists = serp.dfs(newId)
+			let idExists = serp.dfs(inputs[0].value)
 			if(idExists){
-				complain(document.getElementById('newFacet'), "Id is already in use")
+				complain(errorDiv, "Short Name is already in use")
 				return
 			}
-			else if(!newId){
-				complain(document.getElementById('newFacet'), "Please enter an Id for this Facet")
+			if(validateId(inputs[0].value)){
+				complain(errorDiv, "Short Name input error: only letters A-Z and _ allowed")
 				return
 			}
-			else if(!newName){
-				complain(document.getElementById('newFacet'), "Please enter a Name for this Facet")
+
+			if(errorCheck()){
+				complain(errorDiv, "text field empty: enter a short name, long name & description")
 				return
 			}
 			/* removes events from current svg, otherwise these will still be called after current svg is removed */
 			removeEvents()
 			/* create new node and update taxonomy */
-			var cNode = new window.FacetNode(newId,newName,[],currentName)
+			var cNode = new window.FacetNode(inputs[0].value,inputs[1].value,[],currentName, inputs[2].value)
 			var x = serp.dfs(currentName)
 			x.addChild(cNode)
 			/* deletes current svg */
 			removeSvg()
 			/* adds to list of operations so user can reverse step */
-			operations.push(newId)
+			operations.push(inputs[0].value)
 			/* update scaling for new svg */
 			if(currentDepth > globalDepth){
 				globalDepth+=1
@@ -431,7 +450,7 @@ $(function () {
 				.attr("d", arc)
 				.attr("id", d=> 'path'+d.name)
 				.style("fill", d => color(d.name)(relativeUse(d)))
-				.style("stroke", '#f2f2f2')
+				.style("stroke", d => '#f2f2f2')
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
 				.on("click", click)
@@ -451,22 +470,19 @@ $(function () {
 			.attr('font-size', 12)
 			.append('tspan')
 				.on("click", click)
-			svg.select("#textroot")
-				.attr('text-anchor', 'middle')
-				.attr('x', arcX)
-				.attr('y', arcY)
-
+		svg.select("#textroot")
+			.attr('text-anchor', 'middle')
+			.attr('x', arcX)
+			.attr('y', arcY)
 			//can't extend from root node
 			svg.select('#pathroot').on('click',null);
 			svg.select('#textroot').on('click',null);
 			//sets initial colour to effect
 			var activeName = document.getElementById('facetName').innerText
-			document.getElementById('newFacet').style.background = document.getElementById('path'+activeName).style.fill
-
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
-
 	}
+
 	Dataset.loadDefault(data => {
 	    if (!querystring.p) return
 		api.v1.project.taxonomy(querystring.p).then(serp => {

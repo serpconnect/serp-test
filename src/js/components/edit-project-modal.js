@@ -24,7 +24,7 @@
 			value: project.link
 		})
 
-		var modal = el('div#modalConf.modal.confirm.appear', [
+		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", ['Edit project']),
@@ -78,6 +78,7 @@
 			})
 
 			document.body.appendChild(modal)
+			window.modals.appear(modal)
 		})
 	}
 

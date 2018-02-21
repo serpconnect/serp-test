@@ -37,7 +37,7 @@
 		var container = el('div.items-container', items)
 		var kickBtn = el('button#confirm.btn', ['kick'])
 
-		var modal = el('div#modal.modal.appear', [
+		var modal = el('div#modal.modal', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", [
@@ -80,7 +80,7 @@
 
 		return new Promise(function (F, R) {
 			document.body.appendChild(modal)
-
+			window.modals.appear(modal)
 			kickBtn.addEventListener('click', evt => {
 				var email = search.value
 				window.modals.toggleButtonState()
