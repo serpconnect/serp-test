@@ -40,6 +40,7 @@ $(function () {
 	function setupName(collection) {
 		$('#name').text(collection.name)
 		$('#id').text(collection.id)
+		$('#taxonomyID').text('The ' + collection.name + ' Taxonomy')
 	}
 
 	function getCollectionName(){
@@ -70,4 +71,17 @@ $(function () {
 	}, false)
 
 	 $("#profile").addClass("current-view");
+	 
+ 	Dataset.loadDefault(data => {
+		var baseSerp
+		if (!cID) return
+		api.v1.taxonomy().then(serp => {
+			baseSerp = serp
+		})
+		api.v1.collection.taxonomy(cID).then(serpExt => {
+			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
+ 			taxonomy.extend(serpExt.taxonomy)
+			window.overview.renderGraph('#taxonomy', data, taxonomy)
+		})
+	})
 })

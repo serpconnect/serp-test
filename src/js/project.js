@@ -263,6 +263,12 @@ $(function () {
     	    where.appendChild(el("div#complaint.complaint.center", [what]));
 	    }
 
+	    function validateId(id) {
+			var regex = new RegExp('[^A-Za-z0-9_]');
+			//to prevent issues with the db and d3 only allows a-z and _
+	    	return regex.test(id)
+    	}
+
 	    function errorCheck(){
 	    	return inputs.some( input => {
 	    		return input.value == ""
@@ -360,7 +366,7 @@ $(function () {
 	    	}
 	    	extendedTaxonomyData = taxonomyData
 	    	return api.v1.collection.taxonomy(cID, taxonomyData).then(() => {
-	    		alert("ok")
+	    		alert("taxnomy saved")
 	    	}).fail(xhr => alert(xhr.responseText)) 
 	    }
 
@@ -381,15 +387,15 @@ $(function () {
 				Dataset.loadDefault(data => {
 					var baseSerp
 					if (!cID) return
-					api.v1.project.taxonomy(proj).then(serp => {
+					api.v1.taxonomy().then(serp => {
 						baseTaxonomyData = serp
 						baseSerp = serp
 					})
 					api.v1.collection.taxonomy(cID).then(serpExt => {
 						extendedTaxonomyData = serpExt
-						var workingTaxonomyList = baseSerp.taxonomy.concat(serpExt.taxonomy)
-						var workingTaxonomy = new window.Taxonomy(workingTaxonomyList)
-						renderGraph('#taxonomy', data, workingTaxonomy, workingTaxonomy.root)
+						var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
+			 			taxonomy.extend(serpExt.taxonomy)
+						renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
 					})
 				})
 		    }	
@@ -424,9 +430,6 @@ $(function () {
 				.style("stroke", d =>(isBaseTax(d)))
 			svg.select("#path"+d.name)
 				.style("stroke", '#000')
-			var square = document.getElementById('facetName')
-			if(square)
-				square.style.color = color(d.name)(relativeUse(d))
 		}
 
 		function submit(){
@@ -434,11 +437,16 @@ $(function () {
 			var	currentName = document.getElementById('facetName').innerText
 			let idExists = serp.dfs(inputs[0].value)
 			if(idExists){
-				complain(errorDiv, "Id is already in use")
+				complain(errorDiv, "Short Name is already in use")
 				return
 			}
+			if(validateId(inputs[0].value)){
+				complain(errorDiv, "Short Name input error: only letters A-Z and _ allowed")
+				return
+			}
+
 			if(errorCheck()){
-				complain(errorDiv, "text field empty: please enter an id,name and description")
+				complain(errorDiv, "text field empty: enter a short name, long name & description")
 				return
 			}
 			/* removes events from current svg, otherwise these will still be called after current svg is removed */
@@ -522,12 +530,15 @@ $(function () {
 		})
 		api.v1.collection.taxonomy(cID).then(serpExt => {
 			extendedTaxonomyData = serpExt
-			var workingTaxonomyList = baseSerp.taxonomy.concat(serpExt.taxonomy)
-			var workingTaxonomy = new window.Taxonomy(workingTaxonomyList)
-			renderGraph('#taxonomy', data, workingTaxonomy, workingTaxonomy.root)
+
+			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
+ 			taxonomy.extend(serpExt.taxonomy)
+			renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
 		})
 	})
 })
+
+
 // // only works on live
 // Dataset.loadDefault(data => {
 // 		Promise.all([

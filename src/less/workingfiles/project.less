@@ -27,7 +27,7 @@
 }
 .proj-ui-label {
 	font-size: 1rem;
-	width: calc(18%);
+	width: calc(33%);
 	text-align:right;
 	padding: 5px;
 }
@@ -88,4 +88,54 @@
 }
 #extendedLegend {
  border-color: #ffff33;
+}
+.data-tip{
+	cursor:pointer;
+	position:relative;
+}
+.data-tip:before {
+	content:'';
+	display: none;
+	border-left: 2.5px solid black;
+	border-right: 2.5px solid black;
+	border-top: 7px solid #ffffff;	
+	position:absolute;
+	top:-12px;
+	left:60px;
+	z-index:12;
+	font-size:12px;
+	font-family: sans-serif;
+	line-height:0.75;
+	width:0px;
+	text-indent: -3px;
+}
+.data-tip:after {
+	display: none;
+	content:attr(data-tip);
+	position: absolute;
+	top: -10px;
+	transform:translateY(-100%);
+	left: 0;
+	padding: 5px 8px;
+	background: #ffffff;
+	color: #020202;
+	z-index: 9;
+	font-size: .75em;
+	min-height: 18px;
+	line-height: 18px;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-color: black;
+	border-style: solid;
+	border-radius: 3px;
+	white-space: wrap;
+	width:13rem;
+	max-width:350px;
+	word-wrap: normal;
+	border-width: 1px;
+	text-align:left;
+}
+.data-tip:hover::before,
+.data-tip:hover::after {
+	display:block;
 }
