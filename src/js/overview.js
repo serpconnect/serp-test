@@ -1,4 +1,5 @@
 $(function () {
+	var overview = window.overview = {}
 	/* svg settings */
 	var width = 450
 	var height = 450
@@ -70,7 +71,7 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 
-	function renderGraph(nodeId, dataset, taxonomy) {
+	overview.renderGraph = function(nodeId, dataset, taxonomy) {
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = taxonomy.tree()
@@ -141,7 +142,7 @@ $(function () {
 		function mouseOut(d){
 			if (d.depth === 0) return
 		 	svg.select('#text'+d.name)
-				.attr('font-size', d => (labelScale(d)) )
+				.attr('font-size', d => labelScale(d))
 				.style("text-shadow", "none")
 		}
 
@@ -160,7 +161,8 @@ $(function () {
 		function facetInfo(d){
 			var info = window.info.getInfo(d.name)
 			var explanation = document.getElementById('facet-explanation')
-			explanation.innerText=info.description
+			var description= serp.dfs(d.name).desc!=null? serp.dfs(d.name).desc : info.description
+			explanation.innerText=description
 			if(d.depth != 0){
 				explanation.style.fontStyle= "normal"
 				explanation.style.color = "black"
@@ -251,6 +253,8 @@ $(function () {
 		}
 
 		function click(d){
+			if(d.name=='serp')
+				return
 			var rel = relativeDepth(d)
 			if(rel !== 0){
 				var delay = rel > 0 ? (rel*50) : 100
@@ -332,10 +336,18 @@ $(function () {
 			.attr('y', arcY)
 
 	}
- 	Dataset.loadDefault(data => {
- 		api.v1.taxonomy().then(serp => {
- 			var taxonomy = new window.Taxonomy(serp.taxonomy)
- 			renderGraph('#taxonomy', data, taxonomy)
- 		})
- 	})
+ 	
+// })
+ // only works on live
+/*Dataset.loadDefault(data => {
+		Promise.all([
+			api.v1.taxonomy(),
+			api.v1.collection.taxonomy(682)
+		]).then(taxonomies => {
+			var taxonomy = new window.Taxonomy(taxonomies[0].taxonomy)
+			taxonomy.extend(taxonomies[1].taxonomy)
+			//taxonomy.extend(taxonomies[1].taxonomy)
+			renderGraph('#taxonomy', data, taxonomy)
+		})
+	})*/
 })

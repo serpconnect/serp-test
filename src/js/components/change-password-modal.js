@@ -25,7 +25,7 @@
 			placeholder: "new password"
 		})
 
-		var modal = el('div#modalConf.modal.appear', [
+		var modal = el('div#modalConf.modal', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", ['Change password']),
@@ -54,6 +54,7 @@
 			})
 
 			document.body.appendChild(modal)
+			window.modals.appear(modal)
 		})
 	}
 

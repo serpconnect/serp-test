@@ -13,7 +13,7 @@ html
         link(rel="shortcut icon" href="/favicon.ico")
         script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
 
-        script(src="/js/api.js")
+        script(src="/js/api.js") 
         if env == "dev"
             script(src="/js/api-dev.js")
 
@@ -25,8 +25,11 @@ html
     body
         div.grid-container
             div.grid-parent.grid-100
-                a(href="/")
+                a(href="/")    
                     img(src="/img/serp-logo-lofi.png")#logo
+                    div.logo-container    
+                        div.serp-logo SERP
+                        div.project-logo Connect
                 div#header
                     div.views
                         a(href="")#profile.view-title
