@@ -258,7 +258,6 @@ $(function () {
 		}
 
 		function click(d){
-			console.log(d.name)
 			var rel = relativeDepth(d)
 			if(rel !== 0){
 				var delay = rel > 0 ? (rel*50) : 100

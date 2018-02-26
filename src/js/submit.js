@@ -545,7 +545,9 @@ $(document).ready(function() {
     };
 
     $("#submit-create-collection").on("click", function(evt) {
-        window.components.createCollectionModal()
+        var colId = window.components.createCollectionModal().then(col => {
+            updateCollectionList()
+        })
     });
 
     $("#submit-btn").on("click", function(evt) {
