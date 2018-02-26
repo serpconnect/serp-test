@@ -13,6 +13,7 @@
 	}
 
 	G.createCollectionModal = function () {
+		window.modals.toggleButtonState()
 		var create = el('button#confirm.btn', ['create'])
 		var collectionName = el('input.modal-input-box', {
 			placeholder: 'collection name'
