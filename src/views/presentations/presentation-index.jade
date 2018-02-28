@@ -4,12 +4,13 @@ block view-specific-scripts
     script(src="//d3js.org/d3.v3.min.js" charset="utf-8")
 
     // app
-    script(src="js/presentation/presentation-overview.js")
+    script(src="/js/presentation/presentation-index.js")
+
     script(src="/js/util/color.js")
     script(src="/js/util/usage.js")
     script(src="/js/util/treeify.js")
     script(src="/js/dataset.js")
-    script(src="/js/index.js")
+    script(src="/js/overview.js")
     script(src="/js/info.js")
 
 block content
@@ -34,7 +35,7 @@ block content
         div.overview-container
             div.ov-tax-container
                 span#taxonomy
-                div.center The SERP-Test taxonomy
+                div#taxonomy_label.center 
             div.width-30.column-spaced
                 div.overview-explanation
                     div.explanation-container

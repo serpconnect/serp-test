@@ -1,13 +1,10 @@
-$(function() {
-	var x = document.getElementById('presentation-description')
+$(document).ready(function() {
+    $("#overview").addClass("current-view");
+    var cID = window.location.hash.substring(1)
+    
+    $("#taxonomy-label").text('Taxonomy for Collection ' )
 
-	var cID = window.location.hash.substring(1)
-	document.getElementById('logo-link').href = "/presentation.html#" + cID
-	document.getElementById('overview').href = "/presentation.html#" + cID
-	document.getElementById('search').href = "/presentation/search.html#" + cID
-	document.getElementById('explore').href = "/presentation/explore.html#" + cID
-
-	window.api.v1.account.collections()
+    window.api.v1.account.collections()
 		.then(collections => {
       		return collections.filter(collection => {
         		return collection.id === Number(cID)
@@ -22,6 +19,20 @@ $(function() {
 	function setupName(collection) {
 		$('#name').text(collection.name)
 		$('#id').text(collection.id)
+		$("#taxonomy_label").text('Taxonomy for collection: ' + collection.name )
 	}
 
+
+    Dataset.loadDefault(data => {
+		var baseSerp
+		if (!cID) return
+		api.v1.taxonomy().then(serp => {
+			baseSerp = serp
+		})
+		api.v1.collection.taxonomy(cID).then(serpExt => {
+			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
+ 			taxonomy.extend(serpExt.taxonomy)
+			window.overview.renderGraph('#taxonomy', data, taxonomy)
+		})
+	})
 })

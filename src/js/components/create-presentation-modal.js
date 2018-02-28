@@ -12,14 +12,11 @@
 		lastBtn.parentNode.insertBefore(complaint, lastBtn.nextSibling)
 	}
 
-	G.createCollectionModal = function () {
+	G.createPresentationModal = function () {
 		window.modals.toggleButtonState()
 		var create = el('button#confirm.btn', ['create'])
 		var collectionName = el('input.modal-input-box', {
 			placeholder: 'collection name'
-		})
-		var collectionDesc = el('textarea.submit-input-box', {
-			placeholder: 'detailed description/ introduction for collection'
 		})
 		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
@@ -27,7 +24,6 @@
 				el("div.modal-header-title", ['Create new collection']),
 				el('div.modal-divider'),
 				collectionName,
-				collectionDesc,
 				el("div#bottom-divider.modal-divider"),
 				create,
 				window.modals.cancelButton()
@@ -42,7 +38,7 @@
 				}
 
 				window.modals.toggleButtonState()
-				api.v1.collection.create(collectionName.value, "royal sampler")
+				api.v1.collection.create(collectionName.value)
                 	.done(data => {
                 		document.body.removeChild(modal)
                 		F({
