@@ -96,7 +96,7 @@ $(function () {
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
 	function renderGraph(nodeId, dataset, taxonomy,serp) {
-		buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
+		var buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
 		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
