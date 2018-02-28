@@ -75,6 +75,7 @@ app.get("/explore", renderView("explore"))
 app.get("/collection", renderView("collection"))
 app.get("/collection/entries", renderView("collection/entries"))
 app.get("/collection/users", renderView("collection/users"))
+app.get("/collection/taxonomy", renderView("collection/taxonomy"))
 app.get("/resetpassword", renderView("resetpassword"))
 
 app.get("*", function(req, res) {

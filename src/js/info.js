@@ -12,10 +12,10 @@ $(document).ready(function() {
 				 description: 'Click the tables on the left to get more information about the facets.'
 			},
 			'intervention': {
-				description: 'Characteristics of possible solutions.'
+				description: 'an act performed (e.g., use of a technique or a process change) to adapt testing to a specific context, to solve a test issue, to assess testing or to improve testing'
 			},
 			'scope': {
-				description: 'Scope of an effect or an effect target.'
+				description: 'the extent of the effect, intended or measured, on the test process. Correspondingly the scope of the challenge describes which part of the testing process is primarily affected by the challenge or desired improvement'
 			},
 			'planning':{
 				description: 'Decisions on testing and how to achieve the testing goal.'
@@ -30,7 +30,7 @@ $(document).ready(function() {
 				 description: 'Evaluation and analysis of the test outcome with respect to some criteria.'
 			},
 			'context':{
-				 description: 'Factors in the context affecting the applicability of an intervention.'
+				 description: 'describes factors restricting the applicability of an intervention'
 			},
 			'other':{
 				description:'Other context factors.'
@@ -45,7 +45,7 @@ $(document).ready(function() {
 				description:'People-related context factors, such as knowledge and experience.'
 			},
 			'effect':{
-				description:'Effect targets, or measured effects of an intervention.'
+				description:'a short statement of what should be achieved by an intervention. An effect entity is correspondingly a statement of a measured effect'
 			},
 			'adapting':{
 				description: 'Adapt testing to a new or changed testing context.'

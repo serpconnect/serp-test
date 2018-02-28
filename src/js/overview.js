@@ -1,7 +1,14 @@
 $(function () {
 	/* svg settings */
+	var overview = window.overview = {}
 	var width = 450
 	var height = 450
+
+	var baseTaxonomyData
+	api.v1.taxonomy().then(serp => {
+		baseTaxonomyData = serp
+	})
+
 	/* remove -10 to make svg fill the square from edge-to-edge */
 	var radius = (Math.min(width, height) / 2) - 10
 
@@ -69,7 +76,7 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 
-	function renderGraph(nodeId, dataset, taxonomy) {
+	overview.renderGraph = function(nodeId, dataset, taxonomy) {
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
 		var serp = taxonomy.tree()
@@ -159,7 +166,8 @@ $(function () {
 		function facetInfo(d){
 			var info = window.info.getInfo(d.name)
 			var explanation = document.getElementById('facet-explanation')
-			explanation.innerText=info.description
+			var description= serp.dfs(d.name).desc!=null? serp.dfs(d.name).desc : info.description
+			explanation.innerText=description
 			if(d.depth != 0){
 				explanation.style.fontStyle= "normal"
 				explanation.style.color = "black"
@@ -300,13 +308,24 @@ $(function () {
 			})
 		}
 
+		function isBaseTax(d){
+			var current = serp.dfs(d.name)
+			var isBase = baseTaxonomyData.taxonomy.some( some => {
+	    		return some.id.toLowerCase()==current.id().toLowerCase()
+	    	})
+		    if(isBase || d.name=='root')
+		    	return color(d.name)(relativeUse(d))
+		    else
+		    	return '#E3E3E3'
+		}
+
 		/* setup the main graph */
 		svg.selectAll("path")
 			.data(partition).enter()
 			.append("path")
 				.attr("d", arc)
 				.attr("id", d=> 'path'+d.name)
-				.style("fill", d => color(d.name)(relativeUse(d)))
+				.style("fill", d => isBaseTax(d))
 				.style("stroke", '#f2f2f2')
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
@@ -325,16 +344,20 @@ $(function () {
 		    .text(function(d) { return d.name; })
 			.attr('pointer-events', 'none')
 			.attr('font-size', d => labelScale(d))
-		svg.select("#textroot")
-			.attr('text-anchor', 'middle')
-			.attr('x', arcX)
-			.attr('y', arcY)
 
 	}
- 	Dataset.loadDefault(data => {
- 		api.v1.taxonomy().then(serp => {
- 			var taxonomy = new window.Taxonomy(serp.taxonomy)
- 			renderGraph('#taxonomy', data, taxonomy)
- 		})
- 	})
+ 	
 })
+ // only works on live
+// Dataset.loadDefault(data => {
+// 		Promise.all([
+// 			api.v1.taxonomy(),
+// 			api.v1.collection.taxonomy(682)
+// 		]).then(taxonomies => {
+// 			var taxonomy = new window.Taxonomy(taxonomies[0].taxonomy)
+// 			taxonomy.extend(taxonomies[1].taxonomy)
+// 			//taxonomy.extend(taxonomies[1].taxonomy)
+// 			renderGraph('#taxonomy', data, taxonomy)
+// 		})
+// 	})
+// })

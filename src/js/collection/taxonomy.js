@@ -34,58 +34,17 @@ $(function () {
 	})
 
 	window.api.v1.collection.stats(cID)
-		.done(setupStats)
+		.done()
 		.fail(toProfilePage)
 
 	function setupName(collection) {
 		$('#name').text(collection.name)
 		$('#id').text(collection.id)
-		$('#taxonomyID').text('The ' + collection.name + ' Taxonomy')
 	}
 
 	function getCollectionName(){
 		return $('#name').innerText
 	}
 
-	/* X member(s), Y entr(y|ies) */
-    function formatStats(members, entries) {
-        var mems = members === 1 ? "member" : "members"
-        var entr = entries === 1 ? "entry" : "entries"
-
-        return `${members} ${mems}, ${entries} ${entr}`
-    }
-
-	function setupStats(stats) {
-		$('.collection-stats').text(formatStats(stats.members, stats.entries))
-	}
-
-    // Create leave collection modal
-	document.getElementById('leave').addEventListener('click', (evt) => {
-		window.components.leaveCollectionModal(cID, isOwner)
-			.then(toProfilePage)
-  }, false)
-
-	document.getElementById('export').addEventListener('click', (evt) => {
-		var cName = document.getElementById("name").innerText;
-		window.export.toFile(cID, cName);
-	}, false)
-
-	document.getElementById('presentation').addEventListener('click', (evt) => {
-        window.location = window.location.origin + "/presentation.html#" + cID
-    })
-
-	 $("#profile").addClass("current-view");
-	 
- 	Dataset.loadDefault(data => {
-		var baseSerp
-		if (!cID) return
-		api.v1.taxonomy().then(serp => {
-			baseSerp = serp
-		})
-		api.v1.collection.taxonomy(cID).then(serpExt => {
-			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
- 			taxonomy.extend(serpExt.taxonomy)
-			window.overview.renderGraph('#taxonomy', data, taxonomy)
-		})
-	})
+	$("#profile").addClass("current-view");
 })

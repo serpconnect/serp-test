@@ -13,11 +13,12 @@
 	}
 
 	G.createCollectionModal = function () {
+		window.modals.toggleButtonState()
 		var create = el('button#confirm.btn', ['create'])
 		var collectionName = el('input.modal-input-box', {
 			placeholder: 'collection name'
 		})
-		var modal = el('div#modalConf.modal.confirm.appear', [
+		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
 				el("div.modal-header-title", ['Create new collection']),
@@ -52,7 +53,7 @@
 			})
 
 			document.body.appendChild(modal)
+			window.modals.appear(modal)
 		})
 	}
-
 })(window.components || (window.components = {}));

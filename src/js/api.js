@@ -12,20 +12,22 @@ $(function () {
         })
     }
 
+    function json (method, url, data) {
+        return $.ajax(url, {
+            method: method,
+            data: JSON.stringify(data),
+            contentType: "application/json",
+            xhrFields: {
+                withCredentials: true
+            },
+            crossDomain: true
+        })
+    }
+
     window.api = {
         host: "https://api.serpconnect.cs.lth.se",
         ajax: ajax,
-        json: function (method, url, data) {
-            return $.ajax(url, {
-                method: method,
-                data: JSON.stringify(data),
-                contentType: "application/json",
-                xhrFields: {
-                    withCredentials: true
-                },
-                crossDomain: true
-            })
-        }
+        json: json
     }
 
     function endpoint(route) {
@@ -185,8 +187,11 @@ $(function () {
         return ajax("GET", endpoint("/v1/collection/" + cID + "/classification"))
     }
 
-    v1.collection.taxonomy = function (cid) {
-        return ajax("GET", endpoint("/v1/collection/" + cid + "/taxonomy"))
+    v1.collection.taxonomy = function(cid, extension) {
+        if (extension)
+            return json("PUT", endpoint(`/v1/collection/${cid}/taxonomy`) , extension)
+        else
+            return ajax("GET", endpoint(`/v1/collection/${cid}/taxonomy`))
     }
 
     // Admin API
