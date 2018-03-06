@@ -18,10 +18,7 @@
 		var collectionDesc = el('textarea.submit-input-box', {
 			placeholder: 'detailed description/ introduction for collection'
 		})
-		var url = document.location.href
-		var start = url.indexOf('collection')
-		var end = 'collection'.length
-		url= url.substring(0,start) + 'presentation' + url.substring(start+end)
+		var url = window.location.origin + "/presentation#" + CID
 
 		var shareableLink = el('input#link.submit-input-box', {
 			value: url,
