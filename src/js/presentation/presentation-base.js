@@ -1,8 +1,8 @@
 $(document).ready(function() {
 	var x = document.getElementById('presentation-description')
 	var cID = window.location.hash.substring(1)
-	document.getElementById('logo-link').href = "/presentation.html#" + cID
-	document.getElementById('overview').href = "/presentation.html#" + cID
+	document.getElementById('logo-link').href = "/presentation#" + cID
+	document.getElementById('overview').href = "/presentation#" + cID
 	document.getElementById('search').href = "/presentation/search.html#" + cID
 	document.getElementById('explore').href = "/presentation/explore.html#" + cID
 
