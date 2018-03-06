@@ -13,7 +13,7 @@ html
         link(rel="shortcut icon" href="/favicon.ico")
         script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
 
-        script(src="/js/api.js") 
+        script(src="/js/api.js")
         if env == "dev"
             script(src="/js/api-dev.js")
 
@@ -29,12 +29,14 @@ html
                     img(src="/img/serp-logo-lofi.png")#logo
                     div.logo-container    
                         div.serp-logo SERP
-                        div.project-logo Connect
+                        div.project-logo Test
                 div#header
                     div.views
                         a(href="")#profile.view-title
                         a(href="/")#home.view-title home
-                        a(href="/projects.html")#projects.view-title projects
+                        a(href="/search.html")#search.view-title search
+                        a(href="/explore.html")#explore.view-title explore
+                        a(href="/submit.html")#submit.view-title submit
                         a(href="/about.html")#about.view-title about
                 div.header-separator
                 block loginlogout
