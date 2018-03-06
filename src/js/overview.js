@@ -1,4 +1,5 @@
 $(function () {
+	var overview = window.overview = {}
 	/* svg settings */
 	var overview = window.overview = {}
 	var width = 450
@@ -147,7 +148,7 @@ $(function () {
 		function mouseOut(d){
 			if (d.depth === 0) return
 		 	svg.select('#text'+d.name)
-				.attr('font-size', d => (labelScale(d)) )
+				.attr('font-size', d => labelScale(d))
 				.style("text-shadow", "none")
 		}
 
@@ -258,6 +259,8 @@ $(function () {
 		}
 
 		function click(d){
+			if(d.name=='serp')
+				return
 			var rel = relativeDepth(d)
 			if(rel !== 0){
 				var delay = rel > 0 ? (rel*50) : 100
@@ -344,7 +347,6 @@ $(function () {
 		    .text(function(d) { return d.name; })
 			.attr('pointer-events', 'none')
 			.attr('font-size', d => labelScale(d))
-
 	}
  	
 })

@@ -261,6 +261,11 @@ $(function () {
 
     // PROJECT API
 
+    /** 
+     * taxonomy()   --> current project taxonomy
+     * taxonomy(p)  --> project taxonomy
+     * taxonomy(p,t): update taxonomy
+     */
     v1.project.taxonomy = v1.taxonomy = function(proj, taxonomy) {
         if (taxonomy)
             return json("PUT", endpoint(`/v1/project/${proj}/taxonomy`), taxonomy)

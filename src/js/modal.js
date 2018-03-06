@@ -107,9 +107,9 @@ $(document).ready(function() {
 		])
 
 		function submitToCollection(cID) {
-            var url = window.user.collectionUrl(cID)
+            var url = window.api.v1.collection.url(cID)
             selectedEntries.forEach(eID => {
-            	window.user.putIntoCollection(url, eID)
+				window.api.ajax("POST", url, { entryId: eID })
             })
             document.body.removeChild(modal)
         }
@@ -478,6 +478,7 @@ $(document).ready(function() {
 
 		confirmBtn.addEventListener('click', (evt) => {
 			method.apply({modal})
+
 		})
 
 		modals.appear(modal)

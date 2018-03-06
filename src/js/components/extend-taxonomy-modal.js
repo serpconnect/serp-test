@@ -251,7 +251,7 @@
         });
 
         document.body.appendChild(modal)
-        modals.appear(modal)
+        window.modals.appear(modal)
     }
 
 })(window.components || (window.components = {}));

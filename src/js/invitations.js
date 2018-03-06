@@ -2,7 +2,7 @@ $(document).ready(function() {
     $("#login").text("profile");
     $("#login").addClass("current-view");
 
-    window.user.invites()
+    window.api.v1.account.invites()
         .done(showPending)
         .done(showInvites)
         .fail(somethingWentWrong)

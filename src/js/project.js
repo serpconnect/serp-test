@@ -1,16 +1,15 @@
 $(function () {
 	/* returned data from project.taxonomy(p): taxonomy and version */
-	  
+	var project = window.project = {}
 	var baseTaxonomyData
 	var extendedTaxonomyData
 	var cID = window.location.hash.substring(1)
-	var errorDiv = document.getElementById('error-messages')
 	var inputs = [
 		document.getElementById('idInput'),
 		document.getElementById('nameInput'),
 		document.getElementById('descInput')
 	]
-
+	var errorDiv = document.getElementById('error-messages')
 	var querystring = {}
     /* Naive querystring ?a=1&b=c --> {a:1, b:'c'} mapping */
     if (window.location.search) {
@@ -26,7 +25,7 @@ $(function () {
     var	currentFacetName = document.getElementById('facetName').innerText
 	/* used to store order in which elements are added so user can reverse operations */
 	var operations = []
-
+	$('#project-taxonomy').text('extend base-taxonomy for project: ' + querystring.p)
 	/* svg settings */
 	var width = 450
 	var height = 450
@@ -75,7 +74,7 @@ $(function () {
 
 	/* sample y coord of arc for label positioning */
 	function arcY(d) {
-		if (d.name === 'root')
+		if (d.name === 'serp')
 			return 0
 
 		var angle = Math.max(0, Math.min(2 * Math.PI, x(d.x + d.dx * 0.5)))
@@ -84,7 +83,6 @@ $(function () {
 	}
 
 	function computeTextRotation(d) {
-		if (d.name === "root") return 0;
 		return (x(d.x + d.dx / 2) - Math.PI / 2) / Math.PI * 180;
 	}
 	/* Idea is to map the flat tree into an arc tree using the computed
@@ -99,7 +97,10 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
-	function renderGraph(nodeId, dataset, taxonomy,serp) {
+	project.renderGraph = function(nodeId, dataset, taxonomy,serp,taxonomyDataSet) {
+		baseTaxonomyData=taxonomyDataSet[0]
+		extendedTaxonomyData=taxonomyDataSet[1]
+
 		buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
 		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
@@ -298,19 +299,11 @@ $(function () {
 			document.getElementById('svgMain').remove()
 	    }
 
-	    function remove(){
+	     function remove(){
 	    	var head = serp.dfs(currentFacetName)
-	    	var isBase = false
-	    	baseTaxonomyData.taxonomy.forEach( base  => {
-	    		if(base.id.toLowerCase()== head.short.toLowerCase() ){
-	    			return isBase = true
-	    		}
-	    	})
-	    	if(isBase){
-	    		alert('cannot remove base taxonomy')
+	    	if(head.parent=='root'){
 	    		return
-	    	}
-	    	
+	    	}	
 			var children = head.tree
 			if ( children && children.length > 0 ) {
 				while(children.length > 0){
@@ -347,7 +340,15 @@ $(function () {
 	    }
 
 	    function save(){
-	    	//pop out all base taxonom
+	    	if(cID)
+	    		saveCollection()
+		    else
+		    	saveProject()
+	    }
+
+	    function saveCollection(){
+	    	//is collection
+		    	//pop out all base taxonom
 	    	var workingTaxonomy = serp.flatten()
 	    	workingTaxonomy.splice(0, 1) // remove 'root' node
 	    	var newTaxonomyExt = workingTaxonomy.filter(function(match) {
@@ -365,9 +366,22 @@ $(function () {
 	    		version: extendedTaxonomyData.version + 1
 	    	}
 	    	extendedTaxonomyData = taxonomyData
-	    	return api.v1.collection.taxonomy(cID, taxonomyData).then(() => {
-	    		alert("taxnomy saved")
+	    	return api.v1.collection.taxonomy(cID, taxonomyData).then( () => {
+	    		alert("taxonomy saved")
 	    	}).fail(xhr => alert(xhr.responseText)) 
+		}	
+	   
+	    function saveProject(){
+	    	var taxonomyData = {
+		    		taxonomy: serp.flatten(),
+		    		version: baseTaxonomyData.version + 1
+		    	}
+		    	taxonomyData.taxonomy.splice(0, 1) // remove 'root' node
+		    	baseTaxonomyData = taxonomyData
+
+		    	return api.v1.project.taxonomy(querystring.p, taxonomyData).then(() => {
+		    		alert("ok")
+		    	}).fail(xhr => alert(xhr.responseText))
 	    }
 
 	    function reset() {
@@ -383,10 +397,26 @@ $(function () {
 				currentDepth=1
 				y = d3.scale.pow().exponent(1.3).range([0, radius])
 				//load initial taxonomy
+				if(cID)
+					resetCollection()	
+				else
+					resetProject()	
+		    }	
+	    }
+	    function resetProject(){
+	    	Dataset.loadDefault(data => {
+			    if (!querystring.p) return
+				api.v1.project.taxonomy(querystring.p).then(serp => {
+					baseTaxonomyData = serp
+					var taxonomy = new window.Taxonomy(serp.taxonomy)
+					project.renderGraph('#taxonomy', data, taxonomy, taxonomy.root,[baseTaxonomyData])
+				})
+			})
+	    }
 
-				Dataset.loadDefault(data => {
+	    function resetCollection(){
+	    	Dataset.loadDefault(data => {
 					var baseSerp
-					if (!cID) return
 					api.v1.taxonomy().then(serp => {
 						baseTaxonomyData = serp
 						baseSerp = serp
@@ -395,11 +425,13 @@ $(function () {
 						extendedTaxonomyData = serpExt
 						var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
 			 			taxonomy.extend(serpExt.taxonomy)
-						renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
+						project.renderGraph('#taxonomy', data, taxonomy, taxonomy.root,[baseTaxonomyData,extendedTaxonomyData])
 					})
 				})
-		    }	
 	    }
+
+
+
 		function undo(){
 			var current = operations.pop()
 			if(current){
@@ -422,12 +454,11 @@ $(function () {
 
 		function click(d){
 			$('.complaint').remove()
-			
 			currentFacetName = d.name
 			updateName(d.name)
 			currentDepth = d.depth+1
 			svg.selectAll("path")
-				.style("stroke", d =>(isBaseTax(d)))
+				.style("stroke", '#f2f2f2')
 			svg.select("#path"+d.name)
 				.style("stroke", '#000')
 		}
@@ -467,19 +498,9 @@ $(function () {
 			}
 			clearInputText()
 			/* creates new svg with updates */
-			renderGraph('#taxonomy', dataset, taxonomy, serp)
+			project.renderGraph('#taxonomy', dataset, taxonomy, serp,[baseTaxonomyData, extendedTaxonomyData])
 		}
 
-		function isBaseTax(d){
-			var current = serp.dfs(d.name)
-			var isBase = baseTaxonomyData.taxonomy.some( some => {
-	    		return some.id.toLowerCase()==current.id().toLowerCase()
-	    	})
-		    if(isBase)
-		    	return '#f2f2f2'
-		    else
-		    	return '#ffff33'
-		}
 		/* setup the main graph */
 		svg.selectAll("path")
 			.data(partition).enter()
@@ -487,7 +508,7 @@ $(function () {
 				.attr("d", arc)
 				.attr("id", d=> 'path'+d.name)
 				.style("fill", d => color(d.name)(relativeUse(d)))
-				.style("stroke", d => isBaseTax(d))
+				.style("stroke", d => '#f2f2f2')
 				.on("mousemove", mouseMove)
 				.on("mouseout", mouseOut)
 				.on("click", click)
@@ -516,29 +537,11 @@ $(function () {
 			svg.select('#textroot').on('click',null);
 			//sets initial colour to effect
 			var activeName = document.getElementById('facetName').innerText
-
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
 	}
 
-	Dataset.loadDefault(data => {
-		var baseSerp
-		if (!cID) return
-		api.v1.taxonomy().then(serp => {
-			baseTaxonomyData = serp
-			baseSerp = serp
-		})
-		api.v1.collection.taxonomy(cID).then(serpExt => {
-			extendedTaxonomyData = serpExt
-
-			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
- 			taxonomy.extend(serpExt.taxonomy)
-			renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
-		})
-	})
 })
-
-
 // // only works on live
 // Dataset.loadDefault(data => {
 // 		Promise.all([

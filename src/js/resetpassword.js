@@ -18,7 +18,7 @@ $(document).ready(function() {
 
     $("#confirm-btn").on("click", function(evt) {
         if($("#password").val() === $("#password2").val()){
-          var req = window.user.resetpassword($("#password").val())
+          var req = window.api.v1.account.confirmNewPassword($("#password").val())
 
           req.done(xhr => window.location = "profile.html")
 

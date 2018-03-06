@@ -4,7 +4,7 @@ $(function() {
     var userData = undefined
 
     // Display a small banner if user has pending invitations.
-    user.invites().done(showInvites)
+    api.v1.account.invites().done(showInvites)
     function showInvites(invites) {
         if (invites.length > 0) {
             var div = el('div.invitationContainer', [

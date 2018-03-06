@@ -40,7 +40,7 @@
 
 				window.modals.toggleButtonState()
 
-				window.user.delete()
+				window.api.v1.account.delete()
                     .done(F)
                     .fail(xhr => {
                     	window.modals.toggleButtonState()

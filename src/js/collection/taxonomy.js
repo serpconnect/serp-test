@@ -32,7 +32,7 @@ $(function () {
     }).fail(reason => {
 		window.alert(reason)
 	})
-
+    
 	window.api.v1.collection.stats(cID)
 		.done()
 		.fail(toProfilePage)
@@ -47,4 +47,20 @@ $(function () {
 	}
 
 	$("#profile").addClass("current-view");
+	Dataset.loadDefault(data => {
+		var baseSerp
+		var baseTaxonomyData
+		if (!cID) return
+		api.v1.taxonomy().then(serp => {
+			baseTaxonomyData = serp
+			baseSerp = serp
+		})
+		api.v1.collection.taxonomy(cID).then(serpExt => {
+			extendedTaxonomyData = serpExt
+			var taxonomyData = [baseTaxonomyData,extendedTaxonomyData]
+			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
+ 			taxonomy.extend(serpExt.taxonomy)
+			window.project.renderGraph('#taxonomy', data, taxonomy, taxonomy.root,taxonomyData)
+		})
+	})
 })

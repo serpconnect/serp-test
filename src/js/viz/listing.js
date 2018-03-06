@@ -28,12 +28,13 @@
 		var id = this.dataset.entryId
 		var options =[]
 		var CID = getCollectionID()
-		window.user.getEntry(id).done(entry => {
-			window.user.getTaxonomyEntry(id).done(taxonomy => {
-				window.modals.entryModal(CID, entry, taxonomy),function () {
-
-					}
-			})
+		Promise.all([
+			window.api.v1.entry.get(id),
+			window.api.v1.entry.taxonomy(id)
+		]).then(data => {
+			var entry = data[0]
+			var clazz = data[1]
+			window.modals.entryModal(CID, entry, taxonomy)
 		})
 	}
 
