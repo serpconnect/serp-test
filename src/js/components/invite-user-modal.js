@@ -32,7 +32,7 @@
 		var modal = el('div#modal.modal', [
 			el('div', [
 				window.modals.closeButton(),
-				el("div.modal-header-title", [
+				el("h1.text-title", [
 					`Invite to #${collectionId}`
 				]),
 				el("div.modal-divider"),

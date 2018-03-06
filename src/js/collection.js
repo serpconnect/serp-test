@@ -70,7 +70,12 @@ $(function () {
 		window.export.toFile(cID, cName);
 	}, false)
 
-	 $("#profile").addClass("current-view");
+	document.getElementById('presentation').addEventListener('click', (evt) => {
+        window.components.createPresentationModal(cID,document.getElementById("name").innerText)
+        //window.location = window.location.origin + "/presentation.html#" + cID
+    })
+
+	$("#profile").addClass("current-view");
 	 
  	Dataset.loadDefault(data => {
 		var baseSerp

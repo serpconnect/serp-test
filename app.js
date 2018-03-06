@@ -61,7 +61,9 @@ function renderView(page) {
 app.get("/", renderView('index'));
 app.get("/about", renderView("about"));
 app.get("/profile", renderView("profile"))
-app.get("/project", renderView("project"))
+app.get("/presentation", renderView("presentations/presentation-index"));
+app.get("/presentation/explore", renderView("presentations/presentation-explore"));
+app.get("/presentation/search", renderView("presentations/presentation-search"));
 app.get("/invitations", renderView("invitations"));
 app.get("/users", renderView("users"))
 app.get("/collections", renderView("collections"))
@@ -93,7 +95,7 @@ server.listen(app.get("port"), function(){
         console.log("You are connected to the live backend server. Be careful.")
     } else {
         console.log("===[ DEV MODE ]===")
-        console.log("Make sure you have the backend server available on port 8080")
+        console.log("Make sure you have the backend server available on port " + app.get("port"))
     }
 });
 

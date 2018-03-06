@@ -101,7 +101,7 @@ $(function () {
 		baseTaxonomyData=taxonomyDataSet[0]
 		extendedTaxonomyData=taxonomyDataSet[1]
 
-		buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
+		var buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
 		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
 		var color = window.util.colorScheme(taxonomy)
@@ -540,7 +540,6 @@ $(function () {
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
 	}
-
 })
 // // only works on live
 // Dataset.loadDefault(data => {

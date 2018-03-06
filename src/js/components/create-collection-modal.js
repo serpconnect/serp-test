@@ -13,7 +13,6 @@
 	}
 
 	G.createCollectionModal = function () {
-		window.modals.toggleButtonState()
 		var create = el('button#confirm.btn', ['create'])
 		var collectionName = el('input.modal-input-box', {
 			placeholder: 'collection name'
@@ -21,7 +20,7 @@
 		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
-				el("div.modal-header-title", ['Create new collection']),
+				el("h1.text-title", ['Create new collection']),
 				el('div.modal-divider'),
 				collectionName,
 				el("div#bottom-divider.modal-divider"),

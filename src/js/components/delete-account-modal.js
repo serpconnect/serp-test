@@ -20,7 +20,7 @@
 		var modal = el('div#modalConf.modal.confirm', [
 			el('div', [
 				window.modals.closeButton(),
-				el("div.modal-header-title", ['Delete account']),
+				el("h1.text-title", ['Delete account']),
 				el("div.modal-divider"),
 				el('div', [
 					'Type your email and click confirm to delete your account.',
