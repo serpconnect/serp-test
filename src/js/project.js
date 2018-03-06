@@ -1,6 +1,6 @@
 $(function () {
 	/* returned data from project.taxonomy(p): taxonomy and version */
-	  
+	var project = window.project = {}
 	var baseTaxonomyData
 	var extendedTaxonomyData
 	var cID = window.location.hash.substring(1)
@@ -99,7 +99,9 @@ $(function () {
 		.innerRadius(d => Math.max(0, y(d.y)))
 		.outerRadius(d => Math.max(0, y(d.y + d.dy)))
 	
-	function renderGraph(nodeId, dataset, taxonomy,serp) {
+	project.renderGraph = function(nodeId, dataset, taxonomy,serp, taxonomyData) {
+		baseTaxonomyData = taxonomyData[0]
+		extendedTaxonomyData = taxonomyData[1]
 		var buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
 		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
@@ -365,8 +367,9 @@ $(function () {
 	    		version: extendedTaxonomyData.version + 1
 	    	}
 	    	extendedTaxonomyData = taxonomyData
-	    	return api.v1.collection.taxonomy(cID, taxonomyData).then(() => {
-	    		alert("taxnomy saved")
+	    	console.log(cID,taxonomyData)
+	    	return api.v1.collection.taxonomy(cID, taxonomyData).then( () => {
+	    		alert("taxonomy saved")
 	    	}).fail(xhr => alert(xhr.responseText)) 
 	    }
 
@@ -395,7 +398,7 @@ $(function () {
 						extendedTaxonomyData = serpExt
 						var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
 			 			taxonomy.extend(serpExt.taxonomy)
-						renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
+						project.renderGraph('#taxonomy', data, taxonomy, taxonomy.root,[baseTaxonomyData,extendedTaxonomyData])
 					})
 				})
 		    }	
@@ -467,7 +470,7 @@ $(function () {
 			}
 			clearInputText()
 			/* creates new svg with updates */
-			renderGraph('#taxonomy', dataset, taxonomy, serp)
+			project.renderGraph('#taxonomy', dataset, taxonomy, serp, [baseTaxonomyData,extendedTaxonomyData])
 		}
 
 		function isBaseTax(d){
@@ -520,22 +523,6 @@ $(function () {
 			svg.select("#path"+document.getElementById('facetName').activeName)
 				.style("stroke", '#000')
 	}
-
-	Dataset.loadDefault(data => {
-		var baseSerp
-		if (!cID) return
-		api.v1.taxonomy().then(serp => {
-			baseTaxonomyData = serp
-			baseSerp = serp
-		})
-		api.v1.collection.taxonomy(cID).then(serpExt => {
-			extendedTaxonomyData = serpExt
-
-			var taxonomy = new window.Taxonomy(baseSerp.taxonomy)
- 			taxonomy.extend(serpExt.taxonomy)
-			renderGraph('#taxonomy', data, taxonomy, taxonomy.root)
-		})
-	})
 })
 
 

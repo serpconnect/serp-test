@@ -3,10 +3,10 @@
 	G.deleteCollectionModal = function (collectionId) {
 		return new Promise(function (F, R) {
 			var confirm = el('button#confirm.btn', ['confirm'])
-			var modal = el('div#modalConf.modal.confirm.appear', [
+			var modal = el('div#modalConf.modal.confirm', [
 				el('div', [
 					window.modals.closeButton(),
-					el("div.modal-header-title", [
+					el("h1.text-title", [
 						`Delete collection #${collectionId}?`
 					]),
 					el("div#bottom-divider.modal-divider"),

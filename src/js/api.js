@@ -118,11 +118,10 @@ $(function () {
     }
 
     // Collection API
-    v1.collection.create = function (name,desc) {
+    v1.collection.create = function (name) {
         return ajax("POST", endpoint("/v1/collection/"), {
             name: name,
-            project: project,
-            desc:desc
+            project: project
         });
     }
 

@@ -7,7 +7,7 @@
 		var modal = el('div#modal.modal', [
             el('div', [
                 window.modals.closeButton(),
-                el("div.modal-header-title", [action + ' Collection ' + collectionId +'?']),
+                el("h1.text-title", [action + ' Collection ' + collectionId +'?']),
                 //name of modal
 
                 el("div.modal-divider"),

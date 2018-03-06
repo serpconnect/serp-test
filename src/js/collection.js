@@ -71,10 +71,11 @@ $(function () {
 	}, false)
 
 	document.getElementById('presentation').addEventListener('click', (evt) => {
-        window.location = window.location.origin + "/presentation.html#" + cID
+        window.components.createPresentationModal(cID,document.getElementById("name").innerText)
+        //window.location = window.location.origin + "/presentation.html#" + cID
     })
 
-	 $("#profile").addClass("current-view");
+	$("#profile").addClass("current-view");
 	 
  	Dataset.loadDefault(data => {
 		var baseSerp

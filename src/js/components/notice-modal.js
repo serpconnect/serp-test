@@ -6,7 +6,7 @@
 		var continueBtn = el('button#continue.btn', ['continue'])
 		var modal = el('div.modal.notice', [
 			el('div', [
-				el("div.modal-header-title", [title]),
+				el("h1.text-title", [title]),
 				el("div#bottom-divider.modal-divider"),
 				el("div", [desc]),
 				continueBtn

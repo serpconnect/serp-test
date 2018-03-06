@@ -187,7 +187,7 @@
         function rebuild() {
             var node = el('div#'+FACET+'.facet-container',[
                 el("div.modal-divider"),
-                el('div.dyn-modal-header-title', [facet]),
+                el('h1.text-title', [facet]),
                 build(subtree),
             ])
             
