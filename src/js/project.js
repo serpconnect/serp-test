@@ -100,7 +100,6 @@ $(function () {
 	project.renderGraph = function(nodeId, dataset, taxonomy,serp,taxonomyDataSet) {
 		baseTaxonomyData=taxonomyDataSet[0]
 		extendedTaxonomyData=taxonomyDataSet[1]
-
 		var buttonEvents = [ ['submitBtn',submit], ['backBtn',undo], ['resetBtn', reset], ['saveBtn',save], ['removeBtn',remove] ]
 		addEvents()
 		var usage = window.util.computeUsage(dataset, taxonomy)
