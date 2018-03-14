@@ -129,27 +129,6 @@ $(document).ready(function () {
         var nodes = []
         var nodemap = {}
 
-        // Map extended facet onto parent in serp taxonomy
-        var ext2serp = {}
-        if (extendedTaxonomy) {
-            while (extendedTaxonomy.length) {
-                var facet = extendedTaxonomy.shift()
-
-                if (ext2serp[facet.parent]) {
-                    ext2serp[facet.id] = ext2serp[facet.parent]
-                    continue
-                }
-
-                var parent = serpTaxonomy.root.dfs(facet.parent)
-                if (parent) {
-                    ext2serp[facet.id] = parent.id()
-                    continue
-                }
-
-                extendedTaxonomy.push(facet)
-            }
-        }
-
         graph.nodes.forEach(node => {
             node.serpClassification = {}
             node.entryType = node.type
@@ -166,11 +145,6 @@ $(document).ready(function () {
         graph.edges.forEach(edge => {
             var facet = edge.type
             var node = nodes[nodemap[String(edge.source)]]
-
-            if (ext2serp[facet]) {
-                var parent = ext2serp[facet]
-                node.serpClassification[parent.toLowerCase()] = true
-            }
 
             node.serpClassification[edge.type.toLowerCase()] = true
         })
@@ -194,16 +168,23 @@ $(document).ready(function () {
 
                 var cc = collections[id]
                 cc.entries = processGraph(graph, collections[id].name, taxonomy)
-                cc.taxonomy = serpTaxonomy.tree()
+                cc.taxonomy = new Taxonomy()
+                cc.taxonomy.root = serpTaxonomy.tree()
                 cc.taxonomy.extend(taxonomy)
 
                 cb(cc.entries, cc.taxonomy)
             })
-            .catch(reason => cb([], new Taxonomy()))
+            .catch(reason => {
+                cb([], new Taxonomy())
+                console.error(reason)
+            })
     }
     function updateDataset(toset, taxonomy) {
         dataset = toset
         activeTaxonomy = taxonomy
+
+        updateTableHeader(taxonomy)
+        updateFilterList(taxonomy)
         updateViews(toset, taxonomy)
     }
     function selectDataset(value) {
@@ -334,36 +315,43 @@ $(document).ready(function () {
         var div = document.querySelector('div.facets > div.filters')
         while (div.lastChild)
             div.removeChild(div.lastChild)
-        
+
         var facets = taxonomy.tree().map(function build(node, i) {
             if (!node.isTreeLeaf())
-                return el('div.facet-title', [node.name(), node.map(build)])
-            return el('label.subfacet', {
+                return el('div.facet-title', [
+                    node.name(),
+                    el('label.checkbox', [
+                        el('input', { 'type':'checkbox', name:node.id() }),
+                        el('span')
+                    ]),
+                    node.map(build)
+                ])
+            return el('label.sub-facet', {
                 'title': `inspect ${node.name()}`, // TODO: maybe use info.js ?
                 'for': 'checkbox'
             }, [
                 node.name(),
                 el('label.checkbox', [
-                    el('input', { 'type': 'checkbox', 'name': node.name() }),
+                    el('input', { 'type': 'checkbox', 'name': node.id() }),
                     el('span')
                 ])
             ])
         })
-        
+
         for (var i = 0; i < facets.length; i++)
             div.appendChild(facets[i])
-        
+
         // classification took place
         $(".checkbox input").on("change", function (event) {
-            var subfacet = $(this).attr("name");
+            var subfacet = $(this).attr("name").toLowerCase();
             currentClassification[subfacet] = !currentClassification[subfacet];
             updateViews(dataset, activeTaxonomy);
         });
     }
-    
+
     /* This will rebuild the overview table based on the given taxonomy */
     function updateTableHeader(taxonomy) {
-        var div = document.getElementById('#table-view')
+        var div = document.getElementById('table-view')
         while (div.lastChild)
             div.removeChild(div.lastChild)
 
@@ -384,14 +372,10 @@ $(document).ready(function () {
         div.appendChild(thead)
         div.appendChild(el('tbody#table-body'))
     }
-    
+
     function updateViews(dataset, taxonomy) {
         clearViews();
-        
-        // TODO: only required when changing dataset
-        updateTableHeader(taxonomy)
-        updateFilterList(taxonomy)
-        
+
         var currentEntries = 0;
         for (var i = 0; i < dataset.length; i++) {
             var entry = dataset[i];
@@ -409,20 +393,37 @@ $(document).ready(function () {
     }
 
     function filterIsDefined() {
-        for (var subfacet in currentClassification) {
-            if (currentClassification[subfacet]) {
-                return true;
-            }
-        }
-        return false;
+        return Object.keys(currentClassification).length > 0;
     }
 
     function fitsCurrentClassification(entry) {
-        // check if classification exists and then if entry isn't classified,
-        // if that's the case: throw it from the list
-        for (var subfacet in currentClassification) {
-            if (currentClassification[subfacet] && !entry.serpClassification[subfacet]) {
-                return false;
+        // Algorithm:
+        //  for each selected facet filter
+        //      find facet node in taxonomy
+        //      check if any entry classification exists in its sub tree
+        //      if not: entry does not have filtering facet, return false
+        //      if yes: entry is classified with this facet, continue
+        //  return true
+        //
+        var filterFacets = Object.keys(currentClassification)
+        for (var i = 0; i < filterFacets.length; i++) {
+            var subfacet = filterFacets[i]
+            if (currentClassification[subfacet]) {
+                var facetNode = activeTaxonomy.root.dfs(subfacet)
+                /* no entry uses this node? */
+                if (!facetNode) return false
+
+                var entryFacets = Object.keys(entry.serpClassification)
+                var found = false
+                for (var j = 0; j < entryFacets.length; j++) {
+                    var facet = entryFacets[j].toLowerCase()
+                    if (facetNode.dfs(facet)) {
+                        found = true
+                        break
+                    }
+                }
+                if (!found)
+                    return false
             }
         }
         return true;
@@ -458,7 +459,7 @@ $(document).ready(function () {
         var classification = {}
         // iterate over each checkbox that has been checked
         $(".checkbox input:checked").each(function () {
-            var subfacet = $(this).attr("name");
+            var subfacet = $(this).attr("name").toLowerCase();
             classification[subfacet] = [];
         });
         return classification;
@@ -471,51 +472,38 @@ $(document).ready(function () {
     }
 
     function createOverviewTags(entry) {
-        var $entryTags = Element("div").addClass("entry-tags");
+        var facets = Object.keys(entry.serpClassification)
 
-        if (filterIsDefined()) {
-            for (var subfacet in currentClassification) {
-                if (!currentClassification[subfacet] && entry.serpClassification[subfacet]) {
-                    var $tag = Element("div").addClass("entry-tag").text(subfacet);
-                    $entryTags.append($tag);
-                }
-            }
-        } else {
-            for (var subfacet in entry.serpClassification) {
-                if (entry.serpClassification[subfacet]) {
-                    var $tag = Element("div").addClass("entry-tag").text(subfacet);
-                    $entryTags.append($tag);
-                }
-            }
-        }
-        return $entryTags;
+        return facets.map(facet => {
+            var node = activeTaxonomy.root.dfs(facet)
+            return node && el('div.entry-tag', [
+                currentClassification[node.id()] ?
+                    el('strong', [node.name()]) : node.name()
+            ])
+        })
     }
 
     function insertIntoOverview(entry, entryNumber) {
-        var classification = entry["serpClassification"];
+        var entryTitleText = entry["description"] || entry["reference"] || entry["doi"];
 
         // created the individual html elements
-        var $overviewEntry = Element("div").addClass("overview-entry");
-        var $entryType = Element("div").addClass("entry-type").text(entry["entryType"]);
+        var div = el('div.overview-entry', [
+            el('div.entry-type', [entry.entryType]),
+            el('div.entry-title', {
+                'data-entry-number': entryNumber
+            }, [
+                entryTitleText
+            ]),
+            el('div.entry-tags', createOverviewTags(entry))
+        ])
 
-
-        var entryTitleText = entry["description"] || entry["reference"] || entry["doi"];
-        var $entryTitle = Element("div").addClass("entry-title").text(entryTitleText);
-        $entryTitle.data("entry-number", entryNumber);
-
-        var $entryTags = createOverviewTags(entry);
-
-        // append them to the parent element
-        $overviewEntry.append($entryType);
-        $overviewEntry.append($entryTitle);
-        $overviewEntry.append($entryTags);
-        
-        $entryTitle.on("click", handleEntryClickEvent)
+        div.querySelector('.entry-title')
+            .addEventListener("click", handleEntryClickEvent, false)
 
         // insert into the DOM
-        $(".overview-area").append($overviewEntry);
+        document.querySelector(".overview-area").appendChild(div);
     }
-    
+
     function inspectEntry(entryNumber, entryId, collectionId) {
         function deleteEntry() {
             toggleButtonState()
@@ -542,17 +530,16 @@ $(document).ready(function () {
     }
 
     function handleEntryClickEvent(evt) {
-        var entryNumber = parseInt(this.dataset["entry-number"])
-        var entryId = dataset[entryNumber]
+        var entryNumber = parseInt(this.dataset.entryNumber)
+        var entryId = dataset[entryNumber].id
         var collectionId = getCollectionID()
         inspectEntry(entryNumber, entryId, collectionId)
     }
-    
+
     function insertIntoTable(entry, entryNumber) {
         var table = document.getElementById('table-view')
         var classification = entry.serpClassification
-        
-        //var entryNumber = dataset.indexOf(entry)
+
         var exportCheckbox = el('input', { 'type':'checkbox', 'value':entry.id })
         if (selectedEntries.indexOf(entry.id) >= 0)
             exportCheckbox.setAttribute('checked', 'checked')
@@ -571,7 +558,7 @@ $(document).ready(function () {
                         entry.description || entry.reference
                 ])
             ]),
-            collectionTaxonomy.tree().map(function build(node) {
+            activeTaxonomy.root.map(function build(node) {
                 if (!node.isTreeLeaf())
                     return node.map(build)
                 var classified = classification[node.short] ? '.filled-cell' : ''
@@ -579,7 +566,7 @@ $(document).ready(function () {
             }),
             loggedIn ? exportCheckbox : undefined
         ])
-  
+
         row.addEventListener('click', handleEntryClickEvent, false)
         table.querySelector('tbody').appendChild(row)
     }
