@@ -12,20 +12,7 @@ $(document).ready(function () {
     var admin = false;
     var serpTaxonomy = undefined
 
-    var currentClassification = {
-        adapting: false,
-        solving: false,
-        assessing: false,
-        improving: false,
-        planning: false,
-        design: false,
-        execution: false,
-        analysis: false,
-        people: false,
-        information: false,
-        sut: false,
-        other: false
-    }
+    var currentClassification = {}
 
     function getCollectionFromPreviousPage() {
         var type = window.location.hash
@@ -343,17 +330,41 @@ $(document).ready(function () {
         window.location.hash = this.value
     })
 
-    // classification took place
-    $(".checkbox input").on("change", function (event) {
-        var subfacet = $(this).attr("name");
-        currentClassification[subfacet] = !currentClassification[subfacet];
-        updateViews(dataset);
-    });
-
+    function updateFilterList(taxonomy) {
+        var div = document.querySelector('div.facets')
+        while (div.lastChild)
+            div.removeChild(div.lastChild)
+        
+        var facets = taxonomy.tree().map(function build(node, i) {
+            if (!node.isTreeLeaf())
+                return el('div.facet-title', [node.name(), node.map(build)])
+            return el('label.subfacet', {
+                'title': `inspect ${node.name()}`, // TODO: maybe use info.js ?
+                'for': 'checkbox'
+            }, [
+                node.name(),
+                el('label.checkbox', [
+                    el('input', { 'type': 'checkbox', 'name': node.name() }),
+                    el('span')
+                ])
+            ])
+        })
+        
+        for (var i = 0; i < facets.length; i++)
+            div.appendChild(facets[i])
+        
+        // classification took place
+        $(".checkbox input").on("change", function (event) {
+            var subfacet = $(this).attr("name");
+            currentClassification[subfacet] = !currentClassification[subfacet];
+            updateViews(dataset, activeTaxonomy);
+        });
+    }
+    
     /* This will rebuild the overview table based on the given taxonomy */
     function updateTableHeader(taxonomy) {
         var div = document.getElementById('#table-view')
-        while (div.firstChild)
+        while (div.lastChild)
             div.removeChild(div.lastChild)
 
         var thead = el('thead', [
@@ -373,12 +384,13 @@ $(document).ready(function () {
         div.appendChild(thead)
         div.appendChild(el('tbody#table-body'))
     }
-
     
     function updateViews(dataset, taxonomy) {
         clearViews();
         
+        // TODO: only required when changing dataset
         updateTableHeader(taxonomy)
+        updateFilterList(taxonomy)
         
         var currentEntries = 0;
         for (var i = 0; i < dataset.length; i++) {
@@ -439,31 +451,15 @@ $(document).ready(function () {
         } else if (sortingOption == "collections") {
             dataset.sort(alphabeticalComparator);
         }
-        updateViews(dataset);
+        updateViews(dataset, activeTaxonomy);
     });
 
     function getClassification() {
-        var classification = {
-            "intevention": null,
-            "adapting": null,
-            "solving": null,
-            "assessing": null,
-            "improving": null,
-            "planning": null,
-            "design": null,
-            "execution": null,
-            "analysis": null,
-            "people": null,
-            "information": null,
-            "sut": null,
-            "other": null
-        };
-
+        var classification = {}
         // iterate over each checkbox that has been checked
         $(".checkbox input:checked").each(function () {
             var subfacet = $(this).attr("name");
             classification[subfacet] = [];
-            var $parent = $(this).closest(".sub-facet");
         });
         return classification;
     }
@@ -527,7 +523,7 @@ $(document).ready(function () {
                 .done(() => {
                     window.modals.clearAll();
                     dataset.splice(entryNumber, 1);
-                    updateViews();
+                    updateViews(dataset, activeTaxonomy);
                 })
                 .fail(xhr => alert(xhr.responseText))
         }
