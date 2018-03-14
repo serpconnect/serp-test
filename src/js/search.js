@@ -552,8 +552,8 @@ $(document).ready(function () {
             }
         })
 
-        var row = el('tr', {'data-entry-number': entryNumber }, [
-            el('td', [
+        var row = el('tr', [
+            el('td', {'data-entry-number': entryNumber }, [
                 el('div.scroll-wrapper', [
                         entry.description || entry.reference
                 ])
@@ -561,13 +561,15 @@ $(document).ready(function () {
             activeTaxonomy.root.map(function build(node) {
                 if (!node.isTreeLeaf())
                     return node.map(build)
-                var classified = classification[node.short] ? '.filled-cell' : ''
+                var classified = classification[node.id().toLowerCase()] ? '.filled-cell' : ''
+                console.log(entryNumber, node.id(), classified)
                 return el('td' + classified)
             }),
             loggedIn ? exportCheckbox : undefined
         ])
 
-        row.addEventListener('click', handleEntryClickEvent, false)
+        row.firstChild
+            .addEventListener('click', handleEntryClickEvent, false)
         table.querySelector('tbody').appendChild(row)
     }
 });
