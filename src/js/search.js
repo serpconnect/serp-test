@@ -7,6 +7,7 @@ $(document).ready(function () {
     // stores all the queued entries
     var dataset = [];
     var activeTaxonomy = undefined
+    var taxonomyCache = {}
     var selectedEntries = []
     var loggedIn = false
     var admin = false;
@@ -23,6 +24,19 @@ $(document).ready(function () {
         return document.getElementById('collection-dropdown').value
     }
 
+    function buildTaxonomyNodeCache(taxonomy) {
+        taxonomyCache = {
+            id2node: {},
+            leaves: []
+        }
+
+        taxonomy.root.map(function cache(node) {
+            taxonomyCache.id2node[node.id()] = node
+            if (node.isTreeLeaf())
+                taxonomyCache.leaves.push(node)
+            node.map(cache)
+        })
+    }
 
     // When clicking on a table header in the inspection view, bring up all
     // entities (classified examples) and present them in a modal.
@@ -146,7 +160,7 @@ $(document).ready(function () {
             var facet = edge.type
             var node = nodes[nodemap[String(edge.source)]]
 
-            node.serpClassification[edge.type.toLowerCase()] = true
+            node.serpClassification[edge.type] = true
         })
 
         return nodes
@@ -182,10 +196,13 @@ $(document).ready(function () {
     function updateDataset(toset, taxonomy) {
         dataset = toset
         activeTaxonomy = taxonomy
-
-        updateTableHeader(taxonomy)
-        updateFilterList(taxonomy)
-        updateViews(toset, taxonomy)
+        buildTaxonomyNodeCache(activeTaxonomy)
+        updateViews()
+    }
+    function updateViews() {
+        updateTableHeader(activeTaxonomy)
+        updateFilterList(activeTaxonomy)
+        updateLists(dataset, activeTaxonomy)
     }
     function selectDataset(value) {
         if (value === "all") {
@@ -250,14 +267,22 @@ $(document).ready(function () {
     // Append a select element if logged in so user can export to new/existing
     // collection/
     window.api.v1.account.self().done(self => {
-        $('tr').append(Element('th').text("export"))
+        var view = document.querySelector('.table-view-area')
 
-        $('.table-view-area')
-            .append(Element('button').addClass('edit-btn').text('export').click(exportEntries))
-            .append(Element('button').addClass('edit-btn').text('select all').click(selectAllEntries))
+        var exportBtn = el('button.edit-btn', ['export'])
+        exportBtn.addEventListener('click', exportEntries, false)
+        view.appendChild(exportBtn)
+
+        var selectAllBtn = el('button.edit-btn', ['select all'])
+        selectAllBtn.addEventListener('click', selectAllEntries, false)
+        view.appendChild(selectAllBtn)
 
         loggedIn = true
         admin = self.trust === "Admin";
+
+        /* Regen everything to make sure user can export */
+        if (activeTaxonomy)
+            updateViews()
     })
 
     api.v1.taxonomy().then(data => {
@@ -311,42 +336,50 @@ $(document).ready(function () {
         window.location.hash = this.value
     })
 
+    function handleFilterEvent(evt) {
+        var subfacet = this.name
+        currentClassification[subfacet] = !currentClassification[subfacet];
+        updateLists(dataset, activeTaxonomy);
+    }
+    function createCheckboxElement(node) {
+        var div = el('input', { 'type': 'checkbox', 'name': node.id() })
+        div.addEventListener('change', handleFilterEvent, false)
+        return div
+    }
     function updateFilterList(taxonomy) {
         var div = document.querySelector('div.facets > div.filters')
         while (div.lastChild)
             div.removeChild(div.lastChild)
 
-        var facets = taxonomy.tree().map(function build(node, i) {
-            if (!node.isTreeLeaf())
+        var facets = taxonomy.root.map(function build(node, i) {
+            if (!node.isTreeLeaf()) {
                 return el('div.facet-title', [
                     node.name(),
                     el('label.checkbox', [
                         el('input', { 'type':'checkbox', name:node.id() }),
-                        el('span')
+                        el('span', [' '])
                     ]),
                     node.map(build)
                 ])
+            }
+
+            var title = taxonomyCache.id2node[node.id()].desc ||
+                window.info.getInfo(node.id().toLowerCase()).description
+
             return el('label.sub-facet', {
-                'title': `inspect ${node.name()}`, // TODO: maybe use info.js ?
+                'title': title,
                 'for': 'checkbox'
             }, [
                 node.name(),
                 el('label.checkbox', [
-                    el('input', { 'type': 'checkbox', 'name': node.id() }),
-                    el('span')
+                    createCheckboxElement(node),
+                    el('span', [' '])
                 ])
             ])
         })
 
         for (var i = 0; i < facets.length; i++)
             div.appendChild(facets[i])
-
-        // classification took place
-        $(".checkbox input").on("change", function (event) {
-            var subfacet = $(this).attr("name").toLowerCase();
-            currentClassification[subfacet] = !currentClassification[subfacet];
-            updateViews(dataset, activeTaxonomy);
-        });
     }
 
     /* This will rebuild the overview table based on the given taxonomy */
@@ -358,31 +391,33 @@ $(document).ready(function () {
         var thead = el('thead', [
             el('tr', [
                 el('th', ['entries']),
-                taxonomy.tree().map(function build(node, i) {
-                    if (!node.isTreeLeaf())
-                        return node.map(build)
+                taxonomyCache.leaves.map(node => {
                     return el('th.clickable', {
                         'data-facet': node.id(),
                         'title': `inspect ${node.name()}`
                     }, [node.name()])
-                })
+                }),
+                loggedIn && el('th', ['export'])
             ])
         ])
 
         div.appendChild(thead)
-        div.appendChild(el('tbody#table-body'))
+        div.appendChild(el('tbody'))
     }
 
-    function updateViews(dataset, taxonomy) {
+    function updateLists(dataset, taxonomy) {
         clearViews();
+
+        var overview = document.querySelector(".overview-area")
+        var table = document.getElementById('table-view')
 
         var currentEntries = 0;
         for (var i = 0; i < dataset.length; i++) {
             var entry = dataset[i];
             if (fitsCurrentClassification(entry)) {
                 currentEntries++;
-                insertIntoTable(entry, i);
-                insertIntoOverview(entry, i);
+                insertIntoTable(table, entry, i);
+                insertIntoOverview(overview, entry, i);
             }
         }
         updateResultsText(currentEntries, dataset.length);
@@ -399,7 +434,7 @@ $(document).ready(function () {
     function fitsCurrentClassification(entry) {
         // Algorithm:
         //  for each selected facet filter
-        //      find facet node in taxonomy
+        //      find facet node in taxonomy (using id->node memo cache)
         //      check if any entry classification exists in its sub tree
         //      if not: entry does not have filtering facet, return false
         //      if yes: entry is classified with this facet, continue
@@ -409,15 +444,14 @@ $(document).ready(function () {
         for (var i = 0; i < filterFacets.length; i++) {
             var subfacet = filterFacets[i]
             if (currentClassification[subfacet]) {
-                var facetNode = activeTaxonomy.root.dfs(subfacet)
+                var facetNode = taxonomyCache.id2node[subfacet] //activeTaxonomy.root.dfs(subfacet)
                 /* no entry uses this node? */
                 if (!facetNode) return false
 
                 var entryFacets = Object.keys(entry.serpClassification)
                 var found = false
                 for (var j = 0; j < entryFacets.length; j++) {
-                    var facet = entryFacets[j].toLowerCase()
-                    if (facetNode.dfs(facet)) {
+                    if (facetNode.dfs(entryFacets[j])) {
                         found = true
                         break
                     }
@@ -452,30 +486,24 @@ $(document).ready(function () {
         } else if (sortingOption == "collections") {
             dataset.sort(alphabeticalComparator);
         }
-        updateViews(dataset, activeTaxonomy);
+        updateLists(dataset, activeTaxonomy);
     });
 
-    function getClassification() {
-        var classification = {}
-        // iterate over each checkbox that has been checked
-        $(".checkbox input:checked").each(function () {
-            var subfacet = $(this).attr("name").toLowerCase();
-            classification[subfacet] = [];
-        });
-        return classification;
-    }
-
     function clearViews() {
-        $(".overview-area").children().empty();
-        $(".overview-entry").remove();
-        $("#table-body").children().empty();
+        var overview = document.querySelector('.overview-area')
+        while (overview.lastChild)
+            overview.removeChild(overview.lastChild)
+
+        var table = document.getElementById('table-view')
+        table.removeChild(table.querySelector('tbody'))
+        table.appendChild(el('tbody'))
     }
 
     function createOverviewTags(entry) {
         var facets = Object.keys(entry.serpClassification)
 
         return facets.map(facet => {
-            var node = activeTaxonomy.root.dfs(facet)
+            var node = taxonomyCache.id2node[facet] // activeTaxonomy.root.dfs(facet)
             return node && el('div.entry-tag', [
                 currentClassification[node.id()] ?
                     el('strong', [node.name()]) : node.name()
@@ -483,7 +511,7 @@ $(document).ready(function () {
         })
     }
 
-    function insertIntoOverview(entry, entryNumber) {
+    function insertIntoOverview(overview, entry, entryNumber) {
         var entryTitleText = entry["description"] || entry["reference"] || entry["doi"];
 
         // created the individual html elements
@@ -501,7 +529,7 @@ $(document).ready(function () {
             .addEventListener("click", handleEntryClickEvent, false)
 
         // insert into the DOM
-        document.querySelector(".overview-area").appendChild(div);
+        overview.appendChild(div);
     }
 
     function inspectEntry(entryNumber, entryId, collectionId) {
@@ -511,7 +539,7 @@ $(document).ready(function () {
                 .done(() => {
                     window.modals.clearAll();
                     dataset.splice(entryNumber, 1);
-                    updateViews(dataset, activeTaxonomy);
+                    updateLists(dataset, activeTaxonomy);
                 })
                 .fail(xhr => alert(xhr.responseText))
         }
@@ -536,21 +564,28 @@ $(document).ready(function () {
         inspectEntry(entryNumber, entryId, collectionId)
     }
 
-    function insertIntoTable(entry, entryNumber) {
-        var table = document.getElementById('table-view')
-        var classification = entry.serpClassification
+    function handleExportCheckbox (evt) {
+        var entryId = this.value
+        if (this.checked) {
+            if (selectedEntries.indexOf(entryId) === -1)
+                selectedEntries.push(entryId)
+        } else {
+            selectedEntries.splice(selectedEntries.indexOf(entryId), 1)
+        }
+    }
+    function createExportCheckbox(entry) {
+        var exportCheckbox = el('input', {
+            'type':'checkbox',
+            'value':entry.id
+        })
 
-        var exportCheckbox = el('input', { 'type':'checkbox', 'value':entry.id })
         if (selectedEntries.indexOf(entry.id) >= 0)
             exportCheckbox.setAttribute('checked', 'checked')
-        exportCheckbox.addEventListener('change', function (evt) {
-            if (this.checked) {
-                if (selectedEntries.indexOf(entry.id) === -1)
-                    selectedEntries.push(entry.id)
-            } else {
-                selectedEntries.splice(selectedEntries.indexOf(entry.id), 1)
-            }
-        })
+
+        exportCheckbox.addEventListener('change', handleExportCheckbox, false)
+    }
+    function insertIntoTable(table, entry, entryNumber) {
+        var classification = entry.serpClassification
 
         var row = el('tr', [
             el('td', {'data-entry-number': entryNumber }, [
@@ -558,14 +593,11 @@ $(document).ready(function () {
                         entry.description || entry.reference
                 ])
             ]),
-            activeTaxonomy.root.map(function build(node) {
-                if (!node.isTreeLeaf())
-                    return node.map(build)
-                var classified = classification[node.id().toLowerCase()] ? '.filled-cell' : ''
-                console.log(entryNumber, node.id(), classified)
+            taxonomyCache.leaves.map(node => {
+                var classified = classification[node.id()] ? '.filled-cell' : ''
                 return el('td' + classified)
             }),
-            loggedIn ? exportCheckbox : undefined
+            loggedIn && createExportCheckbox(entry)
         ])
 
         row.firstChild
