@@ -6,6 +6,7 @@ $(document).ready(function () {
     $("#collection-dropdown").val("all");
     // stores all the queued entries
     var dataset = [];
+    var activeTaxonomy = undefined
     var selectedEntries = []
     var loggedIn = false
     var admin = false;
@@ -190,8 +191,9 @@ $(document).ready(function () {
         return nodes
     }
     function getCollection(id, cb) {
-        if (collections[id].entries) {
-            cb(collections[id].entries)
+        var cc = collections[id]
+        if (cc && cc.entries && cc.taxonomy) {
+            cb(cc.entries, cc.taxonomy)
             return
         }
 
@@ -203,29 +205,32 @@ $(document).ready(function () {
                 var graph = promise[0]
                 var taxonomy = promise[1].taxonomy
 
-                collections[id].entries = processGraph(graph, collections[id].name, taxonomy)
-                collections[id].taxonomy = taxonomy
+                var cc = collections[id]
+                cc.entries = processGraph(graph, collections[id].name, taxonomy)
+                cc.taxonomy = serpTaxonomy.tree()
+                cc.taxonomy.extend(taxonomy)
 
-                cb(collections[id].entries)
+                cb(cc.entries, cc.taxonomy)
             })
-            .catch(reason => cb([]))
+            .catch(reason => cb([], new Taxonomy()))
     }
-    function updateDataset(toset) {
+    function updateDataset(toset, taxonomy) {
         dataset = toset
-        updateViews()
+        activeTaxonomy = taxonomy
+        updateViews(toset, taxonomy)
     }
     function selectDataset(value) {
         if (value === "all") {
             // set dataset = all
             if (mainDataset) {
-                updateDataset(mainDataset)
+                updateDataset(mainDataset, serpTaxonomy)
                 return
             }
 
             api.v1.entry.all()
                 .done(graph => {
                     mainDataset = processGraph(graph)
-                    updateDataset(mainDataset)
+                    updateDataset(mainDataset, serpTaxonomy)
                 })
                 .fail((reason, err) => window.alert(err))
         } else if (value === "mine") {
@@ -244,12 +249,12 @@ $(document).ready(function () {
                         if (!exists)
                             dataset.push(entries[i])
                     }
-                    updateDataset(dataset)
+                    updateDataset(dataset, serpTaxonomy)
                 })
             })
         } else {
             // use specific collection
-            getCollection(value, entries => updateDataset(entries))
+            getCollection(value, updateDataset)
         }
     }
 
@@ -345,15 +350,43 @@ $(document).ready(function () {
         updateViews(dataset);
     });
 
-    function updateViews(entries) {
+    /* This will rebuild the overview table based on the given taxonomy */
+    function updateTableHeader(taxonomy) {
+        var div = document.getElementById('#table-view')
+        while (div.firstChild)
+            div.removeChild(div.lastChild)
+
+        var thead = el('thead', [
+            el('tr', [
+                el('th', ['entries']),
+                taxonomy.tree().map(function build(node, i) {
+                    if (!node.isTreeLeaf())
+                        return node.map(build)
+                    return el('th.clickable', {
+                        'data-facet': node.id(),
+                        'title': `inspect ${node.name()}`
+                    }, [node.name()])
+                })
+            ])
+        ])
+
+        div.appendChild(thead)
+        div.appendChild(el('tbody#table-body'))
+    }
+
+    
+    function updateViews(dataset, taxonomy) {
         clearViews();
+        
+        updateTableHeader(taxonomy)
+        
         var currentEntries = 0;
         for (var i = 0; i < dataset.length; i++) {
             var entry = dataset[i];
             if (fitsCurrentClassification(entry)) {
                 currentEntries++;
-                insertIntoTable(entry);
-                insertIntoOverview(entry);
+                insertIntoTable(entry, i);
+                insertIntoOverview(entry, i);
             }
         }
         updateResultsText(currentEntries, dataset.length);
@@ -462,7 +495,7 @@ $(document).ready(function () {
         return $entryTags;
     }
 
-    function insertIntoOverview(entry) {
+    function insertIntoOverview(entry, entryNumber) {
         var classification = entry["serpClassification"];
 
         // created the individual html elements
@@ -472,7 +505,7 @@ $(document).ready(function () {
 
         var entryTitleText = entry["description"] || entry["reference"] || entry["doi"];
         var $entryTitle = Element("div").addClass("entry-title").text(entryTitleText);
-        $entryTitle.data("entry-number", dataset.indexOf(entry));
+        $entryTitle.data("entry-number", entryNumber);
 
         var $entryTags = createOverviewTags(entry);
 
@@ -480,158 +513,80 @@ $(document).ready(function () {
         $overviewEntry.append($entryType);
         $overviewEntry.append($entryTitle);
         $overviewEntry.append($entryTags);
+        
+        $entryTitle.on("click", handleEntryClickEvent)
+
         // insert into the DOM
         $(".overview-area").append($overviewEntry);
+    }
+    
+    function inspectEntry(entryNumber, entryId, collectionId) {
+        function deleteEntry() {
+            toggleButtonState()
+            api.v1.admin.deleteEntry(entryId)
+                .done(() => {
+                    window.modals.clearAll();
+                    dataset.splice(entryNumber, 1);
+                    updateViews();
+                })
+                .fail(xhr => alert(xhr.responseText))
+        }
 
+        var removeBtn = el("button.btn", ["delete entry"])
+        removeBtn.addEventListener('click', deleteEntry, false)
 
-
-
-        $(".entry-title").unbind("click").on("click", function (evt) {
-            var entryNumber = $(this).data("entry-number");
-            var id = dataset[entryNumber].id
-            var CID = getCollectionID()
-            function deleteEntry() {
-                toggleButtonState()
-                api.v1.admin.deleteEntry(id)
-                    .done(() => {
-                        window.modals.clearAll();
-                        dataset.splice(entryNumber, 1);
-                        updateViews();
-                    })
-                    .fail(xhr => alert(xhr.responseText))
-
-            }
-
-            var removeBtn = el("button.btn", ["delete entry"])
-            removeBtn.addEventListener('click', deleteEntry, false)
-
-            function insertid(id) { return 0 }
-
-
-            Promise.all([
-                window.api.v1.entry.get(id),
-                window.api.v1.entry.taxonomy(id)
-            ]).then(promise => {
-                window.modals.entryModal(CID, promise[0], promise[1],
-                    admin ? { button: removeBtn } : {}
-                )
-            })
+        Promise.all([
+            window.api.v1.entry.get(entryId),
+            window.api.v1.entry.taxonomy(entryId)
+        ]).then(promise => {
+            window.modals.entryModal(collectionId, promise[0], promise[1],
+                admin ? { button: removeBtn } : {}
+            )
         })
     }
 
-    // creates a table row with the data contained in entry
-    function insertIntoTable(entry, position) {
-        var classification = entry["serpClassification"];
-
-        // let's build the table row for this entry
-        var $row = Element("tr");
-        var maxLength = 35;
-        // choose as the row descriptor either the project name, description
-        // (for challenges), or the reference (for research results)
-        var entryTitle = entry["projectName"] || entry["description"] || entry["reference"];
-        entryTitle = entryTitle.length > maxLength ?
-            entryTitle.substring(0, maxLength - 3) + "..." :
-            entryTitle.substring(0, maxLength);
-        var titleCell = Element("td").text(entryTitle || entry["description"] || entry["reference"]);
-        titleCell.data("entry-number", dataset.indexOf(entry));
-
-        $row.append(titleCell);
-
-        createCell("intervention", true);
-
-        // effect
-        createCell("solving");
-        createCell("adapting");
-        createCell("assessing");
-        createCell("improving");
-
-        // scope
-        createCell("planning", true);
-        createCell("design", true);
-        createCell("execution", true);
-        createCell("analysis", true);
-
-        // context
-        createCell("people");
-        createCell("information");
-        createCell("sut");
-        createCell("other");
-
-        if (loggedIn) {
-            var mark = Element("input").attr("type", "checkbox").val(entry.id)
-
-            if (selectedEntries.indexOf(entry.id) >= 0)
-                mark.attr('checked', 'checked')
-
-            mark.on('change', function (evt) {
-                if (this.checked) {
-                    if (selectedEntries.indexOf(entry.id) === -1)
-                        selectedEntries.push(entry.id)
-                } else {
-                    selectedEntries.splice(selectedEntries.indexOf(entry.id), 1)
-                }
-            })
-
-            $row.append(mark)
-        }
-
-        // insert the row into the specified position
-        if (position) {
-            $("#table-view tbody tr:nth-child(" + position + ")").replaceWith($row);
-        } else {
-            // append row to the end of the table
-            $("#table-body").append($row);
-        }
-
-
-
-        // refresh on-click listeners for all entries in first column;
-        // (a click initiates an entry inspection)
-        $("td:first-child").unbind("click").on("click", function (evt) {
-            var entryNumber = $(this).data("entry-number");
-            var id = dataset[entryNumber].id
-            var CID = getCollectionID()
-            function deleteEntry() {
-                toggleButtonState()
-                api.v1.admin.deleteEntry(id)
-                    .done(() => {
-                        window.modals.clearAll();
-                        dataset.splice(entryNumber, 1);
-                        updateViews();
-                    })
-                    .fail(xhr => alert(xhr.responseText))
-
+    function handleEntryClickEvent(evt) {
+        var entryNumber = parseInt(this.dataset["entry-number"])
+        var entryId = dataset[entryNumber]
+        var collectionId = getCollectionID()
+        inspectEntry(entryNumber, entryId, collectionId)
+    }
+    
+    function insertIntoTable(entry, entryNumber) {
+        var table = document.getElementById('table-view')
+        var classification = entry.serpClassification
+        
+        //var entryNumber = dataset.indexOf(entry)
+        var exportCheckbox = el('input', { 'type':'checkbox', 'value':entry.id })
+        if (selectedEntries.indexOf(entry.id) >= 0)
+            exportCheckbox.setAttribute('checked', 'checked')
+        exportCheckbox.addEventListener('change', function (evt) {
+            if (this.checked) {
+                if (selectedEntries.indexOf(entry.id) === -1)
+                    selectedEntries.push(entry.id)
+            } else {
+                selectedEntries.splice(selectedEntries.indexOf(entry.id), 1)
             }
-
-            var removeBtn = el("button.btn", ["delete entry"])
-            removeBtn.addEventListener('click', deleteEntry, false)
-
-            Promise.all([
-                window.api.v1.entry.get(id),
-                window.api.v1.entry.taxonomy(id)
-            ]).then(promise => {
-                window.modals.entryModal(CID, promise[0], promise[1],
-                    admin ? { button: removeBtn } : {}
-                )
-            })
         })
 
-        function createCell(subfacet, alternating) {
-            var $td = Element("td");
-            classification[subfacet] ? $td.addClass("filled-cell") : "";
-            alternating ? $td.addClass("alternating-group") : "";
-            $row.append($td);
-        }
+        var row = el('tr', {'data-entry-number': entryNumber }, [
+            el('td', [
+                el('div.scroll-wrapper', [
+                        entry.description || entry.reference
+                ])
+            ]),
+            collectionTaxonomy.tree().map(function build(node) {
+                if (!node.isTreeLeaf())
+                    return node.map(build)
+                var classified = classification[node.short] ? '.filled-cell' : ''
+                return el('td' + classified)
+            }),
+            loggedIn ? exportCheckbox : undefined
+        ])
+  
+        row.addEventListener('click', handleEntryClickEvent, false)
+        table.querySelector('tbody').appendChild(row)
     }
-
-
-
-    // convenience function for capitalizing sentences
-    // TODO: rip performance (don't extend prototype, use function instead)
-    String.prototype.capitalize = function () {
-        return this.charAt(0).toUpperCase() + this.slice(1);
-    }
-
 });
 
 
