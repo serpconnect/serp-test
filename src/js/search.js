@@ -331,7 +331,7 @@ $(document).ready(function () {
     })
 
     function updateFilterList(taxonomy) {
-        var div = document.querySelector('div.facets')
+        var div = document.querySelector('div.facets > div.filters')
         while (div.lastChild)
             div.removeChild(div.lastChild)
         
