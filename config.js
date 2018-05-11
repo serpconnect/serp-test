@@ -1,8 +1,8 @@
 var config = {
    port: "8181",
 
-   project: "test",
-   sitename: "SERP",
+   project: "SERP",
+   sitename: "test",
    title: "SERP-Test",
 
    backend: "serp-test"
